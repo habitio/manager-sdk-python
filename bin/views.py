@@ -1,0 +1,67 @@
+import logging
+from flask import request,Response,json
+from bin import app, auth, paho_mqtt
+from bin.webhook_handler import webhook
+from bin.settings import settings
+
+logger = logging.getLogger(__name__)
+
+def kickoff():
+    '''
+    Setting up manager before it starts serving
+
+    '''
+    auth.get_access()
+    if settings.block["access_token"] != "":
+        paho_mqtt.mqtt_config()
+        webhook.webhook_registration()
+
+def shutdown():
+    '''
+    Taking care of shutting down the manager safely
+
+    '''
+    auth.clear_cache()
+    paho_mqtt.mqtt_decongif()
+    logger.notice("Shutting down Manager ...")
+
+@app.route("/")
+def starter():
+    return Response(status=200)
+
+@app.route("/"+settings.api_version+"/authorize",methods=["GET"])
+def authorize():
+    return webhook.authorize(request)
+
+@app.route("/"+settings.api_version+"/receive_token",methods=["POST"])
+def receive_token():
+    return webhook.receive_token(request)
+
+@app.route("/"+settings.api_version+"/devices_list",methods=["POST"])
+def devices_list():
+    return webhook.devices_list(request)
+
+@app.route("/"+settings.api_version+"/select_device",methods=["POST"])
+def select_device():
+    return webhook.select_device(request)
+
+@app.route("/"+settings.api_version+"/manufacturer",methods=["POST"])
+def agent():
+    webhook.agent(request)
+    return Response(
+        status=200
+    )
+        
+@app.after_request
+def after(response):
+    try:
+        if "Location" in response.headers:
+            logger.debug("Redirect "+response.headers["Location"]+" code["+response.status+"]")
+        else:
+            logger.debug("Responding with status code["+response.status+"]") 
+        if response.mimetype == "application/json":
+            logger.verbose("\n"+json.dumps(json.loads(response.response[0]),indent=4,sort_keys=True)+"\n")
+    except:
+        logger.error("Post request logging failed !")
+    return response
+

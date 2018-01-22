@@ -1,0 +1,7 @@
+manager-fake-contained.conf
+Channel_info.odt
+*.pyc
+/mv3
+*.log
+/__pycache__
+/.vscode
