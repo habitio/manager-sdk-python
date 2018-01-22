@@ -1,4 +1,4 @@
-import logging,requests,time,json,threading
+import logging,requests,json,threading
 from dateutil import parser, tz
 from datetime import datetime
 from bin.settings import settings
