@@ -287,12 +287,12 @@ class WebhookHub:
 
         if request.is_json:
             logger.verbose("\n"+json.dumps(request.get_json(),indent=4, sort_keys=True))
-            message = request.get_json()
         else:
-            message = request.data
+            logger.verbose("\n"+request.get_data(as_text=True))
         
-        case,data = solid.listener(message)
-        paho_mqtt.publisher(io="iw",case=case,data=data)
+        case,data = solid.listener(request)
+        if case != None:
+            paho_mqtt.publisher(io="iw",case=case,data=data)
         
 #Creating an instance of WebhookHub
 webhook = WebhookHub()

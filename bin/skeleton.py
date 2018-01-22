@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from flask import request
 from bin import settings
 import requests
 import logging
@@ -12,13 +13,14 @@ class Skeleton(ABC):
     def auth_requests(self):
         """
         Returns a list of dictionaries with the structure,
-        
-        {
-            "method" : "<get/post>"
-            "url" : "<manufacturer's authrorize API uri and parameters>"
-            "headers" : {}
-        }
-
+        [
+            {
+                "method" : "<get/post>"
+                "url" : "<manufacturer's authrorize API uri and parameters>"
+                "headers" : {}
+            },
+            ...
+        ]
         If the value of headers is {} for empty header, otherwise it follows the structure as of the 
         sample given below.
 
@@ -35,7 +37,7 @@ class Skeleton(ABC):
     @abstractmethod
     def auth_response(self,response_data):
         """
-        Receives the response from manufacturer API after authrorization.
+        Receives the response from manufacturer's API after authrorization.
 
         Returns dictionary of required credentials for persistence, otherwise 
         returns None if no persistance required after analyzing.
@@ -45,7 +47,8 @@ class Skeleton(ABC):
     @abstractmethod
     def get_devices(self,credentials):
         """
-        Receives the credentials of user.
+        Receives : 
+            credentials : All persisted user credentials.
 
         Returns a list of dictionaries with the following structure ,
 
@@ -69,13 +72,13 @@ class Skeleton(ABC):
         to read/u
         pdate device's information.
 
-        Receives 3 arguements,
-            mode        : 'r' or 'w'
+        Receives:
+            mode        - 'r' or 'w'
                 r - read from manufacturer's API
                 w - write to manufacturer's API
-            topic       : A dictionary with 3 key 'device_id','channel_id','component' and 'property'.
-            data        : data if any sent by Muzzley's platform.
-            credentials : credentials of user from database
+            topic       - A dictionary with 3 key 'device_id','channel_id','component' and 'property'.
+            data        - data if any sent by Muzzley's platform.
+            credentials - credentials of user from database
 
         Expected Response,
             'r' - mode
@@ -88,20 +91,27 @@ class Skeleton(ABC):
         pass
 
     @abstractmethod
-    def listener(self,message):
+    def listener(self,request):
         """
         Invoked when manufacturer's api intends to communicate with Muzzley's platform
         to update device's information.
+        
+        Receives :
+            request - A flask.request object received from manufacturer's API.
 
         Returns a tuple as (case, data),
-            case - A dictionary with keys 'device_id', 'component' and 'property'
+            case - Expecting a dictionary with keys 'device_id', 'component' and 'property', 
+                   otherwise if None is returned for case, then NO data will be send to muzzley
             data - Any data that has to be send to Muzzley's platform
+
+        
         """
         pass
     
     def get_channel_template(self,channel_id):
         """
-        Receives channel_id of the device.
+        Input : 
+        channel_id - channel_id of the device.
 
         Returns channel_template_id
         """
