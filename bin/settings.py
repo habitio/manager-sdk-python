@@ -5,12 +5,12 @@ from os import path
 class Settings:
 
 # Loading and Reading from Config file
-    if path.isfile("/etc/zapata/backend-enabled/manager-fake-contained.conf"):
-        conf_path = "/etc/zapata/backend-enabled/manager-fake-contained.conf"
+    if path.isfile("/etc/zapata/backend-enabled/manager-sdk-python.conf"):
+        conf_path = "/etc/zapata/backend-enabled/manager-sdk-python.conf"
         with open(conf_path,"r") as json_data_file:
             config_data = json.load(json_data_file)
-    elif path.isfile("manager-fake-contained.conf"):
-        conf_path = "manager-fake-contained.conf"
+    elif path.isfile("manager-sdk-python.conf"):
+        conf_path = "manager-sdk-python.conf"
         with open(conf_path,"r") as json_data_file:
             config_data = json.load(json_data_file)
     else:
