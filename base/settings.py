@@ -1,16 +1,14 @@
 # Breaking down configuration File here!
 import json
+import sys, os
 from os import path
 
 class Settings:
 
 # Loading and Reading from Config file
-    if path.isfile("/etc/zapata/backend-enabled/manager-sdk-python.conf"):
-        conf_path = "/etc/zapata/backend-enabled/manager-sdk-python.conf"
-        with open(conf_path,"r") as json_data_file:
-            config_data = json.load(json_data_file)
-    elif path.isfile("manager-sdk-python.conf"):
-        conf_path = "manager-sdk-python.conf"
+    conf_path = sys.argv[1]
+
+    if path.isfile(conf_path):
         with open(conf_path,"r") as json_data_file:
             config_data = json.load(json_data_file)
     else:
@@ -61,13 +59,15 @@ class Settings:
     man_token_url = "https://fake-manufacture.integrations.muzzley.com/token"
 
     # Loggging file path
-    # if "file" in config_log and config_log["file"] != "":
-    #     if path.isfile(config_log["file"]):
-    #         log_path = config_log["file"]
-    # else:
-    #     if path.isfile("/var/log/syslog"):
-    #         log_path = "/var/log/syslog"
-    log_path = "python_logging.log"
+    if "file" in config_log and config_log["file"] == "{log_path}":
+        log_path = "../"+os.path.splitext(conf_path)[0]+".log"
+    elif "file" in config_log and config_log["file"] != "":
+        if path.isfile(config_log["file"]):
+            log_path = config_log["file"]
+    else:
+        if path.isfile("/var/log/syslog"):
+            log_path = "/var/log/syslog"
+    
 
     #Setting up Redis Database
     redis_bind = config_redis["bind"]
@@ -92,6 +92,7 @@ class Settings:
     
     def get_config(self):
         return self.config_data
+    
 
 #An instanece of Settings class
 settings = Settings()
