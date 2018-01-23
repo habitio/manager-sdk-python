@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from flask import request
-from bin import settings
+from bin.settings import settings
+from bin.redis_db import db
 import requests
 import logging
 
@@ -45,7 +46,7 @@ class Skeleton(ABC):
         pass
     
     @abstractmethod
-    def get_devices(self,credentials):
+    def get_devices(self,sender,credentials):
         """
         Receives : 
             credentials : All persisted user credentials.
@@ -76,7 +77,7 @@ class Skeleton(ABC):
             mode        - 'r' or 'w'
                 r - read from manufacturer's API
                 w - write to manufacturer's API
-            topic       - A dictionary with 3 key 'device_id','channel_id','component' and 'property'.
+            case       - A dictionary with 3 key 'device_id','channel_id','component' and 'property'.
             data        - data if any sent by Muzzley's platform.
             credentials - credentials of user from database
 
@@ -114,6 +115,7 @@ class Skeleton(ABC):
         channel_id - channel_id of the device.
 
         Returns channel_template_id
+
         """
 
         url = settings.api_version_full+"/managers/self/channels"
@@ -140,4 +142,62 @@ class Skeleton(ABC):
             logger.debug("\n"+json.dumps(resp.json(),indent=4,sort_keys=True)+"\n")
             logger.trace(str(ex))
         
-        
+    def store(self,key,value):
+        """
+        To store a value to database with a unique identifier called key
+
+        """
+        db.set_key(key,value)
+
+    def retrieve(self,key):
+        """
+        To retireve a value from database with its unique identifier, key.
+
+        """
+        return db.get_key(key)
+
+    def exists(self,key):
+        """
+        To check if a key is already present in database.
+
+        """
+        return db.had_key(key)
+
+    def log(self,message,level):
+        """
+        To log a message to log file 
+            message - message to be logged.
+            level   - denotes the logging priority. The level-priority relation given below,
+                
+                priority    -level
+                ------------------
+                emergency   = 0,
+                alert       = 1,
+                critical    = 2,
+                error       = 3,
+                warning     = 4,
+                notice      = 5,
+                info        = 6,
+                debug       = 7,
+                trace       = 8,
+                verbose     = 9
+        """
+        return {
+        0: logger.emergency(message),
+        1: logger.alert(message),
+        2: logger.critical(message),
+        3: logger.error(message),
+        4: logger.warning(message),
+        5: logger.notice(message),
+        6: logger.info(message),
+        7: logger.debug(message),
+        8: logger.trace(message),
+        9: logger.verbose(message),
+    }[level]
+
+    def get_config(self):
+        """
+        Returns the entire data in configuration file.
+
+        """
+        return settings.get_config()

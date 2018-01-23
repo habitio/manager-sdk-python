@@ -89,6 +89,9 @@ class Settings:
         "http_ep" : "",
         "mqtt_ep" : "",
     }
+    
+    def get_config(self):
+        return self.config_data
 
 #An instanece of Settings class
 settings = Settings()
