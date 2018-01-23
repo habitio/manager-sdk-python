@@ -77,7 +77,7 @@ class Settings:
     redis_port = parts[1]              # ex. 6379
 
     #Picking out path of module that implements the skeleton
-    skeleton_path = config_modules["skeleton_implmentation"]
+    skeleton_path = config_modules["skeleton_implementation"]
 
     #The block stores all information obtained my manager through request to platform and 
     # to be made available to multiple modules.
