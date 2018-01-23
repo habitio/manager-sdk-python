@@ -7,7 +7,6 @@ class Settings:
 
 # Loading and Reading from Config file
     conf_path = sys.argv[1]
-
     if path.isfile(conf_path):
         with open(conf_path,"r") as json_data_file:
             config_data = json.load(json_data_file)
@@ -60,7 +59,8 @@ class Settings:
 
     # Loggging file path
     if "file" in config_log and config_log["file"] == "{log_path}":
-        log_path = "../"+os.path.splitext(conf_path)[0]+".log"
+        parts = conf_path.split("/")
+        log_path = "../"+os.path.splitext(parts[len(parts)-1])[0]+".log"
     elif "file" in config_log and config_log["file"] != "":
         if path.isfile(config_log["file"]):
             log_path = config_log["file"]
