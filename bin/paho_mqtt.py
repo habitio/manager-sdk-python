@@ -2,7 +2,6 @@ from bin import auth
 from bin.settings import settings
 from bin.redis_db import db
 from bin.solid import Solid
-
 import logging, time
 import paho.mqtt.client as paho
 import json
@@ -68,13 +67,13 @@ def on_message(client, userdata, msg):
                     return
 
                 if payload["io"] == "r":
-                    result = solid.connect(mode='r',case=case,credentials=credentials,data=data)
+                    result = solid.upstream(mode='r',case=case,credentials=credentials,data=data)
                     if result != None:
                         publisher(topic=topic,io="ir",data=result)
                     else:
                         return
                 elif payload["io"] == "w":
-                    result = solid.connect(mode='w',case=case,credentials=credentials,data=data)
+                    result = solid.upstream(mode='w',case=case,credentials=credentials,data=data)
                     if result == True:
                         publisher(topic=topic,io="iw",data=data)
                     elif result == False:

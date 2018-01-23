@@ -82,7 +82,7 @@ class Implementor(Skeleton):
 
         return data
 
-    def connect(self,mode,case,credentials,data=None):
+    def upstream(self,mode,case,credentials,data=None):
         """
         Invoked when Muzzley platform intends to communicate with manufacturer's api
         to read/u
@@ -116,7 +116,7 @@ class Implementor(Skeleton):
             print("In w")
             return True
 
-    def listener(self,message):
+    def downstream(self,message):
         """
         Invoked when manufacturer's api intends to communicate with Muzzley's platform
         to update device's information.

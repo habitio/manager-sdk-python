@@ -290,7 +290,7 @@ class WebhookHub:
         else:
             logger.verbose("\n"+request.get_data(as_text=True))
         
-        case,data = solid.listener(request)
+        case,data = solid.downstream(request)
         if case != None:
             paho_mqtt.publisher(io="iw",case=case,data=data)
         
