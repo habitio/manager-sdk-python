@@ -1,4 +1,4 @@
-from bin.settings import settings
+from base.settings import settings
 from os import path, remove
 from datetime import datetime
 import logging

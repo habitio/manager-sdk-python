@@ -1,8 +1,8 @@
 import logging
 from flask import request,Response,json
-from bin import app, auth, paho_mqtt
-from bin.webhook_handler import webhook
-from bin.settings import settings
+from base import app, auth, paho_mqtt
+from base.webhook_handler import webhook
+from base.settings import settings
 
 logger = logging.getLogger(__name__)
 

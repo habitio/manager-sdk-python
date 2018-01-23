@@ -5,3 +5,4 @@ Channel_info.odt
 *.log
 /__pycache__
 /.vscode
+/base/implementor.py

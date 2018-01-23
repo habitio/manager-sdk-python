@@ -1,5 +1,5 @@
-from bin import app
-from bin.settings import settings
+from base import app
+from base.settings import settings
 import signal
 
 def signal_handler(signal, frame):

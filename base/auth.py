@@ -1,7 +1,7 @@
 import logging,requests,json,threading
 from dateutil import parser, tz
 from datetime import datetime
-from bin.settings import settings
+from base.settings import settings
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +68,7 @@ def renew_token():
 
 def store_info(resp):
     '''
-    Stores the response obtained during authorization with Muzzley in bin.Settings.block
+    Stores the response obtained during authorization with Muzzley in base.Settings.block
 
     '''
     logger.verbose("Caching authorization response info from Muzzley...")

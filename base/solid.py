@@ -1,5 +1,5 @@
-from bin.settings import settings
-from bin import skeleton
+from base.settings import settings
+from base import skeleton
 from importlib import util
 import inspect,logging
 

@@ -1,6 +1,6 @@
 import logging
 from redis import Redis
-from bin.settings import settings
+from base.settings import settings
 
 logger = logging.getLogger(__name__)
 

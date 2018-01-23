@@ -1,7 +1,7 @@
-from bin import auth
-from bin.settings import settings
-from bin.redis_db import db
-from bin.solid import Solid
+from base import auth
+from base.settings import settings
+from base.redis_db import db
+from base.solid import Solid
 import logging, time
 import paho.mqtt.client as paho
 import json

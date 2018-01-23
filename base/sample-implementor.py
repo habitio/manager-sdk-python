@@ -1,6 +1,3 @@
-from bin.skeleton import Skeleton
-from bin.settings import settings
-import json
 
 class Implementor(Skeleton):
 
@@ -30,13 +27,13 @@ class Implementor(Skeleton):
         response =  [
             {
                 "method" : "get",
-                "url" : settings.man_login_url+"?redirect_uri={redirect_uri}",
+                "url" : "<some url>",
                 "headers" : {}
             }
             ,
             {
                 "method" : "post",
-                "url" : settings.man_token_url+"?redirect_uri={redirect_uri}&code={code}",
+                "url" : "<some url>",
                 "headers" : {},
                 
             }
@@ -72,7 +69,6 @@ class Implementor(Skeleton):
 
         Each dictionary in list denotes a device of user.
         """
-        print(sender)
         data = [
             {
                 "content" : "kitchen fridge",

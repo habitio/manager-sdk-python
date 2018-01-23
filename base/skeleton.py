@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from flask import request
-from bin.settings import settings
-from bin.redis_db import db
+from base.settings import settings
+from base.redis_db import db
 import requests
 import logging
 

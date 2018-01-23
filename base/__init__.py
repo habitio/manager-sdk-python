@@ -1,6 +1,6 @@
 from flask import Flask
 from flask_mqtt import Mqtt
-from bin import python_logging as pl
+from base import python_logging as pl
 import logging
 
 # Create the Logger
@@ -24,7 +24,7 @@ except Exception as ex:
 
 app.config.from_object("flask_config")
 
-from bin import views
+from base import views
 
 app.kickoff = views.kickoff
 app.shutdown = views.shutdown
