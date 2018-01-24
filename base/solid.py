@@ -15,7 +15,10 @@ def Solid():
             if inspect.isclass(obj):
                 if inspect.isabstract(obj) != True:
                     if issubclass(obj,skeleton.Skeleton):
+                        logger.debug("Implementation class found: {}".format(obj))
                         return obj()
+
+        logger.critical("Failed to find Skeleton implementer class")
     except Exception as ex:
         logger.critical("Failed to find Skeleton implementer class")
         logger.trace(ex)
