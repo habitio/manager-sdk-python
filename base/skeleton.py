@@ -34,6 +34,7 @@ class Skeleton(ABC):
         Each dictionary in list respresent an individual request to be made to manufacturer's API and
         its position denotes the order of request.
         """
+        raise NotImplementedError
         pass
         
     @abstractmethod
@@ -44,6 +45,7 @@ class Skeleton(ABC):
         Returns dictionary of required credentials for persistence, otherwise 
         returns None if no persistance required after analyzing.
         """
+        raise NotImplementedError
         pass
     
     @abstractmethod
@@ -65,6 +67,7 @@ class Skeleton(ABC):
 
         Each dictionary in list denotes a device of user.
         """
+        raise NotImplementedError
         pass
 
     @abstractmethod
@@ -90,7 +93,10 @@ class Skeleton(ABC):
                 Returns True on successfull write to manufacturer's API, otherwise
                 returns False.
         """
-        pass
+        try:
+            raise NotImplementedError
+        except:
+            pass
 
     @abstractmethod
     def downstream(self,request):
@@ -108,7 +114,11 @@ class Skeleton(ABC):
 
         
         """
-        pass
+        try:
+            raise NotImplementedError
+        except:
+            pass
+
     
     def get_channel_template(self,channel_id):
         """
