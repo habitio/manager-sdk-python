@@ -44,7 +44,7 @@ class DBManager(Redis):
                 logger.verbose(" Key "+str(key)+" retrieved from database.")
                 try :
                     evaluated_value = ast.literal_eval(value)
-                except Expection as e:
+                except Exception as e:
                     evaluated_value = value
                 return evaluated_value
             else:
