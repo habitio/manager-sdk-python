@@ -297,7 +297,7 @@ class WebhookHub:
         
         case,data = solid.downstream(request)
         if case != None:
-            paho_mqtt.publisher(io="iw",case=case,data=data)
+            paho_mqtt.publisher(io="iw",data=data,case=case)
         
 #Creating an instance of WebhookHub
 webhook = WebhookHub()

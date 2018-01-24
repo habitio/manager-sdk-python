@@ -1,13 +1,12 @@
 from base import auth
 from base.settings import settings
 from base.redis_db import db
-from base.solid import Solid
 import logging, time
 import paho.mqtt.client as paho
 import json
 
 logger = logging.getLogger(__name__)
-solid = Solid()
+
 
 def on_connect(client, userdata, flags, rc):
     try:
@@ -33,6 +32,9 @@ def on_subscribe(client, userdata, mid, granted_qos):
 
 def on_message(client, userdata, msg):
     try:
+        from base.solid import Solid
+        solid = Solid()
+
         topic = msg.topic
         payload = json.loads(msg.payload.decode("utf-8"))
         logger.debug("Mqtt - Received "+topic+"  \n"+json.dumps(payload,indent=4,
@@ -69,13 +71,13 @@ def on_message(client, userdata, msg):
                 if payload["io"] == "r":
                     result = solid.upstream(mode='r',case=case,credentials=credentials,data=data)
                     if result != None:
-                        publisher(topic=topic,io="ir",data=result)
+                        publisher(io="ir",data=result,topic=topic)
                     else:
                         return
                 elif payload["io"] == "w":
                     result = solid.upstream(mode='w',case=case,credentials=credentials,data=data)
                     if result == True:
-                        publisher(topic=topic,io="iw",data=data)
+                        publisher(io="iw",data=data,topic=topic)
                     elif result == False:
                         return
             else:
@@ -137,7 +139,7 @@ def mqtt_config():
 def publisher(io,data,topic=None,case=None):
     """
     Receives 3 inputs,
-        io    - mode of operation ('ir','iw')
+        io    - mode of operation ('ir','iw'). By default, io takes value 'iw'.
         data  - data to be published
         topic - topic at which publish to be made (if available)
         case  - if topic not available, a dictionary used to construct the topic from 
