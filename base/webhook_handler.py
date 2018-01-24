@@ -136,7 +136,7 @@ class WebhookHub:
                     sender = {
                         "channel_template_id":request.headers["X-Channeltemplate-Id"],
                         "client_id":request.headers["X-Client-Id"],
-                        "owner_id":headers["X-Owner-Id"]
+                        "owner_id":request.headers["X-Owner-Id"]
                     }
                     data = self.solid.get_devices(sender=sender,credentials=credentials)
 
