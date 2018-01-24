@@ -14,6 +14,7 @@ class Skeleton(ABC):
     @abstractmethod
     def auth_requests(self):
         """
+        *** MANDATORY ***
         Returns a list of dictionaries with the structure,
         [
             {
@@ -34,23 +35,23 @@ class Skeleton(ABC):
         Each dictionary in list respresent an individual request to be made to manufacturer's API and
         its position denotes the order of request.
         """
-        raise NotImplementedError
         pass
         
     @abstractmethod
     def auth_response(self,response_data):
         """
+        *** MANDATORY ***
         Receives the response from manufacturer's API after authrorization.
 
         Returns dictionary of required credentials for persistence, otherwise 
         returns None if no persistance required after analyzing.
         """
-        raise NotImplementedError
         pass
     
     @abstractmethod
     def get_devices(self,sender,credentials):
         """
+        *** MANDATORY ***
         Receives : 
             credentials : All persisted user credentials.
 
@@ -67,12 +68,12 @@ class Skeleton(ABC):
 
         Each dictionary in list denotes a device of user.
         """
-        raise NotImplementedError
         pass
 
     @abstractmethod
     def upstream(self,mode,case,credentials,data=None):
         """
+        *** MANDATORY ***
         Invoked when Muzzley platform intends to communicate with manufacturer's api
         to read/u
         pdate device's information.
@@ -93,14 +94,12 @@ class Skeleton(ABC):
                 Returns True on successfull write to manufacturer's API, otherwise
                 returns False.
         """
-        try:
-            raise NotImplementedError
-        except:
-            pass
+        pass
 
     @abstractmethod
     def downstream(self,request):
         """
+        *** MANDATORY ***
         Invoked when manufacturer's api intends to communicate with Muzzley's platform
         to update device's information.
         
@@ -114,11 +113,7 @@ class Skeleton(ABC):
 
         
         """
-        try:
-            raise NotImplementedError
-        except:
-            pass
-
+        pass
     
     def get_channel_template(self,channel_id):
         """
@@ -193,18 +188,19 @@ class Skeleton(ABC):
                 trace       = 8,
                 verbose     = 9
         """
-        return {
-        0: logger.emergency(message),
-        1: logger.alert(message),
-        2: logger.critical(message),
-        3: logger.error(message),
-        4: logger.warning(message),
-        5: logger.notice(message),
-        6: logger.info(message),
-        7: logger.debug(message),
-        8: logger.trace(message),
-        9: logger.verbose(message),
-    }[level]
+        log_table =  {
+            "0": logger.emergency,
+            "1": logger.alert,
+            "2": logger.critical,
+            "3": logger.error,
+            "4": logger.warning,
+            "5": logger.notice,
+            "6": logger.info,
+            "7": logger.debug,
+            "8": logger.trace,
+            "9": logger.verbose
+        }
+        log_table[str(level)](message)
 
     def get_config(self):
         """
