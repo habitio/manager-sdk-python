@@ -1,4 +1,5 @@
 import logging
+import ast
 from redis import Redis
 from base.settings import settings
 
@@ -41,7 +42,11 @@ class DBManager(Redis):
             if self.hexists(settings.redis_db,key):
                 value = self.hget(settings.redis_db,key)
                 logger.verbose(" Key "+str(key)+" retrieved from database.")
-                return value
+                try :
+                    evaluated_value = ast.literal_eval(value)
+                except Exception as e:
+                    evaluated_value = value
+                return evaluated_value
             else:
                 logger.warning("Key "+str(key)+" not found in database.")
         except Exception as ex:
