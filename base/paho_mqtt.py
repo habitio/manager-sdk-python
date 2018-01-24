@@ -135,7 +135,7 @@ def mqtt_config():
         logger.trace(ex)
         exit()
     
-def publisher(io,data,topic=None,case=None):
+def publisher(io,data,case=None,topic=None):
     """
     Receives 3 inputs,
         io    - mode of operation ('ir','iw'). By default, io takes value 'iw'.
@@ -151,13 +151,15 @@ def publisher(io,data,topic=None,case=None):
         if data != None:
             payload["data"] = data
 
-        if topic == None:
+        if topic is None:
             if all (key in case for key in ("device_id","component","property")):
                 channel_id = db.get_key(case["device_id"])
                 topic = "/"+settings.api_version+"/channels/"+channel_id+"/components/"+case["component"]+"/properties/"+case["property"]+"/value"
             else:
                 logger.warning("Mqtt - Invalid arguements provided to publisher.")
                 raise Exception
+        else : 
+            logger.debug("Mqtt - Will publish to topic {}".format(topic))
                 
         (rc, mid) = mqtt_client.publish(topic=topic,payload=json.dumps(payload))
         if rc == 0:
@@ -167,7 +169,7 @@ def publisher(io,data,topic=None,case=None):
         else:
             raise Exception("Mqtt - Failed to publish , result code("+str(rc)+")")
     except Exception as ex:
-        logger.error(ex)
+        logger.error("Mqtt - Failed to publish , ex {}".format(ex))
         logger.trace(ex)
 
 def mqtt_decongif():
