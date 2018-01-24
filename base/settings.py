@@ -60,7 +60,7 @@ class Settings:
     # Loggging file path
     if "file" in config_log and config_log["file"] == "{log_path}":
         parts = conf_path.split("/")
-        log_path = "../"+os.path.splitext(parts[len(parts)-1])[0]+".log"
+        log_path = os.path.splitext(parts[len(parts)-1])[0]+".log"
     elif "file" in config_log and config_log["file"] != "":
         if path.isfile(config_log["file"]):
             log_path = config_log["file"]

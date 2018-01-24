@@ -54,6 +54,8 @@ class Skeleton(ABC):
         *** MANDATORY ***
         Receives : 
             credentials : All persisted user credentials.
+            sender      : A dictionary with keys 'channel_template_id', 'owner_id' and 
+                        'client_id'.
 
         Returns a list of dictionaries with the following structure ,
 
