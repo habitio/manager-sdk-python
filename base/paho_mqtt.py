@@ -161,6 +161,7 @@ def publisher(io,data,topic=None,case=None):
                 
         (rc, mid) = mqtt_client.publish(topic=topic,payload=json.dumps(payload))
         if rc == 0:
+            logger.debug("Mqtt - Published to topic {} with payload {}".format(topic, payload))
             logger.debug("Mqtt - Published successfully, result code("+str(rc)+") and mid("+str(mid)+").\n"+json.dumps(data,
             indent=4, sort_keys=True))
         else:
