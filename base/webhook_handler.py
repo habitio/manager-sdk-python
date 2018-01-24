@@ -189,8 +189,8 @@ class WebhookHub:
                             "Authorization": "Bearer {0}".format(settings.block["access_token"])
                         }
                         data = { 
-                            "name" : device["content"], 
-                            "channeltemplate_id": request.headers["X-Channeltemplate-Id"] 
+                            "name" : "Device" if not "content" in device else device["content"],
+                            "channeltemplate_id": request.headers["X-Channeltemplate-Id"]
                         }
                         url = settings.api_server_full
 
