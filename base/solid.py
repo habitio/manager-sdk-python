@@ -11,7 +11,6 @@ def get_implementer():
         module = util.module_from_spec(spec)
         spec.loader.exec_module(module)
 
-        print("ONly once")
         for name, obj in inspect.getmembers(module):
             if inspect.isclass(obj):
                 if inspect.isabstract(obj) != True:

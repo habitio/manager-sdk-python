@@ -41,7 +41,7 @@ class DBManager(Redis):
             if self.hexists(settings.redis_db,key):
                 value = self.hget(settings.redis_db,key)
                 logger.verbose(" Key "+str(key)+" retrieved from database.")
-                return eval(value)
+                return value
             else:
                 logger.warning("Key "+str(key)+" not found in database.")
         except Exception as ex:
