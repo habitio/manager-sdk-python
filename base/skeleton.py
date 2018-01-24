@@ -126,7 +126,7 @@ class Skeleton(ABC):
 
         """
 
-        url = settings.api_version_full+"/managers/self/channels"
+        url = settings.api_server_full+"/managers/self/channels"
         headers = {
             "Authorization": "Bearer {0}".format(settings.block["access_token"])
         } 
