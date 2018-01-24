@@ -1,7 +1,7 @@
 from base.settings import settings
 from base.redis_db import db
 from base import paho_mqtt
-from base.solid import Solid
+from base.solid import implementer
 from flask import request,Response
 import logging, requests, json
 
@@ -11,7 +11,7 @@ class WebhookHub:
 
     def __init__(self):
         self.confirmation_hash = ""
-        self.solid = Solid()
+        self.implementer = implementer
 
     def webhook_registration(self):
         logger.debug("\n\n\n\t\t\t\t********************** REGISTERING WEBHOOK **************************")
@@ -58,7 +58,7 @@ class WebhookHub:
             if received_hash == self.confirmation_hash :
 
                 data = {
-                    "location" : self.solid.auth_requests()
+                    "location" : self.implementer.auth_requests()
                 }
                 
                 return Response(
@@ -92,7 +92,7 @@ class WebhookHub:
                         status=422
                     )
                 
-                data = self.solid.auth_response(received_data)
+                data = self.implementer.auth_response(received_data)
                 if data != None:
                     db.set_key(
                         "/".join([
@@ -138,7 +138,7 @@ class WebhookHub:
                         "client_id":request.headers["X-Client-Id"],
                         "owner_id":request.headers["X-Owner-Id"]
                     }
-                    data = self.solid.get_devices(sender=sender,credentials=credentials)
+                    data = self.implementer.get_devices(sender=sender,credentials=credentials)
 
                     return Response(
                         response=json.dumps(data),
@@ -295,7 +295,7 @@ class WebhookHub:
         else:
             logger.verbose("\n"+request.get_data(as_text=True))
         
-        case,data = solid.downstream(request)
+        case,data = implementer.downstream(request)
         if case != None:
             paho_mqtt.publisher(io="iw",data=data,case=case)
         

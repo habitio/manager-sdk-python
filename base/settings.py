@@ -35,9 +35,7 @@ class Settings:
     schema_pub = parts[0]              # ex. https
     host_pub = parts[1]              # ex. fake.integrations.muzzley.com
 
-
     # Localhost
-
     parts = config_http["bind"].split(":")
     schema_loc = parts[0]              # ex. http
     port = int(parts[2])              # ex. 60700
@@ -89,7 +87,6 @@ class Settings:
         "http_ep" : "",
         "mqtt_ep" : "",
     }
-    
     def get_config(self):
         return self.config_data
     

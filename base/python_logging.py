@@ -107,10 +107,6 @@ log_path = settings.log_path
 #Transform level value to make it compatible with python"s standard logging package 
 log_level = (100 + 9-int(settings.config_log["level"]))
 
-if log_path == "python_logging.log":
-    #remove("python_logging.log")
-    pass
-
 # Create the Handler for logging data to a file
 if log_path == "/var/log/syslog" :
     logger_handler = logging.handlers.SysLogHandler(address = "/dev/log")

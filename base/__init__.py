@@ -11,7 +11,7 @@ logger.addHandler(pl.logger_handler)
 
 logger.notice("\n\n\n"+"==="*45+"\n\n\n")
 logger.info("Completed configuring logger!")
-
+ 
 # Flask App
 logger.verbose("Creating Flask Object...")
 try:

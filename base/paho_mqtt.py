@@ -32,8 +32,7 @@ def on_subscribe(client, userdata, mid, granted_qos):
 
 def on_message(client, userdata, msg):
     try:
-        from base.solid import Solid
-        solid = Solid()
+        from base.solid import implementer
 
         topic = msg.topic
         payload = json.loads(msg.payload.decode("utf-8"))
@@ -69,13 +68,13 @@ def on_message(client, userdata, msg):
                     return
 
                 if payload["io"] == "r":
-                    result = solid.upstream(mode='r',case=case,credentials=credentials,data=data)
+                    result = implementer.upstream(mode='r',case=case,credentials=credentials,data=data)
                     if result != None:
                         publisher(io="ir",data=result,topic=topic)
                     else:
                         return
                 elif payload["io"] == "w":
-                    result = solid.upstream(mode='w',case=case,credentials=credentials,data=data)
+                    result = implementer.upstream(mode='w',case=case,credentials=credentials,data=data)
                     if result == True:
                         publisher(io="iw",data=data,topic=topic)
                     elif result == False:
