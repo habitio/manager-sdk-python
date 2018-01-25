@@ -11,7 +11,7 @@ if __name__ == "__main__":
     try:
         #Initial setup of Manager
         app.kickoff()
-        app.run()
+        app.run(port=settings.port, host="0.0.0.0")
     except SystemExit:
         app.shutdown()
         print("\n Manager Aborted !!!")  
