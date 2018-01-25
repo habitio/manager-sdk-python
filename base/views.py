@@ -7,24 +7,19 @@ from base.settings import settings
 logger = logging.getLogger(__name__)
 
 
-'''
-Setting up manager before it starts serving
-
-'''
-logger.verbose("Starting sdk with a kickoff ...")
-auth.get_access()
-if settings.block["access_token"] != "":
-    paho_mqtt.mqtt_config()
-    webhook.webhook_registration()
-
-def shutdown():
+def kickoff():
     '''
-    Taking care of shutting down the manager safely
+    Setting up manager before it starts serving
 
     '''
-    auth.clear_cache()
-    paho_mqtt.mqtt_decongif()
-    logger.notice("Shutting down Manager ...")
+    logger.verbose("Starting sdk with a kickoff ...")
+    auth.get_access()
+    if settings.block["access_token"] != "":
+        paho_mqtt.mqtt_config()
+        webhook.webhook_registration()
+
+#Taking care of tasks before routing
+kickoff()
 
 @app.route("/")
 def starter():

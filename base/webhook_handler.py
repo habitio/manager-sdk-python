@@ -277,11 +277,11 @@ class WebhookHub:
                 if db.has_key(key):
                     credentials = db.get_key(key)
                     sender = {
-                        #TODO
+                        "channel_template_id": request.headers["X-Channeltemplate-Id"],
+                        "client_id" :request.headers["X-Client-Id"],
+                        "owner_id" :request.headers["X-Owner-Id"]
                     }
-                    paired_devices = [
-                        #TODO
-                    ]
+                    paired_devices = message
                     self.implementer.did_pair_devices(sender=sender,credentials=credentials,paired_devices=paired_devices)
 
                 return Response(

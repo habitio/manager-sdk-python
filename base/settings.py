@@ -51,10 +51,6 @@ class Settings:
     renew_url = api_server_full + "/auth/exchange"
     webhook_url = api_server_full + "/managers/"+client_id
 
-    #Manufacturer webhook urls
-    man_login_url = "https://fake-manufacture.integrations.muzzley.com/login"
-    man_token_url = "https://fake-manufacture.integrations.muzzley.com/token"
-
     # Loggging file path
     if "file" in config_log and config_log["file"] == "{log_path}":
         parts = conf_path.split("/")
