@@ -11,6 +11,7 @@ def kickoff():
     Setting up manager before it starts serving
 
     '''
+    logger.verbose("Starting sdk with a kickoff ...")
     auth.get_access()
     if settings.block["access_token"] != "":
         paho_mqtt.mqtt_config()

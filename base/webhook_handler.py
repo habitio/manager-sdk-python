@@ -269,6 +269,21 @@ class WebhookHub:
                         )
 
                     channels.append(channel)
+
+                key = "/".join([
+                            request.headers["X-Client-Id"],
+                            request.headers["X-Owner-Id"]
+                        ])
+                if db.has_key(key):
+                    credentials = db.get_key(key)
+                    sender = {
+                        #TODO
+                    }
+                    paired_devices = [
+                        #TODO
+                    ]
+                    self.implementer.did_pair_devices(sender=sender,credentials=credentials,paired_devices=paired_devices)
+
                 return Response(
                     response=json.dumps(channels),
                     status=200,
