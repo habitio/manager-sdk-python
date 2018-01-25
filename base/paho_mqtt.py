@@ -70,13 +70,13 @@ def on_message(client, userdata, msg):
                 if payload["io"] == "r":
                     result = implementer.upstream(mode='r',case=case,credentials=credentials,data=data)
                     if result != None:
-                        publisher(io="ir",data=result,topic=topic)
+                        publisher(io="ir",data=result,case=case)
                     else:
                         return
                 elif payload["io"] == "w":
                     result = implementer.upstream(mode='w',case=case,credentials=credentials,data=data)
                     if result == True:
-                        publisher(io="iw",data=data,topic=topic)
+                        publisher(io="iw",data=data,case=case)
                     elif result == False:
                         return
             else:
@@ -135,12 +135,11 @@ def mqtt_config():
         logger.trace(ex)
         exit()
     
-def publisher(io,data,topic=None,case=None):
+def publisher(io,data,case=None):
     """
     Receives 3 inputs,
         io    - mode of operation ('ir','iw'). By default, io takes value 'iw'.
         data  - data to be published
-        topic - topic at which publish to be made (if available)
         case  - if topic not available, a dictionary used to construct the topic from 
                 keys 'device_id', 'component' and 'property'
     """
@@ -151,22 +150,23 @@ def publisher(io,data,topic=None,case=None):
         if data != None:
             payload["data"] = data
 
-        if topic == None:
-            if all (key in case for key in ("device_id","component","property")):
-                channel_id = db.get_key(case["device_id"])
-                topic = "/"+settings.api_version+"/channels/"+channel_id+"/components/"+case["component"]+"/properties/"+case["property"]+"/value"
-            else:
-                logger.warning("Mqtt - Invalid arguements provided to publisher.")
-                raise Exception
+        if all (key in case for key in ("device_id","component","property")):
+            channel_id = db.get_key(case["device_id"])
+            topic = "/"+settings.api_version+"/channels/"+channel_id+"/components/"+case["component"]+"/properties/"+case["property"]+"/value"
+            logger.debug("Mqtt - Created a topic {}".format(topic))
+        else:
+            logger.warning("Mqtt - Invalid arguements provided to publisher.")
+            raise Exception
                 
         (rc, mid) = mqtt_client.publish(topic=topic,payload=json.dumps(payload))
         if rc == 0:
+            logger.debug("Mqtt - Published to topic {} with payload {}".format(topic, payload))
             logger.debug("Mqtt - Published successfully, result code("+str(rc)+") and mid("+str(mid)+").\n"+json.dumps(data,
             indent=4, sort_keys=True))
         else:
             raise Exception("Mqtt - Failed to publish , result code("+str(rc)+")")
     except Exception as ex:
-        logger.error(ex)
+        logger.error("Mqtt - Failed to publish , ex {}".format(ex))
         logger.trace(ex)
 
 def mqtt_decongif():

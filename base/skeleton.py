@@ -5,6 +5,7 @@ from base.redis_db import db
 import requests
 import logging
 from base.paho_mqtt import publisher
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -143,7 +144,7 @@ class Skeleton(ABC):
             logger.verbose("Received response code["+str(resp.status_code)+"]") 
             if int(resp.status_code) == 200:
                 logger.verbose("\n"+json.dumps(resp.json(),indent=4,sort_keys=True)+"\n")
-                return resp.json()["channel_template_id"]
+                return resp.json()["elements"][0]["channel"]["channeltemplate_id"]
             else:
                 raise Exception("Failed to retrieve channel_template_id")
         except Exception as ex:
