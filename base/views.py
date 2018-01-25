@@ -6,6 +6,7 @@ from base.settings import settings
 
 logger = logging.getLogger(__name__)
 
+
 def kickoff():
     '''
     Setting up manager before it starts serving
@@ -17,14 +18,8 @@ def kickoff():
         paho_mqtt.mqtt_config()
         webhook.webhook_registration()
 
-def shutdown():
-    '''
-    Taking care of shutting down the manager safely
-
-    '''
-    auth.clear_cache()
-    paho_mqtt.mqtt_decongif()
-    logger.notice("Shutting down Manager ...")
+#Taking care of tasks before routing
+kickoff()
 
 @app.route("/")
 def starter():

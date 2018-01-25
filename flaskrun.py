@@ -1,5 +1,7 @@
+from flask import Flask, current_app
 from base import app
 from base.settings import settings
+# from base.views import kickoff
 import signal
 
 def signal_handler(signal, frame):
@@ -10,7 +12,8 @@ signal.signal(signal.SIGINT, signal_handler)
 if __name__ == "__main__":
     try:
         #Initial setup of Manager
-        app.kickoff()
+        # print("Initial setup of Manager ...")
+        # kickoff()
         app.run(port=settings.port, host="0.0.0.0")
     except SystemExit:
         app.shutdown()
@@ -19,3 +22,11 @@ if __name__ == "__main__":
     except Exception:
         print("********* Unknown Error!!! ********")    
         raise
+
+with app.app_context():
+    # within this block, current_app points to app.
+    print('with app.app_context()' + current_app.name)
+
+@app.teardown_appcontext
+def teardown_app(exception):
+    print('teardown_app')
