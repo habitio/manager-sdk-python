@@ -159,6 +159,7 @@ def publisher(io,data,case=None):
 
         if all (key in case for key in ("device_id","component","property")):
             channel_id = db.get_key(case["device_id"])
+            logger.debug("Mqtt - Detected channel_id {}".format(channel_id))
             topic = "/"+settings.api_version+"/channels/"+channel_id+"/components/"+case["component"]+"/properties/"+case["property"]+"/value"
             logger.debug("Mqtt - Created a topic {}".format(topic))
         else:
