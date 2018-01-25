@@ -10,7 +10,8 @@ signal.signal(signal.SIGINT, signal_handler)
 
 if __name__ == "__main__":
     try:
-        print("Before run ...")
+        #Initial setup of Manager
+        print("Initial setup of Manager ...")
         kickoff()
         app.run()
     except SystemExit:
@@ -21,15 +22,5 @@ if __name__ == "__main__":
         print("********* Unknown Error!!! ********")    
         raise
 
-with app.app_context():
-    print(current_app.name)
-    # kickoff()
-
-
-
-@app.teardown_appcontext
-def teardown_app(exception):
-    print("Initial setup of Manager ...")
-    # kickoff()
 
         
