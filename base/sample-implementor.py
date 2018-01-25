@@ -87,7 +87,7 @@ class Implementor(Skeleton):
 
         return data
 
-    def upstream(self,mode,case,credentials,data=None):
+    def upstream(self,mode,case,credentials,sender,data=None):
         """
         *** MANDATORY ***
         Invoked when Muzzley platform intends to communicate with manufacturer's api
