@@ -24,7 +24,4 @@ except Exception as ex:
 
 app.config.from_object("flask_config")
 
-from base import views
 
-app.kickoff = views.kickoff
-app.shutdown = views.shutdown

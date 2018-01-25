@@ -1,4 +1,5 @@
-from base import app
+from base import app 
+from base.views import kickoff , shutdown
 from base.settings import settings
 import signal
 
@@ -10,10 +11,10 @@ signal.signal(signal.SIGINT, signal_handler)
 if __name__ == "__main__":
     try:
         #Initial setup of Manager
-        app.kickoff()
+        #kickoff()
         app.run()
     except SystemExit:
-        app.shutdown()
+        #shutdown()
         print("\n Manager Aborted !!!")  
         exit()    
     except Exception:
