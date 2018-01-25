@@ -39,7 +39,7 @@ def on_message(client, userdata, msg):
         logger.debug("Mqtt - Received "+topic+"  \n"+json.dumps(payload,indent=4,
         sort_keys=True))
 
-        if payload["io"] in ("r","w"):
+        if "io" in payload and payload["io"] in ("r","w"):
             if all (k in payload for k in ("on_behalf_of","sender")):
                 parts = str(msg.topic).split('/')
                 if db.has_key(parts[5]):
