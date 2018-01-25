@@ -155,13 +155,13 @@ def publisher(io,data,case=None):
         if data != None:
             payload["data"] = data
 
-        logger.debug("Mqtt - Received Case {} and settings.api_version={}".format(case,settings.api_version))
+        logger.debug("Mqtt - Case {} and settings.api_version={}".format(case,settings.api_version))
 
         if all (key in case for key in ("device_id","component","property")):
             channel_id = db.get_key(case["device_id"])
-            logger.debug("Mqtt - Detected channel_id {}".format(channel_id))
+            # logger.debug("Mqtt - Detected channel_id {}".format(channel_id))
             topic = "/"+settings.api_version+"/channels/"+channel_id+"/components/"+case["component"]+"/properties/"+case["property"]+"/value"
-            logger.debug("Mqtt - Created a topic {}".format(topic))
+            # logger.debug("Mqtt - Created a topic {}".format(topic))
         else:
             logger.warning("Mqtt - Invalid arguements provided to publisher.")
             raise Exception

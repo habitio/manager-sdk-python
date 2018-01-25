@@ -20,7 +20,7 @@ class DBManager(Redis):
             self.hset(settings.redis_db,key,value)
             if by_value == True:
                 self.hset(settings.redis_db,value,key)
-            logger.verbose(" Key "+str(key)+" added/updated in database")
+            # logger.debug(" Key "+str(key)+" added/updated in database")
         except Exception as ex:
             logger.error("Failed to set the key at hash.")
             logger.trace(ex)
@@ -41,7 +41,7 @@ class DBManager(Redis):
         try:
             if self.hexists(settings.redis_db,key):
                 value = self.hget(settings.redis_db,key)
-                logger.verbose(" Key "+str(key)+" retrieved from database.")
+                # logger.debug(" Key "+str(key)+" retrieved from database.")
                 try :
                     evaluated_value = ast.literal_eval(value)
                 except Exception as e:

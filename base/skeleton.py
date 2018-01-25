@@ -152,14 +152,14 @@ class Skeleton(ABC):
         }
 
         try :
-            logger.debug("Initiated GET"+" - "+url)
-            logger.verbose("\n"+json.dumps(params,indent=4,sort_keys=True)+"\n")
+            # logger.debug("Initiated GET"+" - "+url)
+            # logger.debug("\n"+json.dumps(params,indent=4,sort_keys=True)+"\n")
 
             resp = requests.get(url,headers=headers,params=params)
 
             logger.verbose("Received response code["+str(resp.status_code)+"]") 
             if int(resp.status_code) == 200:
-                logger.verbose("\n"+json.dumps(resp.json(),indent=4,sort_keys=True)+"\n")
+                # logger.debug("\n"+json.dumps(resp.json(),indent=4,sort_keys=True)+"\n")
                 return resp.json()["elements"][0]["channel"]["channeltemplate_id"]
             else:
                 raise Exception("Failed to retrieve channel_template_id")
