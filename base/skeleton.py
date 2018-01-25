@@ -81,13 +81,11 @@ class Skeleton(ABC):
         Receieves,
             credentials     - All persisted user credentials.
             sender          - A dictionary with keys 'channel_template_id', 'owner_id' and 
-                            'client_id'.
+                        'client_id'.
             paired_devices     - A list of dictionaries with selected device's data
 
         """
         pass
-
-
 
     @abstractmethod
     def upstream(self,mode,case,credentials,sender,data=None):
