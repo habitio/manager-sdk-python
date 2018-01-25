@@ -87,7 +87,7 @@ class Implementor(Skeleton):
 
         return data
 
-    def did_device_pair(self,credentials,sender,paired_devices):
+    def did_pair_devices(self,credentials,sender,paired_devices):
         """
         Invoked after successful device pairing.
 

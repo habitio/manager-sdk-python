@@ -74,7 +74,7 @@ class Skeleton(ABC):
         pass
 
     @abstractmethod
-    def did_device_pair(self,credentials,sender,paired_devices):
+    def did_pair_devices(self,credentials,sender,paired_devices):
         """
         Invoked after successful device pairing.
 
