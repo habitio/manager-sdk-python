@@ -54,8 +54,8 @@ class Skeleton(ABC):
         """
         *** MANDATORY ***
         Receives : 
-            credentials : All persisted user credentials.
-            sender      : A dictionary with keys 'channel_template_id', 'owner_id' and 
+            credentials - All persisted user credentials.
+            sender      - A dictionary with keys 'channel_template_id', 'owner_id' and 
                         'client_id'.
 
         Returns a list of dictionaries with the following structure ,
@@ -74,7 +74,7 @@ class Skeleton(ABC):
         pass
 
     @abstractmethod
-    def upstream(self,mode,case,credentials,data=None):
+    def upstream(self,mode,case,credentials,sender,data=None):
         """
         *** MANDATORY ***
         Invoked when Muzzley platform intends to communicate with manufacturer's api
@@ -88,6 +88,8 @@ class Skeleton(ABC):
             case       - A dictionary with 3 key 'device_id','channel_id','component' and 'property'.
             data        - data if any sent by Muzzley's platform.
             credentials - credentials of user from database
+            sender      - A dictionary with keys 'owner_id' and 
+                        'client_id'.
 
         Expected Response,
             'r' - mode

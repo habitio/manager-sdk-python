@@ -39,8 +39,8 @@ def on_message(client, userdata, msg):
         logger.debug("Mqtt - Received "+topic+"  \n"+json.dumps(payload,indent=4,
         sort_keys=True))
 
-        if all (k in payload for k in ("io","on_behalf_of","sender")):
-            if payload["io"] in ("r","w"):
+        if payload["io"] in ("r","w"):
+            if all (k in payload for k in ("on_behalf_of","sender")):
                 parts = str(msg.topic).split('/')
                 if db.has_key(parts[5]):
                     device_id = db.get_key(parts[5])
@@ -60,6 +60,11 @@ def on_message(client, userdata, msg):
                 else:
                     data = None
 
+                sender = {
+                    "client_id" : payload["sender"],
+                    "owner_id" : payload["on_behalf_of"]
+                }
+
                 key = payload["sender"]+"/"+payload["on_behalf_of"]
                 if db.has_key(key):
                     credentials = db.get_key(key)
@@ -68,21 +73,21 @@ def on_message(client, userdata, msg):
                     return
 
                 if payload["io"] == "r":
-                    result = implementer.upstream(mode='r',case=case,credentials=credentials,data=data)
+                    result = implementer.upstream(mode='r',case=case,credentials=credentials,sender=sender,data=data)
                     if result != None:
                         publisher(io="ir",data=result,case=case)
                     else:
                         return
                 elif payload["io"] == "w":
-                    result = implementer.upstream(mode='w',case=case,credentials=credentials,data=data)
+                    result = implementer.upstream(mode='w',case=case,credentials=credentials,sender=sender,data=data)
                     if result == True:
                         publisher(io="iw",data=data,case=case)
                     elif result == False:
                         return
             else:
+                logger.error("Mqtt - No 'sender'/'on_behalf_of' in payload")
                 return
         else:
-            logger.error("Mqtt - No 'io'/'sender'/'on_behalf_of' in payload")
             return
     except Exception as ex:
         logger.error("Mqtt - Failed to handle payload.")

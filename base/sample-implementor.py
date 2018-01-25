@@ -55,8 +55,11 @@ class Implementor(Skeleton):
     
     def get_devices(self,sender,credentials):
         """
+        *** MANDATORY ***
         Receives : 
-            credentials : All persisted user credentials.
+            credentials - All persisted user credentials.
+            sender      - A dictionary with keys 'channel_template_id', 'owner_id' and 
+                        'client_id'.
 
         Returns a list of dictionaries with the following structure ,
 
@@ -86,6 +89,7 @@ class Implementor(Skeleton):
 
     def upstream(self,mode,case,credentials,data=None):
         """
+        *** MANDATORY ***
         Invoked when Muzzley platform intends to communicate with manufacturer's api
         to read/u
         pdate device's information.
@@ -97,6 +101,8 @@ class Implementor(Skeleton):
             case       - A dictionary with 3 key 'device_id','channel_id','component' and 'property'.
             data        - data if any sent by Muzzley's platform.
             credentials - credentials of user from database
+            sender      - A dictionary with keys 'owner_id' and 
+                        'client_id'.
 
         Expected Response,
             'r' - mode
