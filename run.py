@@ -1,10 +1,11 @@
 from base.settings import settings
 from base import app
 
-print("-------------------------------------------------------------------------"+__name__)
+print("__name__ = "+__name__)
 if __name__ == "__main__":
     try:
-        app.run()  
+        #, host="0.0.0.0"
+        app.run(port=settings.port)
     except Exception:
         print("********* Unknown Error!!! ********")    
         raise
