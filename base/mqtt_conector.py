@@ -19,7 +19,7 @@ class MqttConector():
         self.mqtt_client.on_message = self.on_message
         self.mqtt_client.on_disconnect = self.on_disconnect
         self.mqtt_client.on_publish = self.on_publish
-        # self.mqtt_client.on_log = self.on_log
+        self.mqtt_client.on_log = self.on_log
 
     def on_connect(self, client, userdata, flags, rc):
         try:
@@ -119,7 +119,8 @@ class MqttConector():
         else:
             logger.error("Mqtt - Expected disconnection.")
 
-    def on_log(client, userdata, level, buf):
+    def on_log(self, userdata, level, buf):
+        print("log: ",buf)
         logger.debug("Mqtt - Paho log: {}".format(buf))
 
     def mqtt_config(self):
