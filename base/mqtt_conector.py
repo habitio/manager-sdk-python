@@ -91,13 +91,13 @@ class MqttConector():
                     if payload["io"] == "r":
                         result = implementer.upstream(mode='r',case=case,credentials=credentials,sender=sender,data=data)
                         if result != None:
-                            publisher(io="ir",data=result,case=case)
+                            self.publisher(io="ir",data=result,case=case)
                         else:
                             return
                     elif payload["io"] == "w":
                         result = implementer.upstream(mode='w',case=case,credentials=credentials,sender=sender,data=data)
                         if result == True:
-                            publisher(io="iw",data=data,case=case)
+                            self.publisher(io="iw",data=data,case=case)
                         elif result == False:
                             return
                 else:
