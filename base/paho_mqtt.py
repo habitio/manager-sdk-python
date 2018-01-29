@@ -125,7 +125,8 @@ def mqtt_config():
         try:
             logger.debug("mqtt_client._ssl = {}".format(mqtt_client._ssl))
             if not mqtt_client._ssl and schema_mqtt=="mqtts":
-                mqtt_client.tls_set()
+                logger.debug("Will set tls")
+                mqtt_client.tls_set(ca_certs='/usr/lib/ssl/certs/ca-certificates.crt')
         except Exception as ex:
             logger.alert("Mqtt - Failed to authenticate SSL certificate")
             logger.trace(ex)
