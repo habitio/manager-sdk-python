@@ -102,13 +102,17 @@ def on_disconnect(client, userdata, rc):
     else:
         logger.error("Mqtt - Expected disconnection.")
 
+def on_log(client, userdata, level, buf):
+    logger.debug("Mqtt - Paho log: {}".format(buf))
+
 mqtt_client = paho.Client()
 mqtt_client.on_connect = on_connect
 mqtt_client.on_subscribe = on_subscribe
 mqtt_client.on_message = on_message
 mqtt_client.on_disconnect = on_disconnect
 mqtt_client.on_publish = on_publish
-
+mqtt_client.on_log = on_log
+ 
 def mqtt_config():
     logger.info("Setting up Mqtt connection")
     try:
