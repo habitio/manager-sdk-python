@@ -118,7 +118,7 @@ class MqttConector():
         else:
             logger.error("Mqtt - Expected disconnection.")
 
-    def on_log(client, userdata, level, buf):
+    def on_log(self, userdata, level, buf):
         logger.debug("Mqtt - Paho log: {}".format(buf))
 
     def mqtt_config(self):
