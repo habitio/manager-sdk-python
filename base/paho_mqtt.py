@@ -23,6 +23,8 @@ def on_connect(client, userdata, flags, rc):
                 5: "Connection refused - not authorised",
             }
             raise Exception(rc_list[rc])
+        else :
+            logger.notice("Mqtt - Connected , result code "+str(rc))
     except Exception as ex:
         logger.error("Mqtt - "+str(ex))
         exit()
@@ -134,6 +136,7 @@ def mqtt_config():
         
         mqtt_client.enable_logger()
         mqtt_client.connect(host,port)
+        logger.debug("Mqtt - Did start connect in host:{} and port:{}".format(host, port))
         try:
             mqtt_client.loop_start()
         except Exception as ex:
