@@ -19,7 +19,7 @@ class MqttConector():
         self.mqtt_client.on_message = self.on_message
         self.mqtt_client.on_disconnect = self.on_disconnect
         self.mqtt_client.on_publish = self.on_publish
-        self.mqtt_client.on_log = self.on_log
+        # self.mqtt_client.on_log = self.on_log
 
     def on_connect(self, client, userdata, flags, rc):
         try:
