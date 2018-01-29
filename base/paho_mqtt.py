@@ -116,9 +116,14 @@ def mqtt_config():
         schema_mqtt = parts[0]
         host=parts[1].replace("//","")
         port = int(parts[2])
+
+        host = "platform.office.muzzley.com"
+        port = 8885
+        schema_mqtt = "mqtts"
         
         mqtt_client.username_pw_set(username=settings.client_id,password=settings.block["access_token"])
         try:
+            logger.debug("mqtt_client._ssl = {}".format(mqtt_client._ssl))
             if not mqtt_client._ssl and schema_mqtt=="mqtts":
                 mqtt_client.tls_set()
         except Exception as ex:
