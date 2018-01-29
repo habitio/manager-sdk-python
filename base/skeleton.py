@@ -4,7 +4,8 @@ from base.settings import settings
 from base.redis_db import db
 import requests
 import logging
-from base.paho_mqtt import publisher
+# from base.paho_mqtt import publisher
+from base.mqtt_conector import MqttConector 
 import json
 
 logger = logging.getLogger(__name__)
@@ -234,5 +235,6 @@ class Skeleton(ABC):
             case - a dictionary with keys  'device_id', 'component' and 'property'
             data - data to be published
         """
-        publisher(io="iw",data=data,case=case)
+        #publisher(io="iw",data=data,case=case)
+        mqtt.publisher(io="iw",data=data,case=case)
         
