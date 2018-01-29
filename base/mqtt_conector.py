@@ -13,6 +13,7 @@ class MqttConector():
     def __init__(self):
         logger.debug("Mqtt - Init")
         self.mqtt_client = paho.Client()
+        self.mqtt_client.enable_logger()
         self.mqtt_client.on_connect = self.on_connect
         self.mqtt_client.on_subscribe = self.on_subscribe
         self.mqtt_client.on_message = self.on_message
@@ -140,7 +141,6 @@ class MqttConector():
                 logger.trace(ex)
                 exit()
             
-            self.mqtt_client.enable_logger()
             self.mqtt_client.connect(host, port)
             logger.debug("Mqtt - Did start connect w/ host:{} and port:{}".format(host, port))
             try:
