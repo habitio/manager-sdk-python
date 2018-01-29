@@ -142,7 +142,9 @@ class MqttConector():
             
             self.mqtt_client.enable_logger()
             self.mqtt_client.connect(host, port)
+            logger.debug("Mqtt - Did start connect w/ host:{} and port:{}".format(host, port))
             try:
+                logger.debug("Mqtt - Will start the loop")
                 self.mqtt_client.loop_start()
             except Exception as ex:
                 logger.alert("Mqtt - Failed to listen through loop")
