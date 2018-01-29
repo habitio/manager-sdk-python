@@ -11,18 +11,24 @@ logger = logging.getLogger(__name__)
 class MqttConector():
 
     def __init__(self):
+        logger.debug("Mqtt - Init")
         self.mqtt_client = paho.Client()
         self.mqtt_client.on_connect = self.on_connect
         self.mqtt_client.on_subscribe = self.on_subscribe
         self.mqtt_client.on_message = self.on_message
         self.mqtt_client.on_disconnect = self.on_disconnect
         self.mqtt_client.on_publish = self.on_publish
+        self.mqtt_client.on_log = self.on_log
 
     def on_connect(self, client, userdata, flags, rc):
         try:
             if rc == 0 :
                 logger.notice("Mqtt - Connected , result code "+str(rc))
-                self.mqtt_client.subscribe("/"+settings.api_version+"/managers/"+settings.client_id+"/channels/#",qos=0)
+                
+                topic = "/"+settings.api_version+"/managers/"+settings.client_id+"/channels/#"
+                logger.notice("Mqtt - Will subscribe to {}".format(topic))
+
+                self.mqtt_client.subscribe(topic,qos=0)
             elif rc>0 and rc<6 :
                 rc_list = {
                     0: "Connection successful",
@@ -111,6 +117,9 @@ class MqttConector():
             logger.error("Mqtt - Unexpected disconnection.")
         else:
             logger.error("Mqtt - Expected disconnection.")
+
+    def on_log(client, userdata, level, buf):
+        logger.debug("Mqtt - Paho log: {}".format(buf))
 
     def mqtt_config(self):
         logger.info("Setting up Mqtt connection")
