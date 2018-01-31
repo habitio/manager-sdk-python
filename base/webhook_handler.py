@@ -1,6 +1,6 @@
 from base.settings import settings
 from base.redis_db import db
-from base import paho_mqtt
+from base.mqtt_connector import mqtt 
 from base.solid import implementer
 from flask import request,Response
 import logging, requests, json
@@ -312,7 +312,7 @@ class WebhookHub:
         
         case,data = implementer.downstream(request)
         if case != None:
-            paho_mqtt.publisher(io="iw",data=data,case=case)
+            mqtt.publisher(io="iw",data=data,case=case)
         
 #Creating an instance of WebhookHub
 webhook = WebhookHub()

@@ -5,7 +5,7 @@ from base.redis_db import db
 import requests
 import logging
 # from base.paho_mqtt import publisher
-from base.mqtt_conector import MqttConector, mqtt
+from base.mqtt_connector import mqtt
 import json
 
 logger = logging.getLogger(__name__)

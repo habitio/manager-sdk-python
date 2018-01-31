@@ -7,8 +7,7 @@ import json
 
 logger = logging.getLogger(__name__)
 
-
-class MqttConector():
+class MqttConnector():
 
     def __init__(self):
         logger.debug("Mqtt - Init")
@@ -88,19 +87,22 @@ class MqttConector():
                     else:
                         logger.error("Mqtt - credentials not found in database. ")
                         return
-
-                    if payload["io"] == "r":
-                        result = implementer.upstream(mode='r',case=case,credentials=credentials,sender=sender,data=data)
-                        if result != None:
-                            self.publisher(io="ir",data=result,case=case)
-                        else:
-                            return
-                    elif payload["io"] == "w":
-                        result = implementer.upstream(mode='w',case=case,credentials=credentials,sender=sender,data=data)
-                        if result == True:
-                            self.publisher(io="iw",data=data,case=case)
-                        elif result == False:
-                            return
+                    if implementer.acess_check(mode='r',case=case,credentials=credentials,sender=sender) is True :
+                        if payload["io"] == "r":
+                            result = implementer.upstream(mode='r',case=case,credentials=credentials,sender=sender,data=data)
+                            if result != None:
+                                self.publisher(io="ir",data=result,case=case)
+                            else:
+                                return
+                        elif payload["io"] == "w":
+                            result = implementer.upstream(mode='w',case=case,credentials=credentials,sender=sender,data=data)
+                            if result == True:
+                                self.publisher(io="iw",data=data,case=case)
+                            elif result == False:
+                                return
+                    else:
+                        case["property"] = "access"
+                        self.publisher(io="ir",data="unreachable",case=case)
                 else:
                     logger.error("Mqtt - No 'sender'/'on_behalf_of' in payload")
                     return
@@ -205,4 +207,4 @@ class MqttConector():
             logger.trace(ex)
             exit()
 
-mqtt = MqttConector()
+mqtt = MqttConnector()

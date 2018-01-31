@@ -1,7 +1,7 @@
 import logging
 from flask import request,Response,json
 from base import app, auth
-from base.mqtt_conector import MqttConector, mqtt 
+from base.mqtt_connector import mqtt 
 from base.webhook_handler import webhook
 from base.settings import settings
 
@@ -17,7 +17,6 @@ def kickoff():
     auth.get_access()
     if settings.block["access_token"] != "":
         mqtt.mqtt_config()
-        # paho_mqtt.mqtt_config()
         webhook.webhook_registration()
 
 #Taking care of tasks before routing
