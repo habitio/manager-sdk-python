@@ -88,6 +88,25 @@ class Skeleton(ABC):
         pass
 
     @abstractmethod
+    def access_check(self,mode,case,credentials,sender):
+        """
+        *** MANDATORY ***
+        Checks if there is access to read from/write to a component.
+
+        Receives:
+            mode        - 'r' or 'w'
+                r - read from manufacturer's API
+                w - write to manufacturer's API
+            case       - A dictionary with 3 key 'device_id','channel_id','component' and 'property'.
+            credentials - credentials of user from database
+            sender      - A dictionary with keys 'owner_id' and 
+                        'client_id'.
+        
+        Returns False if no access, otherswise returns True.
+        """
+        pass
+
+    @abstractmethod
     def upstream(self,mode,case,credentials,sender,data=None):
         """
         *** MANDATORY ***

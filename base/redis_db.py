@@ -55,7 +55,7 @@ class DBManager(Redis):
             
     def clear_hash(self):
         try:
-            #self.delete(settings.redis_db)
+            self.delete(settings.redis_db)
             logger.notice(" Redis database shutdown.")
         except Exception as ex:
             logger.error("Failed to clear redis database")

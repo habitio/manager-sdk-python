@@ -73,17 +73,27 @@ def on_message(client, userdata, msg):
                     return
 
                 if payload["io"] == "r":
-                    result = implementer.upstream(mode='r',case=case,credentials=credentials,sender=sender,data=data)
-                    if result != None:
-                        publisher(io="ir",data=result,case=case)
+                    if implementer.access_check(mode='r',case=case,credentials=credentials,sender=sender) is True:
+                        result = implementer.upstream(mode='r',case=case,credentials=credentials,sender=sender,data=data)
+                        if result != None:
+                            publisher(io="ir",data=result,case=case)
+                        else:
+                            return
                     else:
-                        return
+                        case["property"] = "access"
+                        publisher(io="ir",data="unreachable",case=case)
+
                 elif payload["io"] == "w":
-                    result = implementer.upstream(mode='w',case=case,credentials=credentials,sender=sender,data=data)
-                    if result == True:
-                        publisher(io="iw",data=data,case=case)
-                    elif result == False:
-                        return
+                    if implementer.access_check(mode='w',case=case,credentials=credentials,sender=sender) is True:
+                        result = implementer.upstream(mode='w',case=case,credentials=credentials,sender=sender,data=data)
+                        if result == True:
+                            publisher(io="iw",data=data,case=case)
+                        elif result == False:
+                            return
+                    else:
+                        case["property"] = "access"
+                        publisher(io="iw",data="unreachable",case=case)
+
             else:
                 logger.error("Mqtt - No 'sender'/'on_behalf_of' in payload")
                 return
