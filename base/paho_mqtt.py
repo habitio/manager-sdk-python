@@ -23,6 +23,8 @@ def on_connect(client, userdata, flags, rc):
                 5: "Connection refused - not authorised",
             }
             raise Exception(rc_list[rc])
+        else :
+            logger.notice("Mqtt - Connected , result code "+str(rc))
     except Exception as ex:
         logger.error("Mqtt - "+str(ex))
         exit()
@@ -112,13 +114,17 @@ def on_disconnect(client, userdata, rc):
     else:
         logger.error("Mqtt - Expected disconnection.")
 
+def on_log(client, userdata, level, buf):
+    logger.debug("Mqtt - Paho log: {}".format(buf))
+
 mqtt_client = paho.Client()
 mqtt_client.on_connect = on_connect
 mqtt_client.on_subscribe = on_subscribe
 mqtt_client.on_message = on_message
 mqtt_client.on_disconnect = on_disconnect
 mqtt_client.on_publish = on_publish
-
+mqtt_client.on_log = on_log
+ 
 def mqtt_config():
     logger.info("Setting up Mqtt connection")
     try:
@@ -129,8 +135,10 @@ def mqtt_config():
         
         mqtt_client.username_pw_set(username=settings.client_id,password=settings.block["access_token"])
         try:
+            logger.debug("mqtt_client._ssl = {}".format(mqtt_client._ssl))
             if not mqtt_client._ssl and schema_mqtt=="mqtts":
-                mqtt_client.tls_set()
+                logger.debug("Will set tls")
+                mqtt_client.tls_set(ca_certs='/usr/lib/ssl/certs/ca-certificates.crt')
         except Exception as ex:
             logger.alert("Mqtt - Failed to authenticate SSL certificate")
             logger.trace(ex)
@@ -138,6 +146,7 @@ def mqtt_config():
         
         mqtt_client.enable_logger()
         mqtt_client.connect(host,port)
+        logger.debug("Mqtt - Did start connect in host:{} and port:{}".format(host, port))
         try:
             mqtt_client.loop_start()
         except Exception as ex:
