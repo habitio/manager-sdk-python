@@ -74,7 +74,7 @@ The abstract methods are invoked by SDK when required and passes it required dat
 * Returns dictionary of required credentials for persistence, otherwise returns *None* if no persistance required after analyzing.
 
 ---
->**get_devices(sender,credentials) :**
+>####**get_devices(sender,credentials) :**
 
 * To identify a user's device list from manufacturer to integrate with Muzzley.
 * Receives , 
@@ -96,7 +96,7 @@ The abstract methods are invoked by SDK when required and passes it required dat
 
 
 ---
->**did_pair_devices(credentials,sender,paired_devices) :**
+>####**did_pair_devices(credentials,sender,paired_devices) :**
 
 * Invoked after successful device pairing.
 
@@ -106,7 +106,7 @@ The abstract methods are invoked by SDK when required and passes it required dat
 	* *paired_devices*     - A list of dictionaries with selected device's data
 
 ---
->**access_check(mode,case,credentials,sender) :**
+>####**access_check(mode,case,credentials,sender) :**
 
 * Checks if access to read from/write to a component exists.
 
@@ -121,7 +121,7 @@ The abstract methods are invoked by SDK when required and passes it required dat
 * Returns *False* if no access, otherswise returns *True*.
 
 ---
->**upstream(mode,case,credentials,sender,data=None) :**
+>####**upstream(mode,case,credentials,sender,data=None) :**
 
 * Invoked when Muzzley platform intends to communicate with manufacturer's api to read/update device's information.
 
@@ -141,7 +141,7 @@ The abstract methods are invoked by SDK when required and passes it required dat
         Returns *True* on successfull write to manufacturer's API, otherwise returns *False*.
 
 ---
->**downstream(request) :**
+>####**downstream(request) :**
 
 * Invoked when manufacturer's api intends to communicate with Muzzley's platform to update device's information.
 
@@ -156,7 +156,7 @@ The abstract methods are invoked by SDK when required and passes it required dat
 ####Inbuilt methods####
 The pre-defined methods that belongs to Skeleton class to support implmentation of abstract methods.
 
->**get_channel_template(channel_id) :**
+>####**get_channel_template(channel_id) :**
 
 * Makes request to Muzzley's platform to find channel_template_id with channel_id.
  	* *channel_id* - identfier of channel associated to a device.
@@ -164,26 +164,26 @@ The pre-defined methods that belongs to Skeleton class to support implmentation 
 * Returns channel_template_id.
 
 ---
->**store(key,value) :**
+>####**store(key,value) :**
 
 * To store a data in database.
 	* *key* - unique indentifier corresponsing to value.
 	* *value* - data to be stored.
 
 ---
->**retrieve(key) :**
+>####**retrieve(key) :**
 
 * To retireve a data from database with its unique identifier.
 	* *key* - unique indentifier corresponsing to value.
 
 ---
->**exists(key) :**
+>####**exists(key) :**
 
 * To check if a data is already present in database with its unique identifier.
 	* *key* - unique indentifier corresponsing to value.
 	
 ---
->**log(message,level) :**
+>####**log(message,level) :**
 
 * To log a message to log file 
 	* *message* - message to be logged.
@@ -203,12 +203,12 @@ The pre-defined methods that belongs to Skeleton class to support implmentation 
 		|verbose		|9		|
 
 ---
->**get_config() :**
+>####**get_config() :**
 
 * Returns the entire data in configuration file.
 
 ---
->**publisher(case,data) :**
+>####**publisher(case,data) :**
 
 * To publish data to some topic using mqtt.
 	* *case* - a dictionary with keys  '*device_id*', '*component*' and '*property*'.
