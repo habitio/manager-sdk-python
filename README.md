@@ -36,7 +36,9 @@
 The abstract methods are invoked by SDK when required and passes it required data to perform specific functions. SDK may except returned data to follow a pre-defined structure or/and type.
 
 
->**auth_requests() :**
+
+><span style="color:blue">**auth_requests() :**</span>.
+
 
 * To find the requests involved in performing authorization with a manufacturer.
 
