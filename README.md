@@ -37,7 +37,7 @@ The abstract methods are invoked by SDK when required and passes it required dat
 
 
 
-<span style="color:blue">**auth_requests() :**</span>.
+**auth_requests() :**
 
 
 * To find the requests involved in performing authorization with a manufacturer.
