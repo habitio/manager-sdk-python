@@ -37,7 +37,7 @@ The abstract methods are invoked by SDK when required and passes it required dat
 
 
 
-**auth_requests() :**
+>####**auth_requests() :**
 
 
 * To find the requests involved in performing authorization with a manufacturer.
@@ -64,7 +64,7 @@ The abstract methods are invoked by SDK when required and passes it required dat
 
 ---
 
->**auth_response(response_data) :**
+>####**auth_response(response_data) :**
 
 
 * To handle the response received in the final authorization request to manufacturer.
