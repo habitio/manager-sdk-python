@@ -32,7 +32,7 @@
 		Tip: A sample implementation of Skeleton has been provided in sdk/base/sample-implementor.py
 
 
-####Abstract methods####
+###Abstract methods###
 The abstract methods are invoked by SDK when required and passes it required data to perform specific functions. SDK may except returned data to follow a pre-defined structure or/and type.
 
 
@@ -153,7 +153,7 @@ The abstract methods are invoked by SDK when required and passes it required dat
 	* *data* - Any data that has to be send to Muzzley's platform
 
 
-####Inbuilt methods####
+###Inbuilt methods###
 The pre-defined methods that belongs to Skeleton class to support implmentation of abstract methods.
 
 >####**get_channel_template(channel_id) :**
