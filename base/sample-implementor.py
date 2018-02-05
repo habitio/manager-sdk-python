@@ -5,6 +5,7 @@ class Implementor(Skeleton):
 
     def auth_requests(self):
         """
+        *** MANDATORY ***
         Returns a list of dictionaries with the structure,
         [
             {
@@ -46,6 +47,7 @@ class Implementor(Skeleton):
         
     def auth_response(self,response_data):
         """
+        *** MANDATORY ***
         Receives the response from manufacturer's API after authrorization.
 
         Returns dictionary of required credentials for persistence, otherwise 
@@ -56,7 +58,7 @@ class Implementor(Skeleton):
     def get_devices(self,sender,credentials):
         """
         *** MANDATORY ***
-        Receives : 
+        Receives,
             credentials - All persisted user credentials.
             sender      - A dictionary with keys 'channel_template_id', 'owner_id' and 
                         'client_id'.
@@ -89,6 +91,7 @@ class Implementor(Skeleton):
 
     def did_pair_devices(self,credentials,sender,paired_devices):
         """
+        *** MANDATORY ***
         Invoked after successful device pairing.
 
         Receieves,
@@ -105,11 +108,11 @@ class Implementor(Skeleton):
         *** MANDATORY ***
         Checks if there is access to read from/write to a component.
 
-        Receives:
+        Receives,
             mode        - 'r' or 'w'
                 r - read from manufacturer's API
                 w - write to manufacturer's API
-            case       - A dictionary with 3 key 'device_id','channel_id','component' and 'property'.
+            case       - A dictionary with keys 'device_id','channel_id','component' and 'property'.
             credentials - credentials of user from database
             sender      - A dictionary with keys 'owner_id' and 
                         'client_id'.
@@ -123,14 +126,13 @@ class Implementor(Skeleton):
         """
         *** MANDATORY ***
         Invoked when Muzzley platform intends to communicate with manufacturer's api
-        to read/u
-        pdate device's information.
+        to read/update device's information.
 
-        Receives:
+        Receives,
             mode        - 'r' or 'w'
                 r - read from manufacturer's API
                 w - write to manufacturer's API
-            case       - A dictionary with 3 key 'device_id','channel_id','component' and 'property'.
+            case       - A dictionary with keys 'device_id','channel_id','component' and 'property'.
             data        - data if any sent by Muzzley's platform.
             credentials - credentials of user from database
             sender      - A dictionary with keys 'owner_id' and 
@@ -144,11 +146,7 @@ class Implementor(Skeleton):
                 Returns True on successfull write to manufacturer's API, otherwise
                 returns False.
         """
-        print(mode)
-        print(case)
-        print(data)
 
-        message = "Its working"
         if mode == 'r':
             print("In r")
             return message
@@ -158,10 +156,11 @@ class Implementor(Skeleton):
 
     def downstream(self,message):
         """
+        *** MANDATORY ***
         Invoked when manufacturer's api intends to communicate with Muzzley's platform
         to update device's information.
         
-        Receives :
+        Receives,
             request - A flask.request object received from manufacturer's API.
 
         Returns a tuple as (case, data),

@@ -54,7 +54,7 @@ class Skeleton(ABC):
     def get_devices(self,sender,credentials):
         """
         *** MANDATORY ***
-        Receives : 
+        Receives,
             credentials - All persisted user credentials.
             sender      - A dictionary with keys 'channel_template_id', 'owner_id' and 
                         'client_id'.
@@ -77,6 +77,7 @@ class Skeleton(ABC):
     @abstractmethod
     def did_pair_devices(self,credentials,sender,paired_devices):
         """
+        *** MANDATORY ***
         Invoked after successful device pairing.
 
         Receieves,
@@ -94,11 +95,11 @@ class Skeleton(ABC):
         *** MANDATORY ***
         Checks if there is access to read from/write to a component.
 
-        Receives:
+        Receives,
             mode        - 'r' or 'w'
                 r - read from manufacturer's API
                 w - write to manufacturer's API
-            case       - A dictionary with 3 key 'device_id','channel_id','component' and 'property'.
+            case       - A dictionary with keys 'device_id','channel_id','component' and 'property'.
             credentials - credentials of user from database
             sender      - A dictionary with keys 'owner_id' and 
                         'client_id'.
@@ -112,14 +113,13 @@ class Skeleton(ABC):
         """
         *** MANDATORY ***
         Invoked when Muzzley platform intends to communicate with manufacturer's api
-        to read/u
-        pdate device's information.
+        to read/update device's information.
 
-        Receives:
+        Receives,
             mode        - 'r' or 'w'
                 r - read from manufacturer's API
                 w - write to manufacturer's API
-            case       - A dictionary with 3 key 'device_id','channel_id','component' and 'property'.
+            case       - A dictionary with keys 'device_id','channel_id','component' and 'property'.
             data        - data if any sent by Muzzley's platform.
             credentials - credentials of user from database
             sender      - A dictionary with keys 'owner_id' and 
@@ -142,7 +142,7 @@ class Skeleton(ABC):
         Invoked when manufacturer's api intends to communicate with Muzzley's platform
         to update device's information.
         
-        Receives :
+        Receives,
             request - A flask.request object received from manufacturer's API.
 
         Returns a tuple as (case, data),
