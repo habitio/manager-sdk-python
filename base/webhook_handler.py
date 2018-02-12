@@ -252,7 +252,7 @@ class WebhookHub:
                             "requesting_client_id" : request.headers["X-Client-Id"], 
                             "role" : "user" 
                         }
-
+                    
                         logger.debug("Initiated POST"+" - "+url)
                         logger.verbose("\n"+json.dumps(data,indent=4,sort_keys=True)+"\n")
 
