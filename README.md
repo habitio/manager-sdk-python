@@ -165,6 +165,7 @@ The pre-defined methods that belongs to Skeleton class to support implmentation 
 
 ---
 >####**get_device_id(channel_id) :**
+
 * To retrieve device_id using channel_id
     * *channel_id* - identfier of channel associated to a device.
  	
@@ -172,6 +173,7 @@ The pre-defined methods that belongs to Skeleton class to support implmentation 
 
 ---
 >####**get_channel_id(device_id) :**
+
 * To retrieve channel_id using device_id
     * *device_id* - unique identfier of device assigned by manufacturer.
  	
@@ -229,6 +231,7 @@ The pre-defined methods that belongs to Skeleton class to support implmentation 
 	* *data* - data to be published.
 ---
 >####**renew_credentials(sender,credentials,rub=False):**
+
 * To update credentials in database
     * *channel_id* - channel_id of the device.
     * *credentials* - a dictionary with data to be updated. 
