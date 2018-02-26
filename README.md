@@ -230,12 +230,12 @@ The pre-defined methods that belongs to Skeleton class to support implmentation 
 ---
 >####**renew_credentials(sender,credentials,rub=False):**
 * To update credentials in database
-   * *channel_id* - channel_id of the device.
-   * *credentials* - a dictionary with data to be updated. 
-   * *sender*      - a dictionary with keys '*owner_id*' and '*client_id*'.
-   * *rub*         - flag variable , 'False' by default.
-      * if '*True*'  - overwrites entire credentials.
-      * if '*False*' - overwrites specific data in credentials.
+    * *channel_id* - channel_id of the device.
+    * *credentials* - a dictionary with data to be updated. 
+    * *sender*      - a dictionary with keys '*owner_id*' and '*client_id*'.
+    * *rub*         - flag variable , 'False' by default.
+        * if '*True*'  - overwrites entire credentials.
+        * if '*False*' - overwrites specific data in credentials.
 
 ---
 ###Managing Configuration file##
