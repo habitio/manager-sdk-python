@@ -163,24 +163,21 @@ class Skeleton(ABC):
 
         """
 
-        url = settings.api_server_full+"/managers/self/channels"
+        url = settings.api_server_full+"/channels/"+str(channel_id)
         headers = {
             "Authorization": "Bearer {0}".format(settings.block["access_token"])
         } 
-        params = {
-            "channel_id" : channel_id
-        }
-
         try :
             # logger.debug("Initiated GET"+" - "+url)
             # logger.debug("\n"+json.dumps(params,indent=4,sort_keys=True)+"\n")
 
-            resp = requests.get(url,headers=headers,params=params)
+            resp = requests.get(url,headers=headers)
 
             logger.verbose("Received response code["+str(resp.status_code)+"]") 
             if int(resp.status_code) == 200:
                 # logger.debug("\n"+json.dumps(resp.json(),indent=4,sort_keys=True)+"\n")
-                return resp.json()["elements"][0]["channel"]["channeltemplate_id"]
+                return resp.json()["channeltemplate_id"]
+                
             else:
                 raise Exception("Failed to retrieve channel_template_id")
         except Exception as ex:
