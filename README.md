@@ -164,6 +164,20 @@ The pre-defined methods that belongs to Skeleton class to support implmentation 
 * Returns channel_template_id.
 
 ---
+>####**get_device_id(channel_id) :**
+* To retrieve device_id using channel_id
+    * *channel_id* - identfier of channel associated to a device.
+ 	
+* Returns device_id.
+
+---
+>####**get_channel_id(device_id) :**
+* To retrieve channel_id using device_id
+    * *device_id* - unique identfier of device assigned by manufacturer.
+ 	
+* Returns channel_id.
+
+---
 >####**store(key,value) :**
 
 * To store a data in database.
@@ -214,8 +228,16 @@ The pre-defined methods that belongs to Skeleton class to support implmentation 
 	* *case* - a dictionary with keys  '*device_id*', '*component*' and '*property*'.
 	* *data* - data to be published.
 ---
+>####**renew_credentials(sender,credentials,rub=False):**
+* To update credentials in database
+   * *channel_id* - channel_id of the device.
+   * *credentials* - a dictionary with data to be updated. 
+   * *sender*      - a dictionary with keys '*owner_id*' and '*client_id*'.
+   * *rub*         - flag variable , 'False' by default.
+      * if '*True*'  - overwrites entire credentials.
+      * if '*False*' - overwrites specific data in credentials.
 
-	
+---
 ###Managing Configuration file##
 
 * The configuration file of your manager must follow the template in *sample-manager-sdk-python.conf* file available in sdk folder. 
