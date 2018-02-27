@@ -60,7 +60,7 @@ The abstract methods are invoked by SDK when required and passes it required dat
 
 		"headers" : {
 			"Accept": "application/json", 
-			"X-Webview-Authorization": "Bearer {client_secret}" 
+			"Authorization": "Bearer {client_secret}" 
 		}
 
 * Each dictionary in list respresent an individual request to be made to manufacturer's API and its position denotes the order of request.
