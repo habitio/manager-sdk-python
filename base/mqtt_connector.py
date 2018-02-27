@@ -122,7 +122,6 @@ class MqttConnector():
             logger.error("Mqtt - Expected disconnection.")
 
     def on_log(self, userdata, level, buf):
-        print("log: ",buf)
         logger.debug("Mqtt - Paho log: {}".format(buf))
 
     def mqtt_config(self):
@@ -138,7 +137,7 @@ class MqttConnector():
                 logger.debug("mqtt_client._ssl = {}".format(self.mqtt_client._ssl))
                 if not self.mqtt_client._ssl and schema_mqtt=="mqtts":
                     logger.debug("Will set tls")
-                    self.mqtt_client.tls_set(ca_certs='/usr/lib/ssl/certs/ca-certificates.crt')
+                    self.mqtt_client.tls_set(ca_certs=settings.cert_path)
             except Exception as ex:
                 logger.alert("Mqtt - Failed to authenticate SSL certificate")
                 logger.trace(ex)
