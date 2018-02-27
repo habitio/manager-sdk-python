@@ -31,7 +31,7 @@ class Skeleton(ABC):
 
         "headers" : {                                             
             "Accept": "application/json", 
-            "X-Webview-Authorization": "Bearer {client_secret}" 
+            "Authorization": "Bearer {client_secret}" 
         }
 
         Each dictionary in list respresent an individual request to be made to manufacturer's API and
