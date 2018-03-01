@@ -52,17 +52,16 @@ class MqttConnector():
 
             topic = msg.topic
             payload = json.loads(msg.payload.decode("utf-8"))
-            logger.debug("Mqtt - Received "+topic+"  \n"+json.dumps(payload,indent=4,
-            sort_keys=True))
+            logger.debug("Mqtt - Received "+topic+"  \n"+json.dumps(payload,indent=4,sort_keys=True))
             logger.debug("..........................................")
-            logger.debug(implementer.access_check(mode='r',case=case,credentials=credentials,sender=sender))
-            logger.debug(".........................................")
+            # logger.debug(implementer.access_check(mode='r',case=case,credentials=credentials,sender=sender))
+            # logger.debug(".........................................")
 
             if "io" in payload and payload["io"] in ("r","w"):
                 
-                logger.debug("..........................................")
-                logger.debug(implementer.access_check(mode='r',case=case,credentials=credentials,sender=sender))
-                logger.debug(".........................................")
+                # logger.debug("..........................................")
+                # logger.debug(implementer.access_check(mode='r',case=case,credentials=credentials,sender=sender))
+                # logger.debug(".........................................")
                 
                 if all (k in payload for k in ("on_behalf_of","sender")):
                     parts = str(msg.topic).split('/')
@@ -95,9 +94,9 @@ class MqttConnector():
                     else:
                         logger.error("Mqtt - credentials not found in database. ")
                         return
-                    logger.debug("..........................................")
-                    logger.debug(implementer.access_check(mode='r',case=case,credentials=credentials,sender=sender))
-                    logger.debug(".........................................")
+                    # logger.debug("..........................................")
+                    # logger.debug(implementer.access_check(mode='r',case=case,credentials=credentials,sender=sender))
+                    # logger.debug(".........................................")
                     if implementer.access_check(mode='r',case=case,credentials=credentials,sender=sender) is True :
                         logger.debug("inside the access check")
                         if payload["io"] == "r":
