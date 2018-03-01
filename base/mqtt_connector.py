@@ -54,6 +54,9 @@ class MqttConnector():
             payload = json.loads(msg.payload.decode("utf-8"))
             logger.debug("Mqtt - Received "+topic+"  \n"+json.dumps(payload,indent=4,
             sort_keys=True))
+            logger.debug("..........................................")
+            logger.debug(implementer.access_check(mode='r',case=case,credentials=credentials,sender=sender))
+            logger.debug(".........................................")
 
             if "io" in payload and payload["io"] in ("r","w"):
                 
