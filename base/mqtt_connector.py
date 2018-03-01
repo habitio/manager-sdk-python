@@ -56,6 +56,11 @@ class MqttConnector():
             sort_keys=True))
 
             if "io" in payload and payload["io"] in ("r","w"):
+                
+                logger.debug("..........................................")
+                logger.debug(implementer.access_check(mode='r',case=case,credentials=credentials,sender=sender))
+                logger.debug(".........................................")
+                
                 if all (k in payload for k in ("on_behalf_of","sender")):
                     parts = str(msg.topic).split('/')
                     if db.has_key(parts[5]):
