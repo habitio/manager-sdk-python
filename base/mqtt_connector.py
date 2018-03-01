@@ -52,19 +52,9 @@ class MqttConnector():
 
             topic = msg.topic
             payload = json.loads(msg.payload.decode("utf-8"))
-            logger.debug("Mqtt - Received "+topic+"  \n"+json.dumps(payload,indent=4,sort_keys=True))
-            logger.debug("Mqtt - Received................................. "+topic+"  \n"+json.dumps(payload,indent=4,sort_keys=True))
-            logger.debug("..........................................")
-
-            # logger.debug(implementer.access_check(mode='r',case=case,credentials=credentials,sender=sender))
-            # logger.debug(".........................................")
-
+            logger.debug("Mqtt - Received "+topic+"  \n"+json.dumps(payload,indent=4,sort_keys=True))  
             if "io" in payload and payload["io"] in ("r","w"):
-                
-                # logger.debug("..........................................")
-                # logger.debug(implementer.access_check(mode='r',case=case,credentials=credentials,sender=sender))
-                # logger.debug(".........................................")
-                
+            
                 if all (k in payload for k in ("on_behalf_of","sender")):
                     parts = str(msg.topic).split('/')
                     if db.has_key(parts[5]):
@@ -96,9 +86,6 @@ class MqttConnector():
                     else:
                         logger.error("Mqtt - credentials not found in database. ")
                         return
-                    # logger.debug("..........................................")
-                    # logger.debug(implementer.access_check(mode='r',case=case,credentials=credentials,sender=sender))
-                    # logger.debug(".........................................")
                     if implementer.access_check(mode='r',case=case,credentials=credentials,sender=sender) is True :
                         logger.debug("inside the access check")
                         if payload["io"] == "r":
@@ -193,6 +180,7 @@ class MqttConnector():
                 channel_id = db.get_key(case["device_id"])
                 # logger.debug("Mqtt - Detected channel_id {}".format(channel_id))
                 topic = "/"+settings.api_version+"/channels/"+channel_id+"/components/"+case["component"]+"/properties/"+case["property"]+"/value"
+                # logger.debug("Mqtt - Created a topic {}".format(topic))
                 # logger.debug("Mqtt - Created a topic {}".format(topic))
             else:
                 logger.warning("Mqtt - Invalid arguements provided to publisher.")
