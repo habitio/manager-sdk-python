@@ -87,6 +87,9 @@ class MqttConnector():
                     else:
                         logger.error("Mqtt - credentials not found in database. ")
                         return
+                    logger.debug("..........................................")
+                    logger.debug(implementer.access_check(mode='r',case=case,credentials=credentials,sender=sender))
+                    logger.debug(".........................................")
                     if implementer.access_check(mode='r',case=case,credentials=credentials,sender=sender) is True :
                         logger.debug("inside the access check")
                         if payload["io"] == "r":
