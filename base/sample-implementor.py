@@ -1,3 +1,4 @@
+import sys, os
 sys.path.append(os.path.dirname(__file__) + "/sdk")
 from base.skeleton import Skeleton
 
@@ -20,7 +21,7 @@ class Implementor(Skeleton):
 
         "headers" : {                                             
             "Accept": "application/json", 
-            "X-Webview-Authorization": "Bearer {client_secret}" 
+            "Authorization": "Bearer {client_secret}" 
         }
 
         Each dictionary in list respresent an individual request to be made to manufacturer's API and
@@ -53,7 +54,8 @@ class Implementor(Skeleton):
         Returns dictionary of required credentials for persistence, otherwise 
         returns None if no persistance required after analyzing.
         """
-        return response_data
+        credentials = response_data
+        return credentials
     
     def get_devices(self,sender,credentials):
         """
@@ -148,10 +150,8 @@ class Implementor(Skeleton):
         """
 
         if mode == 'r':
-            print("In r")
-            return message
+            return "message"
         else:
-            print("In w")
             return True
 
     def downstream(self,message):

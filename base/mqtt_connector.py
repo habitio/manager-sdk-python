@@ -52,9 +52,10 @@ class MqttConnector():
 
             topic = msg.topic
             payload = json.loads(msg.payload.decode("utf-8"))
-            logger.debug("Mqtt - Received "+topic+"  \n"+json.dumps(payload,indent=4,sort_keys=True))  
+            logger.debug("Mqtt - Received "+topic+"  \n"+json.dumps(payload,indent=4,
+            sort_keys=True))
+
             if "io" in payload and payload["io"] in ("r","w"):
-            
                 if all (k in payload for k in ("on_behalf_of","sender")):
                     parts = str(msg.topic).split('/')
                     if db.has_key(parts[5]):
@@ -126,7 +127,6 @@ class MqttConnector():
             logger.error("Mqtt - Expected disconnection.")
 
     def on_log(self, userdata, level, buf):
-        print("log: ",buf)
         logger.debug("Mqtt - Paho log: {}".format(buf))
 
     def mqtt_config(self):
@@ -142,7 +142,7 @@ class MqttConnector():
                 logger.debug("mqtt_client._ssl = {}".format(self.mqtt_client._ssl))
                 if not self.mqtt_client._ssl and schema_mqtt=="mqtts":
                     logger.debug("Will set tls")
-                    self.mqtt_client.tls_set(ca_certs='/usr/lib/ssl/certs/ca-certificates.crt')
+                    self.mqtt_client.tls_set(ca_certs=settings.cert_path)
             except Exception as ex:
                 logger.alert("Mqtt - Failed to authenticate SSL certificate")
                 logger.trace(ex)
@@ -184,7 +184,6 @@ class MqttConnector():
                 channel_id = db.get_key(case["device_id"])
                 # logger.debug("Mqtt - Detected channel_id {}".format(channel_id))
                 topic = "/"+settings.api_version+"/channels/"+channel_id+"/components/"+case["component"]+"/properties/"+case["property"]+"/value"
-                # logger.debug("Mqtt - Created a topic {}".format(topic))
                 # logger.debug("Mqtt - Created a topic {}".format(topic))
             else:
                 logger.warning("Mqtt - Invalid arguements provided to publisher.")
