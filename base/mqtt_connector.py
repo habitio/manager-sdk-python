@@ -88,7 +88,7 @@ class MqttConnector():
                         logger.error("Mqtt - credentials not found in database. ")
                         return
 
-                    validated_credentials = access_check(mode='r',case=case,credentials=credentials,sender=sender)
+                    validated_credentials = self.access_check(mode='r',case=case,credentials=credentials,sender=sender)
                     if validated_credentials is not None :
                         
                         logger.debug("inside the access check")
