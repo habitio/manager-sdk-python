@@ -117,10 +117,10 @@ class Implementor(Skeleton):
             sender      - A dictionary with keys 'owner_id' and 
                         'client_id'.
         
-        Returns False if no access, otherswise returns True.
+        Returns updated valid credentials or current one. 
         """
         #Checks for access to manufacture for a component
-        return True
+        return credentials
 
     def upstream(self,mode,case,credentials,sender,data=None):
         """
