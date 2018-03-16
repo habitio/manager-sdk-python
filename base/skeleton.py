@@ -209,7 +209,7 @@ class Skeleton(ABC):
         To store a value to database with a unique identifier called key
 
         """
-        db.set_key(key,value)
+        return db.set_key(key,value)
 
     def retrieve(self,key):
         """

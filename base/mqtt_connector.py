@@ -86,20 +86,27 @@ class MqttConnector():
                     else:
                         logger.error("Mqtt - credentials not found in database. ")
                         return
-                    if implementer.access_check(mode='r',case=case,credentials=credentials,sender=sender) is True :
+
+                    #if implementer.access_check(mode='r',case=case,credentials=credentials,sender=sender) is True :                    
+                    validated_credentials = access_check(mode='r',case=case,credentials=credentials,sender=sender)
+                    if validated_credentials is not None :
+                        
                         logger.debug("inside the access check")
                         if payload["io"] == "r":
-                            result = implementer.upstream(mode='r',case=case,credentials=credentials,sender=sender,data=data)
+                            #result = implementer.upstream(mode='r',case=case,credentials=credentials,sender=sender,data=data)
+                            result = implementer.upstream(mode='r',case=case,credentials=validated_credentials,sender=sender,data=data)
                             if result != None:
                                 self.publisher(io="ir",data=result,case=case)
                             else:
                                 return
                         elif payload["io"] == "w":
-                            result = implementer.upstream(mode='w',case=case,credentials=credentials,sender=sender,data=data)
+                            #result = implementer.upstream(mode='w',case=case,credentials=credentials,sender=sender,data=data)
+                            result = implementer.upstream(mode='w',case=case,credentials=validated_credentials,sender=sender,data=data)
                             if result == True:
                                 self.publisher(io="iw",data=data,case=case)
                             elif result == False:
                                 return
+                    
                     else:
                         case["property"] = "access"
                         self.publisher(io="ir",data="unreachable",case=case)
