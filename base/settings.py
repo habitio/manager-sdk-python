@@ -19,7 +19,8 @@ class Settings:
     config_cred = config_boot["rest"]["credentials"]
     config_http = config_boot["http"]
     config_redis = config_boot["redis"]["managers"]
-    config_modules = config_boot["rest"]["modules"]
+    config_modules = config_boot["modules"]
+    config_tls = config_boot["tls"]
 
     client_id = config_cred["client_id"]
     client_secret = config_cred["client_secret"]
@@ -70,6 +71,9 @@ class Settings:
 
     #Picking out path of module that implements the skeleton
     skeleton_path = config_modules["skeleton_implementation"]
+
+    #Getting TLS related data
+    cert_path = config_tls["cert"]
 
     #The block stores all information obtained my manager through request to platform and 
     # to be made available to multiple modules.
