@@ -75,6 +75,11 @@ class Settings:
     #Getting TLS related data
     cert_path = config_tls["cert"]
 
+    #Access Property#
+    access_property = "access"
+    access_failed_value = "unreachable"
+
+
     #The block stores all information obtained my manager through request to platform and 
     # to be made available to multiple modules.
     block = {

@@ -106,8 +106,8 @@ class MqttConnector():
                                 return
                     
                     else:
-                        case["property"] = "access"
-                        self.publisher(io="ir",data="unreachable",case=case)
+                        case["property"] = settings.access_property
+                        self.publisher(io="ir",data=settings.access_failed_value,case=case)
                 else:
                     logger.error("Mqtt - No 'sender'/'on_behalf_of' in payload")
                     return
@@ -182,6 +182,10 @@ class MqttConnector():
 
             if all (key in case for key in ("device_id","component","property")):
                 channel_id = db.get_key(case["device_id"])
+                if channel_id is None :
+                    logger.warning("Mqtt - No channel id found for this device")
+                    return
+                    
                 # logger.debug("Mqtt - Detected channel_id {}".format(channel_id))
                 topic = "/"+settings.api_version+"/channels/"+channel_id+"/components/"+case["component"]+"/properties/"+case["property"]+"/value"
                 # logger.debug("Mqtt - Created a topic {}".format(topic))

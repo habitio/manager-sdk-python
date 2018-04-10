@@ -119,7 +119,7 @@ class Implementor(Skeleton):
             sender      - A dictionary with keys 'owner_id' and 
                         'client_id'.
         
-        Returns updated valid credentials or current one. 
+        Returns updated valid credentials or current one or None if no access 
         """
         #Checks for access to manufacture for a component
         return credentials
