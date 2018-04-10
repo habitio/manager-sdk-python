@@ -104,7 +104,7 @@ class Skeleton(ABC):
             sender      - A dictionary with keys 'owner_id' and 
                         'client_id'.
         
-        Returns updated valid credentials or current one. 
+        Returns updated valid credentials or current one  or None if no access
         """
         pass
 
@@ -209,7 +209,7 @@ class Skeleton(ABC):
         To store a value to database with a unique identifier called key
 
         """
-        return db.set_key(key,value)
+        db.set_key(key,value)
 
     def retrieve(self,key):
         """
