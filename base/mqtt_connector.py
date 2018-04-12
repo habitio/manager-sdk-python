@@ -57,6 +57,7 @@ class MqttConnector():
 
             if "io" in payload and payload["io"] in ("r","w"):
                 if all (k in payload for k in ("on_behalf_of","sender")):
+                    logger.debug("Mqtt - from sender " + payload["sender"] + " on behalf_of " + payload["on_behalf_of"])
                     parts = str(msg.topic).split('/')
                     if db.has_key(parts[5]):
                         device_id = db.get_key(parts[5])
@@ -81,7 +82,7 @@ class MqttConnector():
                         "owner_id" : payload["on_behalf_of"]
                     }
 
-                    key = payload["sender"]+"/"+payload["on_behalf_of"]
+                    key = payload["on_behalf_of"]
                     if db.has_key(key):
                         credentials = db.get_key(key)
                     else:

@@ -96,7 +96,6 @@ class WebhookHub:
                 if data != None:
                     db.set_key(
                         "/".join([
-                            request.headers["X-Client-Id"],
                             request.headers["X-Owner-Id"]
                         ]),
                         data
