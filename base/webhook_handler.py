@@ -95,9 +95,7 @@ class WebhookHub:
                 data = self.implementer.auth_response(received_data)
                 if data != None:
                     db.set_key(
-                        "/".join([
-                            request.headers["X-Owner-Id"]
-                        ]),
+                        request.headers["X-Owner-Id"],
                         data
                     )
                     return Response(
