@@ -124,10 +124,7 @@ class WebhookHub:
         try:
             received_hash = request.headers.get("Authorization").replace("Bearer ","")
             if received_hash == self.confirmation_hash :
-                key = "/".join([
-                            request.headers["X-Client-Id"],
-                            request.headers["X-Owner-Id"]
-                        ])
+                key = request.headers["X-Owner-Id"]
                 if db.has_key(key):
                     credentials  = db.get_key(key)
                     sender = {
@@ -267,10 +264,7 @@ class WebhookHub:
 
                     channels.append(channel)
 
-                key = "/".join([
-                            request.headers["X-Client-Id"],
-                            request.headers["X-Owner-Id"]
-                        ])
+                key = request.headers["X-Owner-Id"]
                 if db.has_key(key):
                     credentials = db.get_key(key)
                     sender = {
