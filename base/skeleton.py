@@ -286,11 +286,7 @@ class Skeleton(ABC):
                             if 'False' - overwrites specific data in credentials.
         """
         try:
-            key = "/".join([
-                sender["client_id"],
-                sender["owner_id"]
-            ])
-
+            key = sender["owner_id"]
             if self.exists(key):
                 original = self.retrieve(key)
                 if rub:

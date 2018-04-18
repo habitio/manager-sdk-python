@@ -62,7 +62,7 @@ class MqttConnector():
                     if db.has_key(parts[5]):
                         device_id = db.get_key(parts[5])
                     else:
-                        logger.error("Mqtt - channel_id "+parts[5]+" not found in database. ")
+                        logger.warning("Mqtt - channel_id "+parts[5]+" not found in database. ")
                         return
 
                     case = {
