@@ -286,7 +286,7 @@ class Skeleton(ABC):
                             if 'False' - overwrites specific data in credentials.
         """
         try:
-            key = "/".join(sender["owner_id"],channel_id]) 
+            key = "/".join([sender["owner_id"],channel_id]) 
             if self.exists(key):
                 original = self.retrieve(key)
             elif self.exists(sender["owner_id"]):
