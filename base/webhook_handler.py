@@ -178,7 +178,7 @@ class WebhookHub:
                 channels = []
                 for device in message :
                     if db.has_key(device["id"]):
-                        logger.verbose("Channel already in database")
+                        logger.info("Channel already in database")
                         channel = {
                             "id" : str(db.get_key(device["id"]))
                         }
@@ -190,6 +190,8 @@ class WebhookHub:
                         logger.verbose("Received response code["+str(resp.status_code)+"]")
                         if int(resp.status_code) not in (200,201):
                             channel = self.create_channel_id(device)
+                        else:
+                            logger.info("Channel still valid in Muzzley")
                     else:
                         channel = self.create_channel_id(device)
 
