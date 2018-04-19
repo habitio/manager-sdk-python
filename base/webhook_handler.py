@@ -169,6 +169,12 @@ class WebhookHub:
                     return Response(
                         status=422
                     )
+
+                headers = {
+                        "Content-Type": "application/json",
+                        "Authorization": "Bearer {0}".format(settings.block["access_token"])
+                    }
+
                 channels = []
                 for device in message :
                     if db.has_key(device["id"]):
@@ -176,47 +182,18 @@ class WebhookHub:
                         channel = {
                             "id" : str(db.get_key(device["id"]))
                         }
+
+                        #Validate if still exists on Muzzley
+                        url = settings.api_server_full+"/channels/" + channel["id"]
+
+                        resp = requests.get(url, headers=headers, data=None)
+                        logger.verbose("Received response code["+str(resp.status_code)+"]")
+                        if int(resp.status_code) not in (200,201):
+                            channel = self.create_channel_id(device)
                     else:
-                        # Creating a new channel for the particular device"s id
-                        headers = {
-                            "Content-Type": "application/json",
-                            "Authorization": "Bearer {0}".format(settings.block["access_token"])
-                        }
-                        data = { 
-                            "name" : "Device" if not "content" in device else device["content"],
-                            "channeltemplate_id": request.headers["X-Channeltemplate-Id"]
-                        }
-                        url = settings.api_server_full
-
-                        try:
-                            logger.debug("Initiated POST"+" - "+url)
-                            logger.verbose("\n"+json.dumps(data,indent=4,sort_keys=True)+"\n")
-
-                            resp = requests.post(url+"/managers/self/channels",headers=headers , data=json.dumps(data))
-
-                            logger.debug("Received response code["+str(resp.status_code)+"]") 
-                            if int(resp.status_code) != 201:
-                                logger.debug("\n"+json.dumps(resp.json(),indent=4,sort_keys=True)+"\n")
-                                raise Exception
-                        except Exception as ex:
-                            logger.error("Failed to create channel for channel template "+str(request.headers["X-Channeltemplate-Id"]))
-                            logger.trace(ex)
-                            return Response(
-                                status=400
-                            )
-                        
-                        #Ensure persistance of manufacturer"s device id (key) to channel id (field) in redis hash
-                        logger.verbose("Channel added to database")
-                        db.set_key(device["id"],resp.json()["id"],by_value=True)
-                
-                        #Creating channel to be appended to channels[]
-                        channel = resp.json()
+                        channel = self.create_channel_id(device)
 
                     #Granting permission to intervenient with id X-Client-Id
-                    headers = {
-                        "Content-Type": "application/json",
-                        "Authorization": "Bearer {0}".format(settings.block["access_token"])
-                    }
                     
                     url = settings.api_server_full+"/channels/" + channel["id"] + "/grant-access"
                     try:
@@ -295,6 +272,43 @@ class WebhookHub:
         except Exception as ex:
             logger.error("Couldn't complete processing request \n")
             logger.trace(ex)
+
+
+    def create_channel_id(self, device):
+        # Creating a new channel for the particular device"s id
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer {0}".format(settings.block["access_token"])
+        }
+        data = { 
+            "name" : "Device" if not "content" in device else device["content"],
+            "channeltemplate_id": request.headers["X-Channeltemplate-Id"]
+        }
+        url = settings.api_server_full
+
+        try:
+            logger.debug("Initiated POST"+" - "+url)
+            logger.verbose("\n"+json.dumps(data,indent=4,sort_keys=True)+"\n")
+
+            resp = requests.post(url+"/managers/self/channels",headers=headers , data=json.dumps(data))
+
+            logger.debug("Received response code["+str(resp.status_code)+"]") 
+            if int(resp.status_code) != 201:
+                logger.debug("\n"+json.dumps(resp.json(),indent=4,sort_keys=True)+"\n")
+                raise Exception
+        except Exception as ex:
+            logger.error("Failed to create channel for channel template "+str(request.headers["X-Channeltemplate-Id"]))
+            logger.trace(ex)
+            return Response(
+                status=400
+            )
+        
+        #Ensure persistance of manufacturer"s device id (key) to channel id (field) in redis hash
+        logger.verbose("Channel added to database")
+        db.set_key(device["id"],resp.json()["id"],by_value=True)
+
+        channel = resp.json()
+        return channel
     
 
     # .../manufacturer Webhook
