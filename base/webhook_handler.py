@@ -267,6 +267,13 @@ class WebhookHub:
                 key = request.headers["X-Owner-Id"]
                 if db.has_key(key):
                     credentials = db.get_key(key)
+
+                    #Store credentials for channel and owner
+                    db.set_key(
+                        "/".join([request.headers["X-Owner-Id"],channel["id"]]), 
+                        credentials
+                    )
+
                     sender = {
                         "channel_template_id": request.headers["X-Channeltemplate-Id"],
                         "client_id" :request.headers["X-Client-Id"],

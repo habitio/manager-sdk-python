@@ -233,7 +233,7 @@ The pre-defined methods that belongs to Skeleton class to support implmentation 
 	* *case* - a dictionary with keys  '*device_id*', '*component*' and '*property*'.
 	* *data* - data to be published.
 ---
->#### **renew_credentials(sender,credentials,rub=False):**
+>#### **renew_credentials(sender,channel_id,sender,credentials,rub=False):**
 
 * To update credentials in database
     * *channel_id* - channel_id of the device.
