@@ -56,7 +56,7 @@ class MqttConnector():
             if "io" in payload and payload["io"] in ("r","w"):
                 if all (k in payload for k in ("on_behalf_of","sender")):
 
-                    logger.debug("\n\n\n\n\n\t\t\t\t\t*******************SELECT_DEVICE****************************")
+                    logger.debug("\n\n\n\n\n\t\t\t\t\t******************* ON MESSAGE ****************************")
                     logger.debug("Mqtt - Received "+topic+"  \n"+json.dumps(payload,indent=4,sort_keys=True))
                     logger.debug("Mqtt - from sender " + payload["sender"] + " on behalf_of " + payload["on_behalf_of"])
                     
@@ -93,7 +93,7 @@ class MqttConnector():
                         credentials = db.get_key(owner)
                         db.set_key(credentials_key, credentials)
                     else:
-                        logger.error("Mqtt - credentials not found in database. ")
+                        logger.error("Mqtt - credentials not found in database for ownwe " + owner)
                         return
 
                     validated_credentials = implementer.access_check(mode='r',case=case,credentials=credentials,sender=sender)
