@@ -52,12 +52,14 @@ class MqttConnector():
 
             topic = msg.topic
             payload = json.loads(msg.payload.decode("utf-8"))
-            logger.debug("Mqtt - Received "+topic+"  \n"+json.dumps(payload,indent=4,
-            sort_keys=True))
-
+            
             if "io" in payload and payload["io"] in ("r","w"):
                 if all (k in payload for k in ("on_behalf_of","sender")):
+
+                    logger.debug("\n\n\n\n\n\t\t\t\t\t*******************SELECT_DEVICE****************************")
+                    logger.debug("Mqtt - Received "+topic+"  \n"+json.dumps(payload,indent=4,sort_keys=True))
                     logger.debug("Mqtt - from sender " + payload["sender"] + " on behalf_of " + payload["on_behalf_of"])
+                    
                     parts = str(msg.topic).split('/')
                     if db.has_key(parts[5]):
                         device_id = db.get_key(parts[5])
