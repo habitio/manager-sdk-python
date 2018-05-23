@@ -57,7 +57,7 @@ class MqttConnector():
                 if all (k in payload for k in ("on_behalf_of","sender")):
 
                     logger.debug("\n\n\n\n\n\t\t\t\t\t******************* ON MESSAGE ****************************")
-                    logger.debug("Mqtt - Received "+topic+"  \n"+json.dumps(payload,indent=4,sort_keys=True))
+                    logger.debug("Mqtt - Received on_message "+topic+"  \n"+json.dumps(payload,indent=4,sort_keys=True))
                     logger.debug("Mqtt - from sender " + payload["sender"] + " on behalf_of " + payload["on_behalf_of"])
                     
                     parts = str(msg.topic).split('/')
