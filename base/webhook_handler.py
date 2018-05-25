@@ -79,7 +79,7 @@ class WebhookHub:
     # .../receive_token Webhook
     def receive_token(self,request):
         logger.debug("\n\n\n\n\n\t\t\t\t\t********************** RECEIVE_TOKEN **************************")
-        logger.debug("Received receive_token "+request.method+" - "+request.path)
+        logger.debug("Received "+request.method+" - "+request.path)
         logger.verbose("\n"+str(request.headers))
         try:
             received_hash = request.headers.get("Authorization").replace("Bearer ","")
@@ -119,7 +119,8 @@ class WebhookHub:
     # .../devices_list Webhook
     def devices_list(self,request):
         logger.debug("\n\n\n\n\n\t\t\t\t\t********************** LIST_DEVICES **************************")
-        logger.debug("Received "+request.method+" - "+request.path + " owner " + request.headers["X-Owner-Id"])
+        logger.debug("Received "+request.method+" - "+request.path)
+        logger.verbose("\n"+str(request.headers))
         try:
             received_hash = request.headers.get("Authorization").replace("Bearer ","")
             if received_hash == self.confirmation_hash :
