@@ -93,7 +93,7 @@ class MqttConnector():
                         credentials = db.get_key(owner)
                         db.set_key(credentials_key, credentials)
                     else:
-                        logger.error("Mqtt - credentials not found in database for ownwe " + owner)
+                        logger.error("Mqtt - credentials not found in database. ")
                         return
 
                     validated_credentials = implementer.access_check(mode='r',case=case,credentials=credentials,sender=sender)

@@ -7,7 +7,7 @@ Internship project of a sdk for python integrations with Muzzley
 
 1. Clone the SDK into a directory named *sdk* in you project folder from,
 
-	    git@bitbucket.org:muzzley/manager-fake-contained.git
+	    git@bitbucket.org:muzzley/manager-sdk-python.git
 
 2. Install the dependencies of SDK from sdk/requiremnts.txt using,
 
