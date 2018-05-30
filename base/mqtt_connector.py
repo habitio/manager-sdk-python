@@ -84,15 +84,21 @@ class MqttConnector():
                         "owner_id" : payload["on_behalf_of"]
                     }
 
-                    owner = payload["on_behalf_of"]
-                    credentials_key = "/".join([owner,case["channel_id"]])
+                    # owner = payload["on_behalf_of"]
+                    # credentials_key = "/".join([owner,case["channel_id"]])
 
-                    if db.has_key(credentials_key):
-                        credentials = db.get_key(credentials_key)
-                    elif db.has_key(owner) :
-                        credentials = db.get_key(owner)
-                        db.set_key(credentials_key, credentials)
-                    else:
+                    # if db.has_key(credentials_key):
+                    #     credentials = db.get_key (credentials_key)
+                    # elif db.has_key(owner) :
+                    #     credentials = db.get_key(owner)
+                    #     db.set_key(credentials_key, credentials)
+                    # else:
+                    #     logger.error("Mqtt - credentials not found in database. ")
+                    #     return
+
+                    credentials = db.get_credentials(payload["sender"], payload["on_behalf_of"], case["channel_id"])
+
+                    if not credentials :
                         logger.error("Mqtt - credentials not found in database. ")
                         return
 

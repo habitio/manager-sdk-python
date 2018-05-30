@@ -125,25 +125,31 @@ class WebhookHub:
             received_hash = request.headers.get("Authorization").replace("Bearer ","")
             if received_hash == self.confirmation_hash :
                 key = request.headers["X-Owner-Id"]
-                if db.has_key(key):
-                    credentials  = db.get_key(key)
-                    sender = {
-                        "channel_template_id":request.headers["X-Channeltemplate-Id"],
-                        "client_id":request.headers["X-Client-Id"],
-                        "owner_id":request.headers["X-Owner-Id"]
-                    }
-                    data = self.implementer.get_devices(sender=sender,credentials=credentials)
+                # if db.has_key(key):
+                #     credentials  = db.get_key(key)
 
-                    return Response(
-                        response=json.dumps(data),
-                        status=200,
-                        mimetype="application/json"
-                    )
-                else:
-                    logger.error("No credentials found in database")
-                    return Response(
-                        status=404
-                    )
+                credentials = db.get_credentials(headers["X-Client-Id"], headers["X-Owner-Id"])    
+
+                if not credentials :
+                        logger.error("No credentials found in database")
+                return Response(
+                    status=404
+                )
+
+                sender = {
+                    "channel_template_id":request.headers["X-Channeltemplate-Id"],
+                    "client_id":request.headers["X-Client-Id"],
+                    "owner_id":request.headers["X-Owner-Id"]
+                }
+                data = self.implementer.get_devices(sender=sender,credentials=credentials)
+
+                return Response(
+                    response=json.dumps(data),
+                    status=200,
+                    mimetype="application/json"
+                )
+                # else:
+                   
             else:
                 logger.debug("Provided invalid confirmation hash!")
                 return Response(

@@ -55,12 +55,25 @@ class DBManager(Redis):
             logger.error(ex)
             logger.trace(ex)
 
+
+    def query(self,regex):
+        cursor = 0
+        try:
+            while True:
+                value = self.hscan(settings.redis_db, cursor, regex)
+                logger.debug("value = " + value)
+            if cursor == 0:
+                break
+        except Exception as ex:
+            logger.error(ex)
+            logger.trace(ex)
+
             
     def clear_hash(self):
         try:
             self.delete(settings.redis_db)
             logger.notice(" Redis database shutdown.")
-        except Exception as ex:
+         except Exception as ex:
             logger.error("Failed to clear redis database")
             logger.trace(ex)
             
@@ -80,20 +93,20 @@ class DBManager(Redis):
         credentials_parcial_key = "/".join(['credential-clients',client_id, 'owners', owner_id])
 
         if channel as None:
-            credentials = db.get_key(credentials_parcial_key)
+            credentials = db.query(credentials_parcial_key)
 
             if credentials as None :
                 logger.warning("No credentials found!")
                 
             return credentials
 
-        credentials = db.get_key(credentials_full_key)
+        credentials = db.query(credentials_full_key)
 
         if credentials as None :
-            credentials = db.get_key(credentials_parcial_key)
+            credentials = db.query(credentials_parcial_key)
 
-            if not credentials as None :
-                db.set_key(credentials_full_key, credentials)
+            # if not credentials as None :
+            #     db.set_key(credentials_full_key, credentials)
 
         if credentials as None :
             logger.warning("No credentials found!")
@@ -103,35 +116,42 @@ class DBManager(Redis):
 
     
     def set_credentials(self,client_id, owner_id, channel_id= None, credentials):
-        if client_id as None or owner_id as None :
-            raise Exception("Not enough keys (client or owner missing)")
-        else : 
-            credentials_key = "/".join(['credential-clients',client_id, 'owners', owner_id])
-            if not channel_id as None : 
-                credentials_key = "/".join(['credential-clients',client_id, 'owners', owner_id, 'channels', channel_id])
+        # if client_id as None or owner_id as None :
+        #     raise Exception("Not enough keys (client or owner missing)")
+        # else : 
+        #     credentials_key = "/".join(['credential-clients',client_id, 'owners', owner_id])
+        #     if not channel_id as None : 
+        #         credentials_key = "/".join(['credential-clients',client_id, 'owners', owner_id, 'channels', channel_id])
 
-             db.set_key(credentials_key, credentials)
+        #      db.set_key(credentials_key, credentials)
 
 
 
     def get_device_id(self, channel_id):
+        pass
 
 
     def set_device_id(self, device_id, channel_id):
+        pass
 
 
     def get_channel_id(self, device_id):
+        pass
 
 
     def set_channel_id(self, channel_id, device_id):
+        pass
 
 
     def get_channel_status(self, channel_id):
+        pass
 
 
     def set_channel_status(self, channel_id, status):
+        pass
 
     def expire(self, key, time):
+        pass
 
         
 
