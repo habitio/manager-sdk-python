@@ -66,7 +66,7 @@ class DBManager(Redis):
             for element in self.hscan_iter(settings.redis_db, match=regex):
                 logger.debug("element ={}".format(element))
                 logger.debug("element[1] ={}".format(element[1]))
-                result.append(json.loads(element[1]))
+                result.append(json.loads(json.dumps(element[1]))
 
             # while True:
             #     cursor, data = self.hscan(settings.redis_db, cursor, regex)
