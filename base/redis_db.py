@@ -118,8 +118,6 @@ class DBManager(Redis):
 
     
     def set_credentials(self, credentials, client_id, owner_id, channel_id= None):
-        logger.warning("credentials={} client_id={} owner_id={}".format(credentials,client_id,owner_id))
-
         if not client_id or not owner_id :
             raise Exception("Not enough keys (client or owner missing)")
         else : 

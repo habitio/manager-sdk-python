@@ -125,7 +125,7 @@ class WebhookHub:
                 # if db.has_key(key):
                 #     credentials  = db.get_key(key)
 
-                credentials = db.get_credentials(headers["X-Client-Id"], headers["X-Owner-Id"])    
+                credentials = db.get_credentials(request.headers["X-Client-Id"], request.headers["X-Owner-Id"])    
 
                 if not credentials :
                         logger.error("No credentials found in database")
