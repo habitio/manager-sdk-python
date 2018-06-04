@@ -60,8 +60,9 @@ class DBManager(Redis):
         cursor = 0
         try:
             while True:
-                value = self.hscan(settings.redis_db, cursor, regex)
-                logger.debug("value = " + value)
+                cursor, data = self.hscan(settings.redis_db, cursor, regex)
+                logger.debug("cursor = " + cursor)
+                logger.debug("data = {}".format(data))
                 if cursor == 0:
                     break
         except Exception as ex:
