@@ -98,7 +98,7 @@ class DBManager(Redis):
 
         if not channel_id:
             data = db.query(credentials_parcial_key)
-            credentials = data[credentials_parcial_key]
+            credentials = data[0]
 
             if not credentials :
                 logger.warning("No credentials found!")
@@ -107,11 +107,11 @@ class DBManager(Redis):
 
         credentials_full_key = "/".join(['credential-clients',client_id, 'owners', owner_id, 'channels', channel_id])
         data = db.query(credentials_full_key)
-        credentials = data[credentials_full_key]
+        credentials = data[0]
 
         if not credentials :
             data = db.query(credentials_parcial_key)
-            credentials = data[credentials_parcial_key]
+            credentials = data[0]
 
 
             # if credentials :
