@@ -250,7 +250,7 @@ class WebhookHub:
                 # if db.has_key(key):
                 #     db.get_key(key)
                 credentials = db.get_credentials(request.headers["X-Client-Id"], request.headers["X-Owner-Id"])
-                db.set_credentials(self, credentials, request.headers["X-Client-Id"], request.headers["X-Owner-Id"], channel["id"])
+                db.set_credentials(credentials, request.headers["X-Client-Id"], request.headers["X-Owner-Id"], channel["id"])
 
                 sender = {
                     "channel_template_id": request.headers["X-Channeltemplate-Id"],
