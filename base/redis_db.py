@@ -63,22 +63,29 @@ class DBManager(Redis):
 
         result = []
         try:
-            while True:
-                cursor, data = self.hscan(settings.redis_db, cursor, regex)
-                logger.debug("cursor = {}".format(cursor))
-                logger.debug("data = {}".format(data))
+            for element in self.hscan_iter(settings.redis_db, match=regex):
+                result.append(json.load(element))
 
-                if isinstance(data[1],list):
-                    for element in data[1]:
-                        result.append(json.load(element))
-                elif isinstance(data[1],str):
-                    logger.warning("Query result is string but should be array")
+            # while True:
+            #     cursor, data = self.hscan(settings.redis_db, cursor, regex)
+            #     logger.debug("cursor = {}".format(cursor))
+            #     logger.debug("data = {}".format(data))
 
-                if cursor == 0:
-                    break
+            #     if isinstance(data,list):
+            #         if isinstance(data[1],list):
+            #             for element in data[1]:
+            #                 result.append(json.load(element))
+            #         elif isinstance(data[1],str):
+            #             logger.warning("Query result is string but should be array")
+            #             raise Exception("Query result is string but should be array")
+            #     else: 
+            #         raise Exception("Query result is not an array")
+
+            #     if cursor == 0:
+            #         break
             return result
         except Exception as ex:
-            logger.error(ex)
+            logger.error("query :: "+ ex)
             logger.trace(ex)
 
             
