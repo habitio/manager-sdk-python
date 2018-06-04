@@ -98,10 +98,12 @@ class DBManager(Redis):
 
         if not channel_id:
             data = db.query(credentials_parcial_key)
-            credentials = data[0]
 
-            if not credentials :
+            if not data :
                 logger.warning("No credentials found!")
+                return None
+
+            credentials = data[0]
 
             logger.debug("credentials={}".format(credentials) )
                 
@@ -109,18 +111,16 @@ class DBManager(Redis):
 
         credentials_full_key = "/".join(['credential-clients',client_id, 'owners', owner_id, 'channels', channel_id])
         data = db.query(credentials_full_key)
+
+        if not data :
+            logger.warning("No credentials found!")
+            return None
+
         credentials = data[0]
 
         if not credentials :
             data = db.query(credentials_parcial_key)
             credentials = data[0]
-
-
-            # if credentials :
-            #     db.set_key(credentials_full_key, credentials)
-
-        if not credentials :
-            logger.warning("No credentials found!")
 
         logger.debug("credentials={}".format(credentials) )
 
@@ -140,23 +140,55 @@ class DBManager(Redis):
 
 
     def get_device_id(self, channel_id):
-        logger.warning("To be implemented!")
+        key = "/".join(['device-channels', channel_id])
 
-    def set_device_id(self, device_id, channel_id):
-        logger.warning("To be implemented!")
+        data = db.query(key)
+
+        if not data :
+            logger.warning("No device found for channel {}".format(key))
+            return None
+        
+        return data[0]
+
+
+    def set_device_id(self, channel_id, device_id):
+        key = "/".join(['device-channels', channel_id])
+        db.set_key(channel_id, device_id)
+
 
     def get_channel_id(self, device_id):
-        logger.warning("To be implemented!")
+        key = "/".join(['channel-devices', device_id])
+
+        data = db.query(key)
+
+        if not data :
+            logger.warning("No channel found for device {}".format(key))
+            return None
+
+        return data[0]
 
 
-    def set_channel_id(self, channel_id, device_id):
-        logger.warning("To be implemented!")
+    def set_channel_id(self, device_id, channel_id):
+        key = "/".join(['channel-devices', device_id])
+        db.set_key(device_id, channel_id)
+
 
     def get_channel_status(self, channel_id):
-        logger.warning("To be implemented!")
+        key = "/".join(['status-channels', channel_id])
+
+        data = db.query(key)
+
+        if not data :
+            logger.warning("No status found for channel {}".format(key))
+            return None
+        
+        return data[0]
+
 
     def set_channel_status(self, channel_id, status):
-        logger.warning("To be implemented!")
+        key = "/".join(['status-channels', channel_id])
+        db.set_key(channel_id, status)
+
 
     def expire(self, key, time):
         logger.warning("To be implemented!")
