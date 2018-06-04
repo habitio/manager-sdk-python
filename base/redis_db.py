@@ -73,7 +73,7 @@ class DBManager(Redis):
         try:
             self.delete(settings.redis_db)
             logger.notice(" Redis database shutdown.")
-         except Exception as ex:
+        except Exception as ex:
             logger.error("Failed to clear redis database")
             logger.trace(ex)
             
