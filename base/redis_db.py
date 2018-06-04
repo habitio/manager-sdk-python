@@ -92,7 +92,7 @@ class DBManager(Redis):
         credentials_full_key = "/".join(['credential-clients',client_id, 'owners', owner_id, 'channels', channel_id])
         credentials_parcial_key = "/".join(['credential-clients',client_id, 'owners', owner_id])
 
-        if not channel:
+        if not channel_id:
             credentials = db.query(credentials_parcial_key)
 
             if not credentials :
