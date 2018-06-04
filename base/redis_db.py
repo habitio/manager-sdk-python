@@ -103,7 +103,7 @@ class DBManager(Redis):
             if not credentials :
                 logger.warning("No credentials found!")
                 
-            return credentials[0]
+            return credentials
 
         credentials_full_key = "/".join(['credential-clients',client_id, 'owners', owner_id, 'channels', channel_id])
         data = db.query(credentials_full_key)
