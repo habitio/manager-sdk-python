@@ -189,20 +189,15 @@ class Skeleton(ABC):
         To retrieve device_id using channel_id
 
         """
-        if self.exists(channel_id):
-            return self.retrieve(channel_id)
-        else:
-            return None
+        return db.get_device_id(channel_id)
+
 
     def get_channel_id(self,device_id):
         """
         To retrieve channel_id using device_id
 
         """
-        if self.exists(device_id):
-            return self.retrieve(device_id)
-        else:
-            return None
+        return db.get_channel_id(device_id)
 
     def store(self,key,value):
         """

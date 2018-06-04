@@ -128,7 +128,7 @@ class DBManager(Redis):
         
 
     
-    def set_credentials(self, credentials, client_id, owner_id, channel_id= None):
+    def set_credentials(self, credentials, client_id, owner_id, channel_id= None, by_value=False):
         if not client_id or not owner_id :
             raise Exception("Not enough keys (client or owner missing)")
         else : 
@@ -151,7 +151,7 @@ class DBManager(Redis):
         return data[0]
 
 
-    def set_device_id(self, channel_id, device_id):
+    def set_device_id(self, channel_id, device_id, by_value=False):
         key = "/".join(['device-channels', channel_id])
         db.set_key(channel_id, device_id)
 
@@ -168,7 +168,7 @@ class DBManager(Redis):
         return data[0]
 
 
-    def set_channel_id(self, device_id, channel_id):
+    def set_channel_id(self, device_id, channel_id, by_value=False):
         key = "/".join(['channel-devices', device_id])
         db.set_key(device_id, channel_id)
 
@@ -185,7 +185,7 @@ class DBManager(Redis):
         return data[0]
 
 
-    def set_channel_status(self, channel_id, status):
+    def set_channel_status(self, channel_id, status, by_value=False):
         key = "/".join(['status-channels', channel_id])
         db.set_key(channel_id, status)
 

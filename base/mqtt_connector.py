@@ -61,9 +61,8 @@ class MqttConnector():
                     logger.debug("Mqtt - from sender " + payload["sender"] + " on behalf_of " + payload["on_behalf_of"])
                     
                     parts = str(msg.topic).split('/')
-                    if db.has_key(parts[5]):
-                        device_id = db.get_key(parts[5])
-                    else:
+                    device_id = db.get_device_id(parts[5])
+                    if not device_id:
                         logger.warning("Mqtt - channel_id "+parts[5]+" not found in database. ")
                         return
 
@@ -83,18 +82,6 @@ class MqttConnector():
                         "client_id" : payload["sender"],
                         "owner_id" : payload["on_behalf_of"]
                     }
-
-                    # owner = payload["on_behalf_of"]
-                    # credentials_key = "/".join([owner,case["channel_id"]])
-
-                    # if db.has_key(credentials_key):
-                    #     credentials = db.get_key (credentials_key)
-                    # elif db.has_key(owner) :
-                    #     credentials = db.get_key(owner)
-                    #     db.set_key(credentials_key, credentials)
-                    # else:
-                    #     logger.error("Mqtt - credentials not found in database. ")
-                    #     return
 
                     credentials = db.get_credentials(payload["sender"], payload["on_behalf_of"], case["channel_id"])
 
@@ -195,7 +182,7 @@ class MqttConnector():
             logger.debug("Mqtt - Case {} and settings.api_version={}".format(case,settings.api_version))
 
             if all (key in case for key in ("device_id","component","property")):
-                channel_id = db.get_key(case["device_id"])
+                channel_id = db.get_channel_id(case["device_id"])
                 if channel_id is None :
                     logger.warning("Mqtt - No channel id found for this device")
                     return

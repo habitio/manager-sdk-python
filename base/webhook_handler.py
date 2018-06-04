@@ -120,10 +120,6 @@ class WebhookHub:
         try:
             received_hash = request.headers.get("Authorization").replace("Bearer ","")
             if received_hash == self.confirmation_hash :
-                key = request.headers["X-Owner-Id"]
-                # if db.has_key(key):
-                #     credentials  = db.get_key(key)
-
                 credentials = db.get_credentials(request.headers["X-Client-Id"], request.headers["X-Owner-Id"])    
 
                 if not credentials :
@@ -179,10 +175,11 @@ class WebhookHub:
 
                 channels = []
                 for device in message :
-                    if db.has_key(device["id"]):
+                    channel_id = db.get_channel_id(device["id"])
+                    if channel_id:
                         logger.info("Channel already in database")
                         channel = {
-                            "id" : str(db.get_key(device["id"]))
+                            "id" : channel_id
                         }
 
                         #Validate if still exists on Muzzley
@@ -245,10 +242,6 @@ class WebhookHub:
 
                     channels.append(channel)
 
-                # key = request.headers["X-Owner-Id"]
-                # if db.has_key(key):
-                #     db.get_key(key)
-
                 credentials = db.get_credentials(request.headers["X-Client-Id"], request.headers["X-Owner-Id"])
                 db.set_credentials(credentials, request.headers["X-Client-Id"], request.headers["X-Owner-Id"], channel["id"])
 
@@ -306,7 +299,7 @@ class WebhookHub:
         
         #Ensure persistance of manufacturer"s device id (key) to channel id (field) in redis hash
         logger.verbose("Channel added to database")
-        db.set_key(device["id"],resp.json()["id"],by_value=True)
+        db.set_device_id(device["id"],resp.json()["id"],by_value=True)
 
         channel = resp.json()
         return channel
