@@ -65,7 +65,7 @@ class DBManager(Redis):
         try:
             for element in self.hscan_iter(settings.redis_db, match=regex):
                 logger.debug("element ={}".format(element))
-                result.append(json.loads(element[1]))
+                result.append(json.loads(json.dumps(element[1])))
 
             logger.debug("result{}".format(result))
             return result
@@ -105,7 +105,7 @@ class DBManager(Redis):
 
             logger.debug("credentials={}".format(credentials) )
                 
-            return credentials
+            return json.loads(credentials)
 
         credentials_full_key = "/".join(['credential-clients',client_id, 'owners', owner_id, 'channels', channel_id])
         data = db.query(credentials_full_key)
@@ -124,7 +124,7 @@ class DBManager(Redis):
 
         logger.debug("credentials={}".format(credentials) )
 
-        return credentials
+        return json.loads(credentials)
         
 
     
