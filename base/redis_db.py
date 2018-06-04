@@ -65,9 +65,9 @@ class DBManager(Redis):
         try:
             for element in self.hscan_iter(settings.redis_db, match=regex):
                 logger.debug("element ={}".format(element))
-                logger.debug("element[1] ={}".format(element[1]))
                 result.append(json.loads(json.dumps(element[1])))
 
+            logger.debug("result{}".format(result))
             return result
         except Exception as ex:
             logger.error("query :: {}".format(ex))
@@ -102,6 +102,8 @@ class DBManager(Redis):
 
             if not credentials :
                 logger.warning("No credentials found!")
+
+            logger.debug("credentials={}".format(credentials) )
                 
             return credentials
 
@@ -119,6 +121,8 @@ class DBManager(Redis):
 
         if not credentials :
             logger.warning("No credentials found!")
+
+        logger.debug("credentials={}".format(credentials) )
 
         return credentials
         
