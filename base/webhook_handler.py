@@ -127,10 +127,10 @@ class WebhookHub:
                 credentials = db.get_credentials(request.headers["X-Client-Id"], request.headers["X-Owner-Id"])    
 
                 if not credentials :
-                        logger.error("No credentials found in database")
-                return Response(
-                    status=404
-                )
+                    logger.error("No credentials found in database")
+                    return Response(
+                        status=404
+                    )
 
                 sender = {
                     "channel_template_id":request.headers["X-Channeltemplate-Id"],
