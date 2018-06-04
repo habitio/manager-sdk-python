@@ -95,20 +95,20 @@ class DBManager(Redis):
         if not channel:
             credentials = db.query(credentials_parcial_key)
 
-            if credentials as None :
+            if not credentials :
                 logger.warning("No credentials found!")
                 
             return credentials
 
         credentials = db.query(credentials_full_key)
 
-        if credentials as None :
+        if not credentials :
             credentials = db.query(credentials_parcial_key)
 
-            # if not credentials as None :
+            # if credentials :
             #     db.set_key(credentials_full_key, credentials)
 
-        if credentials as None :
+        if not credentials :
             logger.warning("No credentials found!")
 
         return credentials
