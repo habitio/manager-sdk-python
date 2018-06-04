@@ -62,8 +62,8 @@ class DBManager(Redis):
             while True:
                 value = self.hscan(settings.redis_db, cursor, regex)
                 logger.debug("value = " + value)
-            if cursor == 0:
-                break
+                if cursor == 0:
+                    break
         except Exception as ex:
             logger.error(ex)
             logger.trace(ex)
@@ -115,7 +115,7 @@ class DBManager(Redis):
         
 
     
-    def set_credentials(self,client_id, owner_id, channel_id= None, credentials):
+    def set_credentials(self, credentials, client_id, owner_id, channel_id= None):
         # if client_id as None or owner_id as None :
         #     raise Exception("Not enough keys (client or owner missing)")
         # else : 
@@ -124,34 +124,32 @@ class DBManager(Redis):
         #         credentials_key = "/".join(['credential-clients',client_id, 'owners', owner_id, 'channels', channel_id])
 
         #      db.set_key(credentials_key, credentials)
+        logger.warning("To be implemented!")
+
 
 
 
     def get_device_id(self, channel_id):
-        pass
-
+        logger.warning("To be implemented!")
 
     def set_device_id(self, device_id, channel_id):
-        pass
-
+        logger.warning("To be implemented!")
 
     def get_channel_id(self, device_id):
-        pass
+        logger.warning("To be implemented!")
 
 
     def set_channel_id(self, channel_id, device_id):
-        pass
-
+        logger.warning("To be implemented!")
 
     def get_channel_status(self, channel_id):
-        pass
-
+        logger.warning("To be implemented!")
 
     def set_channel_status(self, channel_id, status):
-        pass
+        logger.warning("To be implemented!")
 
     def expire(self, key, time):
-        pass
+        logger.warning("To be implemented!")
 
         
 
