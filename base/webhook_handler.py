@@ -94,7 +94,7 @@ class WebhookHub:
                 
                 data = self.implementer.auth_response(received_data)
                 if data != None:
-                    db.set_credentials(self, data, request.headers["X-Client-Id"], request.headers["X-Owner-Id"])
+                    db.set_credentials(data, request.headers["X-Client-Id"], request.headers["X-Owner-Id"])
                     return Response(
                         status=200
                     )
@@ -249,7 +249,7 @@ class WebhookHub:
                 # key = request.headers["X-Owner-Id"]
                 # if db.has_key(key):
                 #     db.get_key(key)
-                
+
                 credentials = db.get_credentials(request.headers["X-Client-Id"], request.headers["X-Owner-Id"])
                 db.set_credentials(credentials, request.headers["X-Client-Id"], request.headers["X-Owner-Id"], channel["id"])
 
