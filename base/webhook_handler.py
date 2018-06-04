@@ -85,7 +85,6 @@ class WebhookHub:
             received_hash = request.headers.get("Authorization").replace("Bearer ","")
             if received_hash == self.confirmation_hash :
                 if request.is_json:
-                    logger.verbose("\n"+json.dumps(request.get_json(),indent=4, sort_keys=True)) 
                     received_data=request.get_json()
                 else:
                     return Response(

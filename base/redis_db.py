@@ -59,13 +59,23 @@ class DBManager(Redis):
     def query(self,regex):
         cursor = 1000
         logger.debug("query = {} regex ={}".format(cursor, regex))
+
+        result = []
         try:
             while True:
                 cursor, data = self.hscan(settings.redis_db, cursor, regex)
                 logger.debug("cursor = {}".format(cursor))
                 logger.debug("data = {}".format(data))
+
+                if isinstance(data[1],list):
+                    for element in data[1]:
+                        result.append(json.load(element))
+                elif isinstance(data[1],str):
+                    logger.warning("Query result is string but should be array")
+
                 if cursor == 0:
                     break
+            return result
         except Exception as ex:
             logger.error(ex)
             logger.trace(ex)
@@ -92,20 +102,24 @@ class DBManager(Redis):
 
     def get_credentials(self, client_id, owner_id, channel_id = None):
         credentials_parcial_key = "/".join(['credential-clients',client_id, 'owners', owner_id])
-        
+
         if not channel_id:
-            credentials = db.query(credentials_parcial_key)
+            data = db.query(credentials_parcial_key)
+            credentials = data[credentials_parcial_key]
 
             if not credentials :
                 logger.warning("No credentials found!")
                 
-            return credentials
+            return credentials[0]
 
         credentials_full_key = "/".join(['credential-clients',client_id, 'owners', owner_id, 'channels', channel_id])
-        credentials = db.query(credentials_full_key)
+        data = db.query(credentials_full_key)
+        credentials = data[credentials_full_key]
 
         if not credentials :
-            credentials = db.query(credentials_parcial_key)
+            data = db.query(credentials_parcial_key)
+            credentials = data[credentials_parcial_key]
+
 
             # if credentials :
             #     db.set_key(credentials_full_key, credentials)
@@ -113,7 +127,7 @@ class DBManager(Redis):
         if not credentials :
             logger.warning("No credentials found!")
 
-        return credentials
+        return credentials[0]
         
 
     
