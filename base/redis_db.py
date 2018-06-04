@@ -105,7 +105,7 @@ class DBManager(Redis):
 
             logger.debug("credentials={}".format(credentials) )
                 
-            return json.loads(credentials)
+            return json.loads(json.dumps(credentials))
 
         credentials_full_key = "/".join(['credential-clients',client_id, 'owners', owner_id, 'channels', channel_id])
         data = db.query(credentials_full_key)
@@ -124,7 +124,7 @@ class DBManager(Redis):
 
         logger.debug("credentials={}".format(credentials) )
 
-        return json.loads(credentials)
+        return json.loads(json.dumps(credentials))
         
 
     
