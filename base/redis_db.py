@@ -118,17 +118,14 @@ class DBManager(Redis):
 
     
     def set_credentials(self, credentials, client_id, owner_id, channel_id= None):
-        # if client_id as None or owner_id as None :
-        #     raise Exception("Not enough keys (client or owner missing)")
-        # else : 
-        #     credentials_key = "/".join(['credential-clients',client_id, 'owners', owner_id])
-        #     if not channel_id as None : 
-        #         credentials_key = "/".join(['credential-clients',client_id, 'owners', owner_id, 'channels', channel_id])
+        if client_id as None or owner_id as None :
+            raise Exception("Not enough keys (client or owner missing)")
+        else : 
+            credentials_key = "/".join(['credential-clients',client_id, 'owners', owner_id])
+            if not channel_id as None : 
+                credentials_key = "/".join(['credential-clients',client_id, 'owners', owner_id, 'channels', channel_id])
 
-        #      db.set_key(credentials_key, credentials)
-        logger.warning("To be implemented!")
-
-
+            db.set_key(credentials_key, credentials)
 
 
     def get_device_id(self, channel_id):
