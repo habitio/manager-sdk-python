@@ -118,11 +118,11 @@ class DBManager(Redis):
 
     
     def set_credentials(self, credentials, client_id, owner_id, channel_id= None):
-        if client_id as None or owner_id as None :
+        if not client_id or not owner_id :
             raise Exception("Not enough keys (client or owner missing)")
         else : 
             credentials_key = "/".join(['credential-clients',client_id, 'owners', owner_id])
-            if not channel_id as None : 
+            if channel_id : 
                 credentials_key = "/".join(['credential-clients',client_id, 'owners', owner_id, 'channels', channel_id])
 
             db.set_key(credentials_key, credentials)
