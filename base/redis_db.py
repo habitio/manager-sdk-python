@@ -120,7 +120,7 @@ class DBManager(Redis):
         if not credentials :
             logger.warning("No credentials found!")
 
-        return credentials[0]
+        return credentials
         
 
     
