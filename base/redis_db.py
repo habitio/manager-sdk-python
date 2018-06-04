@@ -58,7 +58,7 @@ class DBManager(Redis):
 
     def query(self,regex):
         cursor = 1000
-        logger.debug("query = {} regex =".format(cursor, regex))
+        logger.debug("query = {} regex ={}".format(cursor, regex))
         try:
             while True:
                 cursor, data = self.hscan(settings.redis_db, cursor, regex)

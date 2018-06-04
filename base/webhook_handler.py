@@ -94,10 +94,7 @@ class WebhookHub:
                 
                 data = self.implementer.auth_response(received_data)
                 if data != None:
-                    db.set_key(
-                        request.headers["X-Owner-Id"],
-                        data
-                    )
+                    db.set_credentials(self, data, request.headers["X-Client-Id"], request.headers["X-Owner-Id"])
                     return Response(
                         status=200
                     )
@@ -249,23 +246,19 @@ class WebhookHub:
 
                     channels.append(channel)
 
-                key = request.headers["X-Owner-Id"]
-                if db.has_key(key):
-                    credentials = db.get_key(key)
+                # key = request.headers["X-Owner-Id"]
+                # if db.has_key(key):
+                #     db.get_key(key)
+                credentials = db.get_credentials(request.headers["X-Client-Id"], request.headers["X-Owner-Id"])
+                db.set_credentials(self, credentials, request.headers["X-Client-Id"], request.headers["X-Owner-Id"], channel["id"])
 
-                    #Store credentials for channel and owner
-                    db.set_key(
-                        "/".join([request.headers["X-Owner-Id"],channel["id"]]), 
-                        credentials
-                    )
-
-                    sender = {
-                        "channel_template_id": request.headers["X-Channeltemplate-Id"],
-                        "client_id" :request.headers["X-Client-Id"],
-                        "owner_id" :request.headers["X-Owner-Id"]
-                    }
-                    paired_devices = message
-                    self.implementer.did_pair_devices(sender=sender,credentials=credentials,paired_devices=paired_devices)
+                sender = {
+                    "channel_template_id": request.headers["X-Channeltemplate-Id"],
+                    "client_id" :request.headers["X-Client-Id"],
+                    "owner_id" :request.headers["X-Owner-Id"]
+                }
+                paired_devices = message
+                self.implementer.did_pair_devices(sender=sender,credentials=credentials,paired_devices=paired_devices)
 
                 return Response(
                     response=json.dumps(channels),
