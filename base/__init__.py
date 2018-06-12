@@ -13,23 +13,23 @@ logger.info("Completed configuring logger!")
 
 logger.debug(" ************************ __INIT__")
 
-from flask import Flask
-from flask_mqtt import Mqtt
+# from flask import Flask
+# from flask_mqtt import Mqtt
 
-# Flask App
-logger.verbose("Creating Flask Object...")
-try:
-    logger.debug(" ************************ CREATE FLASK")
+# # Flask App
+# logger.verbose("Creating Flask Object...")
+# try:
+#     logger.debug(" ************************ CREATE FLASK")
 
-    app = Flask(__name__, instance_relative_config=True)
-    logger.info("Flask object successfully created!")
-except Exception as ex:
-    logger.emergency("Flask object creation failed ...")
-    logger.trace(ex)
-    raise
+#     app = Flask(__name__, instance_relative_config=True)
+#     logger.info("Flask object successfully created!")
+# except Exception as ex:
+#     logger.emergency("Flask object creation failed ...")
+#     logger.trace(ex)
+#     raise
 
-app.config.from_object("flask_config")
+# app.config.from_object("flask_config")
 
-logger.debug(" ************************ IMPORT VIEWS")
+# logger.debug(" ************************ IMPORT VIEWS")
 
-from base import views
+# from base import views

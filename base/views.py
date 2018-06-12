@@ -6,8 +6,8 @@ from base.webhook_handler import webhook
 from base.settings import settings
 
 logger.debug(" ************************ IMPORT APP ON VIEWS")
-# from sdk.run import app
-from base import app
+from sdk.run import app
+# from base import app
 
 def kickoff():
     '''
