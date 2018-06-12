@@ -4,8 +4,11 @@ from base import logger
 from base.mqtt_connector import mqtt 
 from base.webhook_handler import webhook
 from base.settings import settings
-from sdk.run import app
-# from base import app
+# from sdk.run import app
+
+logger.debug(" ************************ IMPORT APP ON VIEWS")
+
+from base import app
 
 def kickoff():
     '''
@@ -25,6 +28,7 @@ kickoff()
 
 logger.debug("App {}".format(app))
 
+logger.debug(" ************************ CREATE ROUTES ON VIEWS")
 @app.route("/")
 def starter():
     return Response(status=200)
