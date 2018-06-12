@@ -8,7 +8,7 @@ import app
 
 
 import sys
-print(sys.path)
+logger.debug("sys.path:" + sys.path)
 
 logger = logging.getLogger(__name__)
 
