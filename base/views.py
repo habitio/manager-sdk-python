@@ -1,6 +1,6 @@
 import logging
 from flask import request,Response,json
-from base import app, auth
+from base import auth
 from base.mqtt_connector import mqtt 
 from base.webhook_handler import webhook
 from base.settings import settings
