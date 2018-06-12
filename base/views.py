@@ -4,8 +4,8 @@ from base import logger
 from base.mqtt_connector import mqtt 
 from base.webhook_handler import webhook
 from base.settings import settings
-# from sdk.run import app
-from base import app
+from sdk.run import app
+# from base import app
 
 def kickoff():
     '''
