@@ -199,6 +199,13 @@ class Skeleton(ABC):
         """
         return db.get_channel_id(device_id)
 
+    def store_channel_status(self, channel_id, status):
+        """
+        To store a value to database with a unique identifier called key
+
+        """
+        db.set_channel_status(channel_id, status)
+
     def store(self,key,value):
         """
         To store a value to database with a unique identifier called key
