@@ -20,6 +20,8 @@ def kickoff():
         mqtt.mqtt_config()
         webhook.webhook_registration()
 
+    logger.debug("App {}".format(app.__name__))
+
 #Taking care of tasks before routing
 kickoff()
 
