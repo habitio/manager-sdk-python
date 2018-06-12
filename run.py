@@ -8,6 +8,8 @@ from flask_mqtt import Mqtt
 # Flask App
 logger.verbose("Creating Flask Object...")
 try:
+    logger.debug(" ************************ CREATE FLASK")
+
     app = Flask(__name__, instance_relative_config=True)
     logger.info("Flask object successfully created!")
 except Exception as ex:
