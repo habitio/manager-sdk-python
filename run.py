@@ -1,6 +1,7 @@
 from base.settings import settings
 from base import logger
 
+from base import app
 print("__name__ = "+__name__)
 if __name__ == "__main__":
     try:
