@@ -19,6 +19,7 @@ from base import logger
 
 # from base import views
 
+from base import app
 
 print("__name__ = "+__name__)
 if __name__ == "__main__":

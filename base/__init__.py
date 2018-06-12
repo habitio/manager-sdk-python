@@ -32,5 +32,4 @@ app.config.from_object("flask_config")
 
 logger.debug(" ************************ IMPORT VIEWS")
 
-
 from base import views
