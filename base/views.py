@@ -4,7 +4,7 @@ from base import auth
 from base.mqtt_connector import mqtt 
 from base.webhook_handler import webhook
 from base.settings import settings
-from .. import app
+from sdk.run import app
 
 logger = logging.getLogger(__name__)
 
