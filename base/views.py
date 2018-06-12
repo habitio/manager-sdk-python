@@ -15,12 +15,14 @@ def kickoff():
 
     '''
     logger.verbose("Starting sdk with a kickoff ...")
+
+    logger.debug("App {}".format(app.__name__))
+
     auth.get_access()
     if settings.block["access_token"] != "":
         mqtt.mqtt_config()
         webhook.webhook_registration()
 
-    logger.debug("App {}".format(app.__name__))
 
 #Taking care of tasks before routing
 kickoff()
