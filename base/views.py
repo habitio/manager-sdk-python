@@ -6,6 +6,10 @@ from base.webhook_handler import webhook
 from base.settings import settings
 import app
 
+
+import sys
+print(sys.path)
+
 logger = logging.getLogger(__name__)
 
 
