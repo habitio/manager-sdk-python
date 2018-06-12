@@ -13,8 +13,6 @@ def kickoff():
     '''
     logger.verbose("Starting sdk with a kickoff ...")
 
-    logger.debug("App {}".format(app))
-
     auth.get_access()
     if settings.block["access_token"] != "":
         mqtt.mqtt_config()
@@ -23,6 +21,8 @@ def kickoff():
 
 #Taking care of tasks before routing
 kickoff()
+
+logger.debug("App {}".format(app))
 
 @app.route("/")
 def starter():
