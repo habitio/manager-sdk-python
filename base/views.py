@@ -1,13 +1,10 @@
-import logging
+import logger
 from flask import request,Response,json
 from base import auth
 from base.mqtt_connector import mqtt 
 from base.webhook_handler import webhook
 from base.settings import settings
 from sdk.run import app
-
-logger = logging.getLogger(__name__)
-
 
 def kickoff():
     '''
