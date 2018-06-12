@@ -3,6 +3,10 @@ from flask import Flask
 from flask_mqtt import Mqtt
 from base import logger
 
+
+import sys
+logger.debug("sys.path:" + sys.path)
+
 # Flask App
 logger.verbose("Creating Flask Object...")
 try:
