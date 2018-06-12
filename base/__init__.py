@@ -1,7 +1,5 @@
 from base import python_logging as pl
 import logging
-from flask import Flask
-from flask_mqtt import Mqtt
 
 # Create the Logger
 logger = logging.getLogger(__name__)
@@ -11,6 +9,10 @@ logger.addHandler(pl.logger_handler)
 
 logger.notice("\n\n\n"+"==="*45+"\n\n\n")
 logger.info("Completed configuring logger!")
+
+
+from flask import Flask
+from flask_mqtt import Mqtt
 
 # Flask App
 logger.verbose("Creating Flask Object...")
@@ -23,15 +25,6 @@ except Exception as ex:
     raise
 
 app.config.from_object("flask_config")
-
-print("__name__ = "+__name__)
-if __name__ == "__main__":
-    try:
-        # host="0.0.0.0"
-        app.run(port=settings.port)
-    except Exception:
-        print("********* Unknown Error!!! ********")    
-        raise
 
 from base import views
 
