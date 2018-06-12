@@ -16,7 +16,7 @@ def kickoff():
     '''
     logger.verbose("Starting sdk with a kickoff ...")
 
-    logger.debug("App {}".format(app.__name__))
+    logger.debug("App {}".format(app))
 
     auth.get_access()
     if settings.block["access_token"] != "":
