@@ -15,8 +15,8 @@ class Views:
 
     def __init__(self, _app):
         # app = _app
-        route_setup(_app)
-        kickoff()
+        self.route_setup(_app)
+        self.kickoff()
 
     def kickoff():
         '''
