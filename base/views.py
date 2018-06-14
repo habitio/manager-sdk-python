@@ -13,12 +13,16 @@ class Views:
 
     app = None
 
-    def kickoff(self, _app):
+    def __init__(self, _app):
+        app = _app
+        self.kickoff()
+
+
+    def kickoff():
         '''
         Setting up manager before it starts serving
 
         '''
-        self.app = _app
         logger.verbose("Starting sdk with a kickoff ...")
 
         auth.get_access()
@@ -32,7 +36,7 @@ class Views:
 
     logger.debug("App {}".format(app))
 
-    logger.debug(" ************************ CREATE ROUTES ON VIEWS   ")
+    logger.debug(" ************************ CREATE ROUTES ON VIEWS")
     @app.route("/")
     def starter():
         return Response(status=200)

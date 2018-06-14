@@ -1,9 +1,9 @@
 from base.settings import settings
 from base import logger
-
-
 from flask import Flask
 from flask_mqtt import Mqtt
+from base import Views
+
 
 # Flask App
 logger.verbose("Creating Flask Object...")
@@ -19,9 +19,8 @@ except Exception as ex:
 
 app.config.from_object("flask_config")
 
-logger.debug(" ************************ IMPORT VIEWS")
-
-from base import views
+logger.debug(" ************************ CALL VIEWS")
+views = Views(app)
 
 # from base import app
 
