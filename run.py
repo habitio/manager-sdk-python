@@ -2,7 +2,6 @@ from base.settings import settings
 from base import logger
 from flask import Flask
 from flask_mqtt import Mqtt
-from base import Views
 
 
 # Flask App
