@@ -9,7 +9,7 @@ logger.debug(" ************************ IMPORT APP ON VIEWS")
 # from sdk.run import app
 # from base import app
 
-class Views:
+class Views():
 
     app = None
 
