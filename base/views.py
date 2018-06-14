@@ -33,7 +33,7 @@ class Views:
     # #Taking care of tasks before routing
     # kickoff()
 
-    def route_setup(app):
+    def route_setup(self, app):
         logger.debug("App {}".format(app))
 
         logger.debug(" ************************ CREATE ROUTES ON VIEWS")
