@@ -5,16 +5,10 @@ from base.mqtt_connector import mqtt
 from base.webhook_handler import webhook
 from base.settings import settings
 
-#logger.debug(" ************************ IMPORT APP ON VIEWS")
-# from sdk.run import app
-# from base import app
 
 class Views:
 
-    # app = None
-
     def __init__(self, _app):
-        # app = _app
         self.route_setup(_app)
         self.kickoff()
 
@@ -30,13 +24,10 @@ class Views:
             mqtt.mqtt_config()
             webhook.webhook_registration()
 
-    # #Taking care of tasks before routing
-    # kickoff()
 
     def route_setup(self, app):
         logger.debug("App {}".format(app))
 
-        logger.debug(" ************************ CREATE ROUTES ON VIEWS")
         @app.route("/")
         def starter():
             return Response(status=200)
