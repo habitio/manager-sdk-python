@@ -19,16 +19,17 @@ except Exception as ex:
 app.config.from_object("flask_config")
 
 logger.debug(" ************************ CALL VIEWS")
-views = Views(app)
+from base import views
+views = views.Views(app)
 
-# from base import app
+
+#from base import app
 
 print("__name__ = "+__name__)
 if __name__ == "__main__":
     try:
         # host="0.0.0.0"
         logger.debug(" ************************ RUN APP")
-
         app.run(port=settings.port)
     except Exception:
         print("********* Unknown Error!!! ********")    
