@@ -18,7 +18,7 @@ class Views:
         self.route_setup(_app)
         self.kickoff()
 
-    def kickoff():
+    def kickoff(self):
         '''
         Setting up manager before it starts serving
 
