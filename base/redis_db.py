@@ -170,7 +170,7 @@ class DBManager(Redis):
 
     def set_channel_id(self, device_id, channel_id, by_value=False):
         key = "/".join(['channel-devices', device_id])
-        db.set_key(device_id, channel_id)
+        db.set_key(key, channel_id)
 
 
     def get_channel_status(self, channel_id):
@@ -187,7 +187,7 @@ class DBManager(Redis):
 
     def set_channel_status(self, channel_id, status, by_value=False):
         key = "/".join(['status-channels', channel_id])
-        db.set_key(channel_id, status)
+        db.set_key(key, status)
 
 
     def expire(self, key, time):
