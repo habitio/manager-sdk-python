@@ -299,7 +299,7 @@ class WebhookHub:
         
         #Ensure persistance of manufacturer"s device id (key) to channel id (field) in redis hash
         logger.verbose("Channel added to database")
-        db.set_channel_id(device["id"],resp.json()["id"],by_value=True)
+        db.set_channel_id(device["id"],resp.json()["id"],True)
 
         channel = resp.json()
         return channel
