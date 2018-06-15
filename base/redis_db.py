@@ -133,7 +133,7 @@ class DBManager(Redis):
                     logger.warning("No credentials found!")
                     return None
             elif channel_id :
-                self.set_credentials(credentials, client_id, owner_id, channel_id)
+                self.set_credentials(data[0], client_id, owner_id, channel_id)
 
 
         credentials = data[0]
