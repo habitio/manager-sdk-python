@@ -8,18 +8,18 @@ logger = logging.getLogger(__name__)
 
 class DBManager(Redis):
 
-    def set_key(self,key,value,by_value=False):
+    def set_key(self,key,value,add_reverse=False):
         """
         To set a key-field in hash table
             key : key of the field
             value : content of field
-            by_value : stores another value-key combination in hash to 
+            add_reverse : stores another value-key combination in hash to 
                 facilitate search by value inexpensively.
         
         """
         try:
             self.hset(settings.redis_db,key,value)
-            if by_value == True:
+            if add_reverse == True:
                 self.hset(settings.redis_db,value,key)
             logger.debug(" Key "+str(key)+" added/updated in database")
         except Exception as ex:
@@ -128,7 +128,7 @@ class DBManager(Redis):
         
 
     
-    def set_credentials(self, credentials, client_id, owner_id, channel_id= None, by_value=False):
+    def set_credentials(self, credentials, client_id, owner_id, channel_id= None, add_reverse=False):
         if not client_id or not owner_id :
             raise Exception("Not enough keys (client or owner missing)")
         else : 
@@ -136,7 +136,7 @@ class DBManager(Redis):
             if channel_id : 
                 credentials_key = "/".join(['credential-clients',client_id, 'owners', owner_id, 'channels', channel_id])
 
-            db.set_key(credentials_key, credentials)
+            db.set_key(credentials_key, credentials, add_reverse)
 
 
     def get_device_id(self, channel_id):
@@ -151,9 +151,9 @@ class DBManager(Redis):
         return data[0]
 
 
-    def set_device_id(self, channel_id, device_id, by_value=False):
+    def set_device_id(self, channel_id, device_id, add_reverse=False):
         key = "/".join(['device-channels', channel_id])
-        db.set_key(key, device_id)
+        db.set_key(key, device_id, add_reverse)
 
 
     def get_channel_id(self, device_id):
@@ -168,9 +168,9 @@ class DBManager(Redis):
         return data[0]
 
 
-    def set_channel_id(self, device_id, channel_id, by_value=False):
+    def set_channel_id(self, device_id, channel_id, add_reverse=False):
         key = "/".join(['channel-devices', device_id])
-        db.set_key(key, channel_id)
+        db.set_key(key, channel_id, add_reverse)
 
 
     def get_channel_status(self, channel_id):
@@ -185,9 +185,9 @@ class DBManager(Redis):
         return data[0]
 
 
-    def set_channel_status(self, channel_id, status, by_value=False):
+    def set_channel_status(self, channel_id, status, add_reverse=False):
         key = "/".join(['status-channels', channel_id])
-        db.set_key(key, status)
+        db.set_key(key, status, add_reverse)
 
 
     def expire(self, key, time):
