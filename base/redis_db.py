@@ -42,7 +42,7 @@ class DBManager(Redis):
         try:
             if self.hexists(settings.redis_db,key):
                 value = self.hget(settings.redis_db,key)
-                # logger.debug(" Key "+str(key)+" retrieved from database.")
+                logger.debug(" Key "+str(key)+" retrieved from database.")
                 try :
                     evaluated_value = ast.literal_eval(value)
                 except Exception as e:
@@ -96,7 +96,7 @@ class DBManager(Redis):
             logger.trace(ex)
 
 
-    def __get_credentials_old(self, client_id, owner_id):
+    def __get_credentials_old(self, client_id, owner_id, channel_id):
         '''
             Due to legacy code, this method retrieves credentials stored just by uuid
         '''
@@ -108,7 +108,7 @@ class DBManager(Redis):
             result = db.get_key("/".join([client_id, owner_id]))
 
         if result:
-            self.set_credentials(result, client_id, owner_id)
+            self.set_credentials(result, client_id, owner_id, channel_id)
 
         return result
 
@@ -127,7 +127,7 @@ class DBManager(Redis):
             data = db.query(credentials_parcial_key)
 
             if not data :
-                data = [self.__get_credentials_old(client_id, owner_id)]
+                data = [self.__get_credentials_old(client_id, owner_id, channel_id)]
 
                 if not data:
                     logger.warning("No credentials found!")
