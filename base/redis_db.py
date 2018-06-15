@@ -61,7 +61,7 @@ class DBManager(Redis):
         results = []
         try:
             for element in self.hscan_iter(settings.redis_db, match=regex):
-                logger.debug("element={}".format(element))
+                #logger.debug("element={}".format(element))
                 str_element = element[1].replace('\'', '\"')
                 try: 
                     value = json.loads(str_element)
