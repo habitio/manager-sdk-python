@@ -70,7 +70,7 @@ class DBManager(Redis):
 
                 results.append(value)
 
-            logger.debug("result={}".format(results))
+            logger.debug("Query found {} results!".format(len(results)))
             return results
         except Exception as ex:
             logger.error("query :: {}".format(ex))
@@ -132,6 +132,9 @@ class DBManager(Redis):
                 if not data:
                     logger.warning("No credentials found!")
                     return None
+            elif channel_id :
+                self.set_credentials(credentials, client_id, owner_id, channel_id)
+
 
         credentials = data[0]
 
