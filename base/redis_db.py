@@ -132,7 +132,8 @@ class DBManager(Redis):
 
         credentials = data[0]
 
-        logger.debug("credentials={}".format(credentials) )
+        logger.debug("Credentials Found!" )
+        # logger.debug("credentials={}".format(credentials) )
 
         return credentials
         
