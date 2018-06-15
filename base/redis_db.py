@@ -19,9 +19,10 @@ class DBManager(Redis):
         """
         try:
             self.hset(settings.redis_db,key,value)
+            logger.debug(" Key "+str(key)+" added/updated in database")
             if add_reverse == True:
                 self.hset(settings.redis_db,value,key)
-            logger.debug(" Key "+str(key)+" added/updated in database")
+                logger.debug(" Key "+str(value)+" added/updated in database")
         except Exception as ex:
             logger.error("Failed to set the key at hash.")
             logger.trace(ex)
@@ -61,14 +62,19 @@ class DBManager(Redis):
         cursor = 1000
         logger.debug("query = {} regex ={}".format(cursor, regex))
 
-        result = []
+        results = []
         try:
             for element in self.hscan_iter(settings.redis_db, match=regex):
                 logger.debug("element ={}".format(element))
-                result.append(json.loads(element[1].replace('\'', '\"')))
+                value = element[1].replace('\'', '\"')
+                try: 
+                    element = json.loads(value)
+                except ValueError, e:
+                    element = value
+                results.append(element)
 
-            logger.debug("result={}".format(result))
-            return result
+            logger.debug("result={}".format(results))
+            return results
         except Exception as ex:
             logger.error("query :: {}".format(ex))
             logger.trace(ex)
