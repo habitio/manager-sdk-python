@@ -276,36 +276,17 @@ class Skeleton(ABC):
         logger.debug("Will publisher to mqtt")
         mqtt.publisher(io="iw",data=data,case=case)
         
-    def renew_credentials(self,channel_id,sender,credentials,rub=False):
+    def renew_credentials(self,channel_id,sender,credentials):
         """
         To update credentials in database
             channel_id - channel_id of the device.
             credentials - a dictionary with data to be updated. 
             sender      - a dictionary with keys 'owner_id' and 
                         'client_id'.
-            rub         - flag variable , 'False' by default.
-                            if 'True'  - overwrites entire credentials.
-                            if 'False' - overwrites specific data in credentials.
         """
         try:
-            key = "/".join([sender["owner_id"],channel_id]) 
-            if self.exists(key):
-                original = self.retrieve(key)
-            elif self.exists(sender["owner_id"]):
-                original = self.retrieve(sender["owner_id"])
-            else : 
-                logger.warning("Original credentials not found : "+str(key))
-
-            if rub:
-                self.store(key,credentials)
-            else:
-                if not original is None:
-                    original.update(credentials)
-                    self.store(key,original)
-                    logger.debug("Credentials successfully renewed : "+str(key)+" !")
-                else:
-                    raise Exception("Renew credentials failed")
-
+            db.set_credentials(credentials, sender["client_id"], sender["owner_id"], channel_id)
+            logger.info("Credentials successfully renewed !")
         except Exception as ex:
             logger.error("Renew credentials failed!!! \n"+str(ex))
 

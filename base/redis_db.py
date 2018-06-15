@@ -100,8 +100,10 @@ class DBManager(Redis):
         '''
             Due to legacy code, this method retrieves credentials stored just by uuid
         '''
-        result = db.get_key(owner_id)
 
+        logger.info("No credentials found w/ new format! Search w/ old format")
+        
+        result = db.get_key(owner_id)
         if not result:
             result = db.get_key("/".join([client_id, owner_id]))
 
@@ -152,7 +154,7 @@ class DBManager(Redis):
         data = db.query(key)
 
         if not data :
-            logger.warning("No device found w/ new format! Search w/ old format")
+            logger.info("No device found w/ new format! Search w/ old format")
             key = channel_id
             result = db.get_key(key)
 
@@ -180,7 +182,7 @@ class DBManager(Redis):
         data = db.query(key)
 
         if not data :
-            logger.warning("No channel found w/ new format! Search w/ old format")
+            logger.info("No channel found w/ new format! Search w/ old format")
             key = device_id
             result = db.get_key(key)
 
