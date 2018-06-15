@@ -153,7 +153,7 @@ class DBManager(Redis):
 
     def set_device_id(self, channel_id, device_id, by_value=False):
         key = "/".join(['device-channels', channel_id])
-        db.set_key(channel_id, device_id)
+        db.set_key(key, device_id)
 
 
     def get_channel_id(self, device_id):
