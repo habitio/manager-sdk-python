@@ -107,6 +107,9 @@ class DBManager(Redis):
         if not result:
             result = db.get_key("/".join([client_id, owner_id]))
 
+        if result:
+            self.set_credentials(result, client_id, owner_id)
+
         return result
 
 
