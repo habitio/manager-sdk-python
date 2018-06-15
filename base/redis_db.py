@@ -96,7 +96,7 @@ class DBManager(Redis):
             logger.trace(ex)
 
 
-    def get_credentials_old(self, client_id, owner_id):
+    def __get_credentials_old(self, client_id, owner_id):
         '''
             Due to legacy code, this method retrieves credentials stored just by uuid
         '''
@@ -127,7 +127,7 @@ class DBManager(Redis):
             data = db.query(credentials_parcial_key)
 
             if not data :
-                data = [self.get_credentials_old(client_id, owner_id)]
+                data = [self.__get_credentials_old(client_id, owner_id)]
 
                 if not data:
                     logger.warning("No credentials found!")
