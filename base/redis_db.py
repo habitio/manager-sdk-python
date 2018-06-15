@@ -96,34 +96,39 @@ class DBManager(Redis):
             logger.trace(ex)
 
 
-    def get_credentials(self, client_id, owner_id, channel_id = None):
-        credentials_parcial_key = "/".join(['credential-clients',client_id, 'owners', owner_id])
+    def get_credentials_old(self, client_id, owner_id):
+        '''
+            Due to legacy code, this method retrieves credentials stored just by uuid
+        '''
+        result = db.get_key(owner_id)
 
-        if not channel_id:
+        if not result:
+            result = db.get_key("/".join([client_id, owner_id]))
+
+        return result
+
+
+
+
+    def get_credentials(self, client_id, owner_id, channel_id = None):
+        data = None
+
+        if channel_id:
+            credentials_full_key = "/".join(['credential-clients',client_id, 'owners', owner_id, 'channels', channel_id])
+            data = db.query(credentials_full_key)
+        
+        if not data :
+            credentials_parcial_key = "/".join(['credential-clients',client_id, 'owners', owner_id])
             data = db.query(credentials_parcial_key)
 
             if not data :
-                logger.warning("No credentials found!")
-                return None
+                data = [self.get_credentials_old(client_id, owner_id)]
 
-            credentials = data[0]
-
-            logger.debug("credentials={}".format(credentials) )
-                
-            return credentials
-
-        credentials_full_key = "/".join(['credential-clients',client_id, 'owners', owner_id, 'channels', channel_id])
-        data = db.query(credentials_full_key)
-
-        if not data :
-            logger.warning("No credentials found!")
-            return None
+                if not data:
+                    logger.warning("No credentials found!")
+                    return None
 
         credentials = data[0]
-
-        if not credentials :
-            data = db.query(credentials_parcial_key)
-            credentials = data[0]
 
         logger.debug("credentials={}".format(credentials) )
 
@@ -144,14 +149,22 @@ class DBManager(Redis):
 
     def get_device_id(self, channel_id):
         key = "/".join(['device-channels', channel_id])
-
         data = db.query(key)
 
         if not data :
-            logger.warning("No device found for channel {}".format(key))
-            return None
+            logger.warning("No device found w/ new format! Search w/ old format")
+            key = channel_id
+            result = db.get_key(key)
+
+            if not result :
+                logger.warning("No device found for channel {}".format(key))
+                return None
+            else:
+                self.set_device_id(channel_id,result, True)
+        else :
+            result = data[0]
         
-        return data[0]
+        return result
 
 
     def set_device_id(self, channel_id, device_id, add_reverse=False):
@@ -164,14 +177,22 @@ class DBManager(Redis):
 
     def get_channel_id(self, device_id):
         key = "/".join(['channel-devices', device_id])
-
         data = db.query(key)
 
         if not data :
-            logger.warning("No channel found for device {}".format(key))
-            return None
+            logger.warning("No channel found w/ new format! Search w/ old format")
+            key = device_id
+            result = db.get_key(key)
 
-        return data[0]
+            if not result :
+                logger.warning("No channel found for device {}".format(key))
+                return None
+            else:
+                self.set_channel_id(channel_id,result, True)
+        else :
+            result = data[0]
+
+        return result
 
 
     def set_channel_id(self, device_id, channel_id, add_reverse=False):
