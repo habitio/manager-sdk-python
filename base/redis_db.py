@@ -197,7 +197,7 @@ class DBManager(Redis):
                 logger.warning("No channel found for device {}".format(key))
                 return None
             else:
-                self.set_channel_id(channel_id,result, True)
+                self.set_channel_id(device_id,result, True)
         else :
             result = data[0]
 
