@@ -69,7 +69,7 @@ class DBManager(Redis):
                 str_element = element[1].replace('\'', '\"')
                 try: 
                     value = json.loads(str_element)
-                except ValueError, ex:
+                except ValueError:
                     value = str_element
                 results.append(value)
 
