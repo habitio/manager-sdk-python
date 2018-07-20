@@ -52,17 +52,18 @@ class MqttConnector():
 
             topic = msg.topic
             payload = json.loads(msg.payload.decode("utf-8"))
-            logger.debug("Mqtt - Received "+topic+"  \n"+json.dumps(payload,indent=4,
-            sort_keys=True))
-
+            
             if "io" in payload and payload["io"] in ("r","w"):
                 if all (k in payload for k in ("on_behalf_of","sender")):
+
+                    logger.debug("\n\n\n\n\n\t\t\t\t\t******************* ON MESSAGE ****************************")
+                    logger.debug("Mqtt - Received on_message "+topic+"  \n"+json.dumps(payload,indent=4,sort_keys=True))
                     logger.debug("Mqtt - from sender " + payload["sender"] + " on behalf_of " + payload["on_behalf_of"])
+                    
                     parts = str(msg.topic).split('/')
-                    if db.has_key(parts[5]):
-                        device_id = db.get_key(parts[5])
-                    else:
-                        logger.error("Mqtt - channel_id "+parts[5]+" not found in database. ")
+                    device_id = db.get_device_id(parts[5])
+                    if not device_id:
+                        logger.warning("Mqtt - channel_id "+parts[5]+" not found in database. ")
                         return
 
                     case = {
@@ -82,10 +83,9 @@ class MqttConnector():
                         "owner_id" : payload["on_behalf_of"]
                     }
 
-                    key = payload["on_behalf_of"]
-                    if db.has_key(key):
-                        credentials = db.get_key(key)
-                    else:
+                    credentials = db.get_credentials(payload["sender"], payload["on_behalf_of"], case["channel_id"])
+
+                    if not credentials :
                         logger.error("Mqtt - credentials not found in database. ")
                         return
 
@@ -182,7 +182,7 @@ class MqttConnector():
             logger.debug("Mqtt - Case {} and settings.api_version={}".format(case,settings.api_version))
 
             if all (key in case for key in ("device_id","component","property")):
-                channel_id = db.get_key(case["device_id"])
+                channel_id = db.get_channel_id(case["device_id"])
                 if channel_id is None :
                     logger.warning("Mqtt - No channel id found for this device")
                     return

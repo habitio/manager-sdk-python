@@ -181,7 +181,7 @@ class Skeleton(ABC):
             else:
                 raise Exception("Failed to retrieve channel_template_id")
         except Exception as ex:
-            logger.debug("\n"+json.dumps(resp.json(),indent=4,sort_keys=True)+"\n")
+            logger.debug("\n{}\n".format(resp))
             logger.trace(str(ex))
     
     def get_device_id(self,channel_id):
@@ -189,20 +189,22 @@ class Skeleton(ABC):
         To retrieve device_id using channel_id
 
         """
-        if self.exists(channel_id):
-            return self.retrieve(channel_id)
-        else:
-            return None
+        return db.get_device_id(channel_id)
+
 
     def get_channel_id(self,device_id):
         """
         To retrieve channel_id using device_id
 
         """
-        if self.exists(device_id):
-            return self.retrieve(device_id)
-        else:
-            return None
+        return db.get_channel_id(device_id)
+
+    def store_channel_status(self, channel_id, status):
+        """
+        To store a value to database with a unique identifier called key
+
+        """
+        db.set_channel_status(channel_id, status)
 
     def store(self,key,value):
         """
@@ -274,32 +276,17 @@ class Skeleton(ABC):
         logger.debug("Will publisher to mqtt")
         mqtt.publisher(io="iw",data=data,case=case)
         
-    def renew_credentials(self,sender,credentials,rub=False):
+    def renew_credentials(self,channel_id,sender,credentials):
         """
         To update credentials in database
             channel_id - channel_id of the device.
             credentials - a dictionary with data to be updated. 
             sender      - a dictionary with keys 'owner_id' and 
                         'client_id'.
-            rub         - flag variable , 'False' by default.
-                            if 'True'  - overwrites entire credentials.
-                            if 'False' - overwrites specific data in credentials.
         """
         try:
-            key = "/".join([
-                sender["client_id"],
-                sender["owner_id"]
-            ])
-
-            if self.exists(key):
-                original = self.retrieve(key)
-                if rub:
-                    self.store(key,credentials)
-                else:
-                    original.update(credentials)
-                    self.store(key,original)
-                logger.debug("Credentials successfully renewed : "+str(key)+" !")
-            else:
-                logger.debug("Invalid data provided for renewing credentials : "+str(key))
+            db.set_credentials(credentials, sender["client_id"], sender["owner_id"], channel_id)
+            logger.info("Credentials successfully renewed !")
         except Exception as ex:
-            logger.debug("Renew credentials failed!!! \n"+str(ex))
+            logger.error("Renew credentials failed!!! \n"+str(ex))
+

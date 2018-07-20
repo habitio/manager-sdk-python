@@ -1,5 +1,6 @@
 import logging
 import ast
+import json
 from redis import Redis
 from base.settings import settings
 
@@ -7,23 +8,22 @@ logger = logging.getLogger(__name__)
 
 class DBManager(Redis):
 
-    def set_key(self,key,value,by_value=False):
+    def set_key(self,key,value):
         """
         To set a key-field in hash table
             key : key of the field
             value : content of field
-            by_value : stores another value-key combination in hash to 
+            add_reverse : stores another value-key combination in hash to 
                 facilitate search by value inexpensively.
         
         """
         try:
             self.hset(settings.redis_db,key,value)
-            if by_value == True:
-                self.hset(settings.redis_db,value,key)
-            # logger.debug(" Key "+str(key)+" added/updated in database")
+            logger.debug(" Key "+str(key)+" added/updated in database")
         except Exception as ex:
             logger.error("Failed to set the key at hash.")
             logger.trace(ex)
+
 
     def has_key(self,key):
         try:
@@ -36,12 +36,13 @@ class DBManager(Redis):
             logger.error("Failed to check if hash has key.")
             logger.trace(ex)
 
+
     def get_key(self,key):
         """To get a key"s field from hash table"""
         try:
             if self.hexists(settings.redis_db,key):
                 value = self.hget(settings.redis_db,key)
-                # logger.debug(" Key "+str(key)+" retrieved from database.")
+                logger.debug(" Key "+str(key)+" retrieved from database.")
                 try :
                     evaluated_value = ast.literal_eval(value)
                 except Exception as e:
@@ -52,6 +53,29 @@ class DBManager(Redis):
         except Exception as ex:
             logger.error(ex)
             logger.trace(ex)
+
+
+    def query(self,regex):
+        logger.debug("query regex={}".format(regex))
+
+        results = []
+        try:
+            for element in self.hscan_iter(settings.redis_db, match=regex):
+                #logger.debug("element={}".format(element))
+                str_element = element[1].replace('\'', '\"')
+                try: 
+                    value = json.loads(str_element)
+                except ValueError:
+                    value = str_element
+
+                results.append(value)
+
+            logger.debug("Query found {} results!".format(len(results)))
+            return results
+        except Exception as ex:
+            logger.error("query :: {}".format(ex))
+            logger.trace(ex)
+
             
     def clear_hash(self):
         try:
@@ -60,6 +84,7 @@ class DBManager(Redis):
         except Exception as ex:
             logger.error("Failed to clear redis database")
             logger.trace(ex)
+            
     
     def save_n_exit(self):
         """ To safely exit the opened client """
@@ -69,6 +94,145 @@ class DBManager(Redis):
         except Exception as ex:
             logger.error("Failed to shutdown redis database")
             logger.trace(ex)
+
+
+    def __get_credentials_old(self, client_id, owner_id, channel_id):
+        '''
+            Due to legacy code, this method retrieves credentials stored just by uuid
+        '''
+
+        logger.info("No credentials found w/ new format! Search w/ old format")
+        
+        result = db.get_key(owner_id)
+        if not result:
+            result = db.get_key("/".join([client_id, owner_id]))
+
+        if result:
+            self.set_credentials(result, client_id, owner_id, channel_id)
+
+        return result
+
+
+
+
+    def get_credentials(self, client_id, owner_id, channel_id = None):
+        data = None
+
+        if channel_id:
+            credentials_full_key = "/".join(['credential-clients',client_id, 'owners', owner_id, 'channels', channel_id])
+            data = db.query(credentials_full_key)
+        
+        if not data :
+            credentials_parcial_key = "/".join(['credential-clients',client_id, 'owners', owner_id])
+            data = db.query(credentials_parcial_key)
+
+            if not data :
+                data = [self.__get_credentials_old(client_id, owner_id, channel_id)]
+
+                if not data:
+                    logger.warning("No credentials found!")
+                    return None
+            elif channel_id :
+                self.set_credentials(data[0], client_id, owner_id, channel_id)
+
+
+        credentials = data[0]
+
+        logger.debug("Credentials Found!" )
+        # logger.debug("credentials={}".format(credentials) )
+
+        return credentials
+        
+
+    
+    def set_credentials(self, credentials, client_id, owner_id, channel_id= None):
+        if not client_id or not owner_id :
+            raise Exception("Not enough keys (client or owner missing)")
+        else : 
+            credentials_key = "/".join(['credential-clients',client_id, 'owners', owner_id])
+            if channel_id : 
+                credentials_key = "/".join(['credential-clients',client_id, 'owners', owner_id, 'channels', channel_id])
+
+            db.set_key(credentials_key, credentials)
+
+
+    def get_device_id(self, channel_id):
+        key = "/".join(['device-channels', channel_id])
+        data = db.query(key)
+
+        if not data :
+            logger.info("No device found w/ new format! Search w/ old format")
+            key = channel_id
+            result = db.get_key(key)
+
+            if not result :
+                logger.warning("No device found for channel {}".format(key))
+                return None
+            else:
+                self.set_device_id(channel_id,result, True)
+        else :
+            result = data[0]
+        
+        return result
+
+
+    def set_device_id(self, channel_id, device_id, add_reverse=False):
+        key = "/".join(['device-channels', channel_id])
+        db.set_key(key, device_id)
+
+        if add_reverse:
+            self.set_channel_id(device_id, channel_id)
+
+
+    def get_channel_id(self, device_id):
+        key = "/".join(['channel-devices', device_id])
+        data = db.query(key)
+
+        if not data :
+            logger.info("No channel found w/ new format! Search w/ old format")
+            key = device_id
+            result = db.get_key(key)
+
+            if not result :
+                logger.warning("No channel found for device {}".format(key))
+                return None
+            else:
+                self.set_channel_id(device_id,result, True)
+        else :
+            result = data[0]
+
+        return result
+
+
+    def set_channel_id(self, device_id, channel_id, add_reverse=False):
+        key = "/".join(['channel-devices', device_id])
+        db.set_key(key, channel_id)
+
+        if add_reverse:
+            self.set_device_id(channel_id, device_id)
+
+
+
+    def get_channel_status(self, channel_id):
+        key = "/".join(['status-channels', channel_id])
+
+        data = db.query(key)
+
+        if not data :
+            logger.warning("No status found for channel {}".format(key))
+            return None
+        
+        return data[0]
+
+
+    def set_channel_status(self, channel_id, status):
+        key = "/".join(['status-channels', channel_id])
+        db.set_key(key, status)
+
+
+    def expire(self, key, time):
+        logger.warning("To be implemented!")
+
         
 
 try:

@@ -7,7 +7,7 @@ Internship project of a sdk for python integrations with Muzzley
 
 1. Clone the SDK into a directory named *sdk* in you project folder from,
 
-	    git@bitbucket.org:muzzley/manager-fake-contained.git
+	    git@bitbucket.org:muzzley/manager-sdk-python.git
 
 2. Install the dependencies of SDK from sdk/requiremnts.txt using,
 
@@ -233,15 +233,12 @@ The pre-defined methods that belongs to Skeleton class to support implmentation 
 	* *case* - a dictionary with keys  '*device_id*', '*component*' and '*property*'.
 	* *data* - data to be published.
 ---
->#### **renew_credentials(sender,credentials,rub=False):**
+>#### **renew_credentials(sender,channel_id,sender,credentials):**
 
 * To update credentials in database
     * *channel_id* - channel_id of the device.
     * *credentials* - a dictionary with data to be updated. 
     * *sender*      - a dictionary with keys '*owner_id*' and '*client_id*'.
-    * *rub*         - flag variable , 'False' by default.
-        * if '*True*'  - overwrites entire credentials.
-        * if '*False*' - overwrites specific data in credentials.
 
 ---
 ### Managing Configuration file ##
