@@ -131,8 +131,10 @@ class MqttConnector():
             logger.trace(ex)
 
     def on_publish(self, client, userdata, mid):
+        logger.debug(
+            "\n\n\n\n\n\t\t\t\t\t******************* ON PUBLISH ****************************")
         logger.verbose(
-            "Mqtt - Publish acknowledged by broker, mid("+str(mid)+").")
+            "Mqtt - Publish acknowledged by broker, mid({}) userdata={}.".format(mid, userdata))
 
     def on_disconnect(self, client, userdata, rc):
         if rc != 0:
