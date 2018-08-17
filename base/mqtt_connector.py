@@ -217,8 +217,8 @@ class MqttConnector():
             (rc, mid) = self.mqtt_client.publish(
                 topic=topic, payload=json.dumps(payload))
             if rc == 0:
-                logger.debug("Mqtt - Published successfully, result code("+str(rc)+") and mid("+str(mid)+") to topic:\n".format(topic, json.dumps(payload,
-                                                                                                                                                  indent=4, sort_keys=True)))
+                logger.debug("Mqtt - Published successfully, result code({}) and mid({}) to topic: {} with payload:{}".format(rc, mid, topic, json.dumps(payload,
+                                                                                                                                                         indent=4, sort_keys=True)))
             else:
                 raise Exception(
                     "Mqtt - Failed to publish , result code("+str(rc)+")")
