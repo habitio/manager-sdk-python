@@ -124,7 +124,7 @@ class DBManager(Redis):
                 data = [self.__get_credentials_old(
                     client_id, owner_id, channel_id)]
 
-                logger.vebose("get_credentials Data {}".format(data))
+                logger.verbose("get_credentials Data {}".format(data))
                 if not data:
                     logger.warning("No credentials found!")
                     return None
