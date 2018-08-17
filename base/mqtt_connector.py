@@ -1,11 +1,13 @@
 from base import auth
 from base.settings import settings
 from base.redis_db import db
-import logging, time
+import logging
+import time
 import paho.mqtt.client as paho
 import json
 
 logger = logging.getLogger(__name__)
+
 
 class MqttConnector():
 
@@ -22,17 +24,17 @@ class MqttConnector():
 
     def on_connect(self, client, userdata, flags, rc):
         try:
-            if rc == 0 :
+            if rc == 0:
                 logger.notice("Mqtt - Connected , result code "+str(rc))
-                
+
                 topic = "/"+settings.api_version+"/managers/"+settings.client_id+"/channels/#"
                 logger.notice("Mqtt - Will subscribe to {}".format(topic))
 
-                self.mqtt_client.subscribe(topic,qos=0)
-            elif rc>0 and rc<6 :
+                self.mqtt_client.subscribe(topic, qos=0)
+            elif rc > 0 and rc < 6:
                 rc_list = {
                     0: "Connection successful",
-                    1: "Connection refused - incorrect protocol version" ,
+                    1: "Connection refused - incorrect protocol version",
                     2: "Connection refused - invalid client identifier",
                     3: "Connection refused - server unavailable",
                     4: "Connection refused - bad username or password",
@@ -42,9 +44,10 @@ class MqttConnector():
         except Exception as ex:
             logger.error("Mqtt - "+str(ex))
             exit()
-        
+
     def on_subscribe(self, client, userdata, mid, granted_qos):
-        logger.info("Mqtt - Subscribed , mid("+str(mid)+") qos("+str(granted_qos)+")")
+        logger.info("Mqtt - Subscribed , mid("+str(mid) +
+                    ") qos("+str(granted_qos)+")")
 
     def on_message(self, client, userdata, msg):
         try:
@@ -52,25 +55,27 @@ class MqttConnector():
 
             topic = msg.topic
             payload = json.loads(msg.payload.decode("utf-8"))
-            
-            if "io" in payload and payload["io"] in ("r","w"):
-                if all (k in payload for k in ("on_behalf_of","sender")):
 
-                    logger.debug("\n\n\n\n\n\t\t\t\t\t******************* ON MESSAGE ****************************")
-                    logger.debug("Mqtt - Received on_message "+topic+"  \n"+json.dumps(payload,indent=4,sort_keys=True))
-                    logger.debug("Mqtt - from sender " + payload["sender"] + " on behalf_of " + payload["on_behalf_of"])
-                    
+            if "io" in payload and payload["io"] in ("r", "w"):
+                if all(k in payload for k in ("on_behalf_of", "sender")):
+
+                    logger.debug(
+                        "\n\n\n\n\n\t\t\t\t\t******************* ON MESSAGE ****************************")
+                    logger.debug("Mqtt - Received on_message "+topic +
+                                 "  \n"+json.dumps(payload, indent=4, sort_keys=True))
+
                     parts = str(msg.topic).split('/')
                     device_id = db.get_device_id(parts[5])
                     if not device_id:
-                        logger.warning("Mqtt - channel_id "+parts[5]+" not found in database. ")
+                        logger.warning("Mqtt - channel_id " +
+                                       parts[5]+" not found in database. ")
                         return
 
                     case = {
-                        "device_id" : device_id,
-                        "channel_id" : parts[5],
-                        "component" :parts[7],
-                        "property" :parts[9]
+                        "device_id": device_id,
+                        "channel_id": parts[5],
+                        "component": parts[7],
+                        "property": parts[9]
                     }
 
                     if "data" in payload:
@@ -79,38 +84,45 @@ class MqttConnector():
                         data = None
 
                     sender = {
-                        "client_id" : payload["sender"],
-                        "owner_id" : payload["on_behalf_of"]
+                        "client_id": payload["sender"],
+                        "owner_id": payload["on_behalf_of"]
                     }
 
-                    credentials = db.get_credentials(payload["sender"], payload["on_behalf_of"], case["channel_id"])
+                    credentials = db.get_credentials(
+                        payload["sender"], payload["on_behalf_of"], case["channel_id"])
 
-                    if not credentials :
-                        logger.error("Mqtt - credentials not found in database. ")
+                    if not credentials:
+                        logger.error(
+                            "Mqtt - credentials not found in database. ")
                         return
 
-                    validated_credentials = implementer.access_check(mode='r',case=case,credentials=credentials,sender=sender)
-                    if validated_credentials is not None :
-                        
+                    validated_credentials = implementer.access_check(
+                        mode='r', case=case, credentials=credentials, sender=sender)
+                    if validated_credentials is not None:
+
                         logger.debug("inside the access check")
                         if payload["io"] == "r":
-                            result = implementer.upstream(mode='r',case=case,credentials=validated_credentials,sender=sender,data=data)
+                            result = implementer.upstream(
+                                mode='r', case=case, credentials=validated_credentials, sender=sender, data=data)
                             if result != None:
-                                self.publisher(io="ir",data=result,case=case)
+                                self.publisher(io="ir", data=result, case=case)
                             else:
                                 return
                         elif payload["io"] == "w":
-                            result = implementer.upstream(mode='w',case=case,credentials=validated_credentials,sender=sender,data=data)
+                            result = implementer.upstream(
+                                mode='w', case=case, credentials=validated_credentials, sender=sender, data=data)
                             if result == True:
-                                self.publisher(io="iw",data=data,case=case)
+                                self.publisher(io="iw", data=data, case=case)
                             elif result == False:
                                 return
-                    
+
                     else:
                         case["property"] = settings.access_property
-                        self.publisher(io="ir",data=settings.access_failed_value,case=case)
+                        self.publisher(
+                            io="ir", data=settings.access_failed_value, case=case)
                 else:
-                    logger.error("Mqtt - No 'sender'/'on_behalf_of' in payload")
+                    logger.error(
+                        "Mqtt - No 'sender'/'on_behalf_of' in payload")
                     return
             else:
                 return
@@ -118,8 +130,9 @@ class MqttConnector():
             logger.error("Mqtt - Failed to handle payload.")
             logger.trace(ex)
 
-    def on_publish(self, client, userdata, mid):   
-        logger.debug("Mqtt - Publish acknowledged by broker, mid("+str(mid)+").")
+    def on_publish(self, client, userdata, mid):
+        logger.verbose(
+            "Mqtt - Publish acknowledged by broker, mid("+str(mid)+").")
 
     def on_disconnect(self, client, userdata, rc):
         if rc != 0:
@@ -135,22 +148,25 @@ class MqttConnector():
         try:
             parts = settings.block["mqtt_ep"].split(":")
             schema_mqtt = parts[0]
-            host=parts[1].replace("//","")
+            host = parts[1].replace("//", "")
             port = int(parts[2])
-            
-            self.mqtt_client.username_pw_set(username=settings.client_id,password=settings.block["access_token"])
+
+            self.mqtt_client.username_pw_set(
+                username=settings.client_id, password=settings.block["access_token"])
             try:
-                logger.debug("mqtt_client._ssl = {}".format(self.mqtt_client._ssl))
-                if not self.mqtt_client._ssl and schema_mqtt=="mqtts":
+                logger.debug("mqtt_client._ssl = {}".format(
+                    self.mqtt_client._ssl))
+                if not self.mqtt_client._ssl and schema_mqtt == "mqtts":
                     logger.debug("Will set tls")
                     self.mqtt_client.tls_set(ca_certs=settings.cert_path)
             except Exception as ex:
                 logger.alert("Mqtt - Failed to authenticate SSL certificate")
                 logger.trace(ex)
                 exit()
-            
+
             self.mqtt_client.connect(host, port)
-            logger.debug("Mqtt - Did start connect w/ host:{} and port:{}".format(host, port))
+            logger.debug(
+                "Mqtt - Did start connect w/ host:{} and port:{}".format(host, port))
             try:
                 logger.debug("Mqtt - Will start the loop")
                 self.mqtt_client.loop_start()
@@ -163,7 +179,7 @@ class MqttConnector():
             logger.emergency(ex)
             logger.trace(ex)
             exit()
-        
+
     def publisher(self, io, data, case=None):
         """
         Receives 3 inputs,
@@ -179,35 +195,41 @@ class MqttConnector():
             if data != None:
                 payload["data"] = data
 
-            logger.debug("Mqtt - Case {} and settings.api_version={}".format(case,settings.api_version))
+            logger.debug(
+                "Mqtt - Case {} and settings.api_version={}".format(case, settings.api_version))
 
-            if all (key in case for key in ("device_id","component","property")):
+            if all(key in case for key in ("device_id", "component", "property")):
                 channel_id = db.get_channel_id(case["device_id"])
-                if channel_id is None :
-                    logger.warning("Mqtt - No channel id found for this device")
+                if channel_id is None:
+                    logger.warning(
+                        "Mqtt - No channel id found for this device")
                     return
-                    
-                # logger.debug("Mqtt - Detected channel_id {}".format(channel_id))
-                topic = "/"+settings.api_version+"/channels/"+channel_id+"/components/"+case["component"]+"/properties/"+case["property"]+"/value"
-                # logger.debug("Mqtt - Created a topic {}".format(topic))
+
+                # logger.verbose("Mqtt - Detected channel_id {}".format(channel_id))
+                topic = "/"+settings.api_version+"/channels/"+channel_id+"/components/" + \
+                    case["component"]+"/properties/"+case["property"]+"/value"
+                # logger.verbose("Mqtt - Created a topic {}".format(topic))
             else:
-                logger.warning("Mqtt - Invalid arguements provided to publisher.")
+                logger.warning(
+                    "Mqtt - Invalid arguements provided to publisher.")
                 raise Exception
-                    
-            (rc, mid) = self.mqtt_client.publish(topic=topic,payload=json.dumps(payload))
+
+            (rc, mid) = self.mqtt_client.publish(
+                topic=topic, payload=json.dumps(payload))
             if rc == 0:
-                logger.debug("Mqtt - Published to topic {} with payload {}".format(topic, payload))
-                logger.debug("Mqtt - Published successfully, result code("+str(rc)+") and mid("+str(mid)+").\n"+json.dumps(data,
-                indent=4, sort_keys=True))
+                logger.debug("Mqtt - Published successfully, result code("+str(rc)+") and mid("+str(mid)+") to topic:\n".format(topic, json.dumps(payload,
+                                                                                                                                                  indent=4, sort_keys=True)))
             else:
-                raise Exception("Mqtt - Failed to publish , result code("+str(rc)+")")
+                raise Exception(
+                    "Mqtt - Failed to publish , result code("+str(rc)+")")
         except Exception as ex:
             logger.error("Mqtt - Failed to publish , ex {}".format(ex))
             logger.trace(ex)
 
     def mqtt_decongif(self):
-        try :
-            self.mqtt_client.unsubscribe("/"+settings.api_version+"/managers/"+settings.client_id+"/channels/#")
+        try:
+            self.mqtt_client.unsubscribe(
+                "/"+settings.api_version+"/managers/"+settings.client_id+"/channels/#")
             self.mqtt_client.loop_stop()
             self.mqtt_client.disconnect()
             self.mqtt_client.disable_logger()
@@ -215,5 +237,6 @@ class MqttConnector():
             logger.error("Mqtt - Failed to de-configure connection ")
             logger.trace(ex)
             exit()
+
 
 mqtt = MqttConnector()
