@@ -121,13 +121,14 @@ class DBManager(Redis):
             data = db.query(credentials_parcial_key)
 
             if not data:
-                data = [self.__get_credentials_old(
-                    client_id, owner_id, channel_id)]
+                data = self.__get_credentials_old(
+                    client_id, owner_id, channel_id)
 
-                logger.verbose("get_credentials Data {}".format(data))
                 if not data:
                     logger.warning("No credentials found!")
                     return None
+                else:
+                    data = [data]
             elif channel_id:
                 self.set_credentials(data[0], client_id, owner_id, channel_id)
 
