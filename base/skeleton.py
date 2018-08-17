@@ -14,6 +14,13 @@ logger = logging.getLogger(__name__)
 class Skeleton(ABC):
 
     @abstractmethod
+    def start(self):
+        """
+        Initial setup
+        """
+        pass
+
+    @abstractmethod
     def auth_requests(self):
         """
         *** MANDATORY ***
@@ -38,9 +45,9 @@ class Skeleton(ABC):
         its position denotes the order of request.
         """
         pass
-        
+
     @abstractmethod
-    def auth_response(self,response_data):
+    def auth_response(self, response_data):
         """
         *** MANDATORY ***
         Receives the response from manufacturer's API after authrorization.
@@ -49,9 +56,9 @@ class Skeleton(ABC):
         returns None if no persistance required after analyzing.
         """
         pass
-    
+
     @abstractmethod
-    def get_devices(self,sender,credentials):
+    def get_devices(self, sender, credentials):
         """
         *** MANDATORY ***
         Receives,
@@ -75,7 +82,7 @@ class Skeleton(ABC):
         pass
 
     @abstractmethod
-    def did_pair_devices(self,credentials,sender,paired_devices):
+    def did_pair_devices(self, credentials, sender, paired_devices):
         """
         *** MANDATORY ***
         Invoked after successful device pairing.
@@ -90,7 +97,7 @@ class Skeleton(ABC):
         pass
 
     @abstractmethod
-    def access_check(self,mode,case,credentials,sender):
+    def access_check(self, mode, case, credentials, sender):
         """
         *** MANDATORY ***
         Checks if there is access to read from/write to a component.
@@ -103,13 +110,13 @@ class Skeleton(ABC):
             credentials - credentials of user from database
             sender      - A dictionary with keys 'owner_id' and 
                         'client_id'.
-        
+
         Returns updated valid credentials or current one  or None if no access
         """
         pass
 
     @abstractmethod
-    def upstream(self,mode,case,credentials,sender,data=None):
+    def upstream(self, mode, case, credentials, sender, data=None):
         """
         *** MANDATORY ***
         Invoked when Muzzley platform intends to communicate with manufacturer's api
@@ -136,12 +143,12 @@ class Skeleton(ABC):
         pass
 
     @abstractmethod
-    def downstream(self,request):
+    def downstream(self, request):
         """
         *** MANDATORY ***
         Invoked when manufacturer's api intends to communicate with Muzzley's platform
         to update device's information.
-        
+
         Receives,
             request - A flask.request object received from manufacturer's API.
 
@@ -150,11 +157,11 @@ class Skeleton(ABC):
                    otherwise if None is returned for case, then NO data will be send to muzzley
             data - Any data that has to be send to Muzzley's platform
 
-        
+
         """
         pass
-    
-    def get_channel_template(self,channel_id):
+
+    def get_channel_template(self, channel_id):
         """
         Input : 
             channel_id - channel_id of the device.
@@ -166,33 +173,32 @@ class Skeleton(ABC):
         url = settings.api_server_full+"/channels/"+str(channel_id)
         headers = {
             "Authorization": "Bearer {0}".format(settings.block["access_token"])
-        } 
-        try :
+        }
+        try:
             # logger.debug("Initiated GET"+" - "+url)
             # logger.debug("\n"+json.dumps(params,indent=4,sort_keys=True)+"\n")
 
-            resp = requests.get(url,headers=headers)
+            resp = requests.get(url, headers=headers)
 
-            logger.verbose("Received response code["+str(resp.status_code)+"]") 
+            logger.verbose("Received response code["+str(resp.status_code)+"]")
             if int(resp.status_code) == 200:
                 # logger.debug("\n"+json.dumps(resp.json(),indent=4,sort_keys=True)+"\n")
                 return resp.json()["channeltemplate_id"]
-                
+
             else:
                 raise Exception("Failed to retrieve channel_template_id")
         except Exception as ex:
             logger.debug("\n{}\n".format(resp))
             logger.trace(str(ex))
-    
-    def get_device_id(self,channel_id):
+
+    def get_device_id(self, channel_id):
         """
         To retrieve device_id using channel_id
 
         """
         return db.get_device_id(channel_id)
 
-
-    def get_channel_id(self,device_id):
+    def get_channel_id(self, device_id):
         """
         To retrieve channel_id using device_id
 
@@ -206,33 +212,33 @@ class Skeleton(ABC):
         """
         db.set_channel_status(channel_id, status)
 
-    def store(self,key,value):
+    def store(self, key, value):
         """
         To store a value to database with a unique identifier called key
 
         """
-        db.set_key(key,value)
+        db.set_key(key, value)
 
-    def retrieve(self,key):
+    def retrieve(self, key):
         """
         To retireve a value from database with its unique identifier, key.
 
         """
         return db.get_key(key)
 
-    def exists(self,key):
+    def exists(self, key):
         """
         To check if a key is already present in database.
 
         """
         return db.has_key(key)
 
-    def log(self,message,level):
+    def log(self, message, level):
         """
         To log a message to log file 
             message - message to be logged.
             level   - denotes the logging priority. The level-priority relation given below,
-                
+
                 priority    -level
                 ------------------
                 emergency   = 0,
@@ -246,7 +252,7 @@ class Skeleton(ABC):
                 trace       = 8,
                 verbose     = 9
         """
-        log_table =  {
+        log_table = {
             "0": logger.emergency,
             "1": logger.alert,
             "2": logger.critical,
@@ -267,16 +273,16 @@ class Skeleton(ABC):
         """
         return settings.get_config()
 
-    def publisher(self,case,data):
+    def publisher(self, case, data):
         """
         To make an mqtt publish
             case - a dictionary with keys  'device_id', 'component' and 'property'
             data - data to be published
         """
         logger.debug("Will publisher to mqtt")
-        mqtt.publisher(io="iw",data=data,case=case)
-        
-    def renew_credentials(self,channel_id,sender,credentials):
+        mqtt.publisher(io="iw", data=data, case=case)
+
+    def renew_credentials(self, channel_id, sender, credentials):
         """
         To update credentials in database
             channel_id - channel_id of the device.
@@ -285,8 +291,8 @@ class Skeleton(ABC):
                         'client_id'.
         """
         try:
-            db.set_credentials(credentials, sender["client_id"], sender["owner_id"], channel_id)
+            db.set_credentials(
+                credentials, sender["client_id"], sender["owner_id"], channel_id)
             logger.info("Credentials successfully renewed !")
         except Exception as ex:
             logger.error("Renew credentials failed!!! \n"+str(ex))
-

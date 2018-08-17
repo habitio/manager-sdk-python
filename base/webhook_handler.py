@@ -43,6 +43,8 @@ class WebhookHub:
                 logger.notice("Confirmation Hash received!")
             else :
                 raise Exception
+
+            self.implementer.start()
         except Exception as ex:
             logger.alert("Failed to get confirmation hash! \n"+json.dumps(resp.json(),indent=4,sort_keys=True)+"\n")
             exit()
