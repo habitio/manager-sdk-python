@@ -111,31 +111,33 @@ class DBManager(Redis):
         data = None
 
         if channel_id:
-            credentials_full_key = "/".join(
+            credentials_key = "/".join(
                 ['credential-clients', client_id, 'owners', owner_id, 'channels', channel_id])
-            data = db.query(credentials_full_key)
+            data = db.query(credentials_key)
+            if not data:
+                credentials_key = "/".join(
+                    ['credential-owners', owner_id, 'channels', channel_id])
+                data = db.query(credentials_key)
 
         if not data:
-            credentials_parcial_key = "/".join(
+            credentials_key = "/".join(
                 ['credential-clients', client_id, 'owners', owner_id])
-            data = db.query(credentials_parcial_key)
-
+            data = db.query(credentials_key)
             if not data:
                 data = self.__get_credentials_old(
                     client_id, owner_id, channel_id)
-
                 if not data:
                     logger.warning("No credentials found!")
                     return None
                 else:
                     data = [data]
             elif channel_id:
-                self.set_credentials(data[0], client_id, owner_id, channel_id)
+                self.set_credentials(data[0], owner_id, channel_id)
 
         credentials = data[0]
 
         logger.debug("Credentials Found!")
-        # logger.debug("credentials={}".format(credentials) )
+        # logger.verbose("credentials={}".format(credentials) )
 
         return credentials
 
@@ -146,8 +148,8 @@ class DBManager(Redis):
             credentials_key = "/".join(['credential-clients',
                                         client_id, 'owners', owner_id])
             if channel_id:
-                credentials_key = "/".join(['credential-clients', client_id,
-                                            'owners', owner_id, 'channels', channel_id])
+                credentials_key = "/".join(['credential-owners',
+                                            owner_id, 'channels', channel_id])
 
             db.set_key(credentials_key, credentials)
 
