@@ -1,10 +1,10 @@
-from base import auth
-from base.settings import settings
-from base.redis_db import db
-import logging
-import time
-import paho.mqtt.client as paho
 import json
+import logging
+
+import paho.mqtt.client as paho
+
+from base.redis_db import db
+from base.settings import settings
 
 logger = logging.getLogger(__name__)
 
@@ -25,9 +25,9 @@ class MqttConnector():
     def on_connect(self, client, userdata, flags, rc):
         try:
             if rc == 0:
-                logger.notice("Mqtt - Connected , result code "+str(rc))
+                logger.notice("Mqtt - Connected , result code " + str(rc))
 
-                topic = "/"+settings.api_version+"/managers/"+settings.client_id+"/channels/#"
+                topic = "/" + settings.api_version + "/managers/" + settings.client_id + "/channels/#"
                 logger.notice("Mqtt - Will subscribe to {}".format(topic))
 
                 self.mqtt_client.subscribe(topic, qos=0)
@@ -42,12 +42,12 @@ class MqttConnector():
                 }
                 raise Exception(rc_list[rc])
         except Exception as ex:
-            logger.error("Mqtt - "+str(ex))
+            logger.error("Mqtt - " + str(ex))
             exit()
 
     def on_subscribe(self, client, userdata, mid, granted_qos):
-        logger.info("Mqtt - Subscribed , mid("+str(mid) +
-                    ") qos("+str(granted_qos)+")")
+        logger.info("Mqtt - Subscribed , mid(" + str(mid) +
+                    ") qos(" + str(granted_qos) + ")")
 
     def on_message(self, client, userdata, msg):
         try:
@@ -61,14 +61,14 @@ class MqttConnector():
 
                     logger.debug(
                         "\n\n\n\n\n\t\t\t\t\t******************* ON MESSAGE ****************************")
-                    logger.debug("Mqtt - Received on_message "+topic +
-                                 "  \n"+json.dumps(payload, indent=4, sort_keys=True))
+                    logger.debug("Mqtt - Received on_message " + topic +
+                                 "  \n" + json.dumps(payload, indent=4, sort_keys=True))
 
                     parts = str(msg.topic).split('/')
                     device_id = db.get_device_id(parts[5])
                     if not device_id:
                         logger.warning("Mqtt - channel_id " +
-                                       parts[5]+" not found in database. ")
+                                       parts[5] + " not found in database. ")
                         return
 
                     case = {
@@ -208,8 +208,8 @@ class MqttConnector():
                     return
 
                 # logger.verbose("Mqtt - Detected channel_id {}".format(channel_id))
-                topic = "/"+settings.api_version+"/channels/"+channel_id+"/components/" + \
-                    case["component"]+"/properties/"+case["property"]+"/value"
+                topic = "/" + settings.api_version + "/channels/" + channel_id + "/components/" + \
+                        case["component"] + "/properties/" + case["property"] + "/value"
                 # logger.verbose("Mqtt - Created a topic {}".format(topic))
             else:
                 logger.warning(
@@ -219,11 +219,17 @@ class MqttConnector():
             (rc, mid) = self.mqtt_client.publish(
                 topic=topic, payload=json.dumps(payload))
             if rc == 0:
-                logger.debug("Mqtt - Published successfully, result code({}) and mid({}) to topic: {} with payload:{}".format(rc, mid, topic, json.dumps(payload,
-                                                                                                                                                         indent=4, sort_keys=True)))
+                logger.debug(
+                    "Mqtt - Published successfully, result code({}) and mid({}) to topic: {} with payload:{}".format(rc,
+                                                                                                                     mid,
+                                                                                                                     topic,
+                                                                                                                     json.dumps(
+                                                                                                                         payload,
+                                                                                                                         indent=4,
+                                                                                                                         sort_keys=True)))
             else:
                 raise Exception(
-                    "Mqtt - Failed to publish , result code("+str(rc)+")")
+                    "Mqtt - Failed to publish , result code(" + str(rc) + ")")
         except Exception as ex:
             logger.error("Mqtt - Failed to publish , ex {}".format(ex))
             logger.trace(ex)
@@ -231,7 +237,7 @@ class MqttConnector():
     def mqtt_decongif(self):
         try:
             self.mqtt_client.unsubscribe(
-                "/"+settings.api_version+"/managers/"+settings.client_id+"/channels/#")
+                "/" + settings.api_version + "/managers/" + settings.client_id + "/channels/#")
             self.mqtt_client.loop_stop()
             self.mqtt_client.disconnect()
             self.mqtt_client.disable_logger()

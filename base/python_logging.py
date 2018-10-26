@@ -1,9 +1,6 @@
-from base.settings import settings
-from os import path, remove
-from datetime import datetime
-import logging
 import logging.handlers
 
+from base.settings import settings
 
 log_levels = {
     "EMERGENCY": ["\x1B[4;31m emergency \x1B[0m ", 109],
