@@ -58,9 +58,13 @@ class WebhookHub:
         try:
             received_hash = request.headers.get("Authorization").replace("Bearer ","")
             if received_hash == self.confirmation_hash :
-
+                sender = {
+                    "channel_template_id":request.headers["X-Channeltemplate-Id"],
+                    "client_id":request.headers["X-Client-Id"],
+                    "owner_id":request.headers["X-Owner-Id"]
+                }
                 data = {
-                    "location" : self.implementer.auth_requests()
+                    "location" : self.implementer.auth_requests(sender=sender)
                 }
                 
                 return Response(
