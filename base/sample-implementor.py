@@ -4,9 +4,17 @@ from base.skeleton import Skeleton
 
 class Implementor(Skeleton):
 
-    def auth_requests(self):
+    def start(self):
+        """
+        Initial setup
+        """
+        pass
+
+    def auth_requests(self, sender):
         """
         *** MANDATORY ***
+        Receives,
+            sender      - A dictionary with keys 'channel_template_id', 'owner_id' and 'client_id'.
         Returns a list of dictionaries with the structure,
         [
             {
@@ -44,8 +52,7 @@ class Implementor(Skeleton):
         ]
 
         return response
-        
-        
+
     def auth_response(self,response_data):
         """
         *** MANDATORY ***
