@@ -45,6 +45,9 @@ The abstract methods are invoked by SDK when required and passes it required dat
 
 * To find the requests involved in performing authorization with a manufacturer.
 
+* Receives ,
+	*  _sender_      - A dictionary with keys '*channel_template_id*', '*owner_id*' and '*client_id*'.
+
 * Returns a list of dictionaries with the structure,
 
 		[
