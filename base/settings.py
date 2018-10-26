@@ -21,6 +21,7 @@ class Settings:
     config_redis = config_boot["redis"]["managers"]
     config_modules = config_boot["modules"]
     config_tls = config_boot["tls"]
+    config_manufacturer = config_boot["manufacturer"]
 
     client_id = config_cred["client_id"]
     client_secret = config_cred["client_secret"]
