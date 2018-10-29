@@ -183,7 +183,7 @@ class WebhookHub:
 
                 channels = []
                 for device in message:
-                    channel_id = db.get_channel_id(device["id"])
+                    channel_id = db.get_channel_id(str(device["id"]))
                     if channel_id:
                         logger.info("Channel already in database")
                         channel = {
