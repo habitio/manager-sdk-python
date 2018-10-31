@@ -65,7 +65,7 @@ class MqttConnector():
                                  "  \n" + json.dumps(payload, indent=4, sort_keys=True))
 
                     parts = str(msg.topic).split('/')
-                    device_id = str(db.get_device_id(parts[5]))
+                    device_id = db.get_device_id(parts[5])
                     if not device_id:
                         logger.warning("Mqtt - channel_id " +
                                        parts[5] + " not found in database. ")
