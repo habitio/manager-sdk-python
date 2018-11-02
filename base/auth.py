@@ -7,6 +7,7 @@ import requests
 from dateutil import parser, tz
 
 from base.settings import settings
+from base.utils import format_response
 
 logger = logging.getLogger(__name__)
 
@@ -26,20 +27,17 @@ def get_access():
     }
     url = settings.auth_url
     try:
-        logger.debug("Initiated POST" + " - " + url)
+        logger.debug("Initiated POST - {}".format(url))
         resp = requests.post(url, data=data)
         if (resp.status_code == 200):
             logger.notice("Manager succesfully Authorized with Muzzley")
             store_info(resp.json())
             start_refresher()
         else:
-            if is_json(resp.text):
-                error_msg = "\n" + json.dumps(resp.json(), indent=4, sort_keys=True) + "\n"
-            else:
-                error_msg = "\n" + resp.text + "\n"
+            error_msg = format_response(resp)
             raise Exception(error_msg)
-    except Exception:
-        logger.alert("Unexpected error during authorization " + error_msg)
+    except Exception as e:
+        logger.alert("Unexpected error during authorization {}".format(e))
         exit()
 
 
@@ -55,7 +53,7 @@ def renew_token():
         "grant_type": settings.grant_type
     }
     try:
-        logger.debug("Initiated POST" + " - " + url)
+        logger.debug("Initiated POST - {}".format(url))
 
         resp = requests.get(url, params=data, headers=header)
         if (resp.status_code == 200):
@@ -63,13 +61,10 @@ def renew_token():
             store_info(resp.json())
             start_refresher()
         else:
-            if is_json(resp.text):
-                error_msg = "\n" + json.dumps(resp.json(), indent=4, sort_keys=True) + "\n"
-            else:
-                error_msg = "\n" + resp.text + "\n"
+            error_msg = format_response(resp)
             raise Exception(error_msg)
-    except Exception:
-        logger.alert("Unexpected error during token renewal" + error_msg)
+    except Exception as e:
+        logger.alert("Unexpected error during token renewal: {}".format(e))
         exit()
 
 
@@ -103,24 +98,8 @@ def clear_cache():
     logger.info("Memory cache cleared for security")
     pass
 
-
-def is_json(myjson):
-    '''
-    A function to check if a string contains a valid json
-    
-    '''
-    try:
-        json_object = json.loads(myjson)
-    except ValueError:
-        return False
-    return True
-
-
 def start_refresher():
-    '''
-    Refreshes the access token 2 days before expiry
-
-    '''
+    """Refreshes the access token 2 days before expiry"""
 
     logger.debug('Starting token refresh thread ...')
     try:
@@ -132,7 +111,7 @@ def start_refresher():
         timer = threading.Timer(refresh_after, renew_token)
         timer.daemon = True
         timer.start()
-    except Exception as ex:
-        logger.critical("Token expiry check - thread failed \n" + ex)
-        logger.trace(ex)
+    except Exception as e:
+        logger.critical("Token expiry check - thread failed \n {}".format(e))
+        logger.trace(e)
         exit()

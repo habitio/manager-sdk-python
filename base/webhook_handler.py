@@ -8,6 +8,7 @@ from base.mqtt_connector import mqtt
 from base.redis_db import db
 from base.settings import settings
 from base.solid import implementer
+from base.utils import format_str
 
 logger = logging.getLogger(__name__)
 
@@ -20,12 +21,12 @@ class WebhookHub:
 
     def webhook_registration(self):
         logger.debug("\n\n\n\t\t\t\t********************** REGISTERING WEBHOOK **************************")
-        full_host = settings.schema_pub + "://" + settings.host_pub
+        full_host = "{}://{}/{}".format(settings.schema_pub, settings.host_pub, settings.api_version)
         data = {
-            "authorize": full_host + "/" + settings.api_version + "/authorize",
-            "receive_token": full_host + "/" + settings.api_version + "/receive_token",
-            "devices_list": full_host + "/" + settings.api_version + "/devices_list",
-            "select_device": full_host + "/" + settings.api_version + "/select_device"
+            "authorize": "{}/authorize".format(full_host),
+            "receive_token": "{}/receive_token".format(full_host),
+            "devices_list": "{}/devices_list".format(full_host),
+            "select_device": "{}/select_device".format(full_host)
         }
 
         headers = {
@@ -34,17 +35,17 @@ class WebhookHub:
         }
         url = settings.webhook_url
         try:
-            logger.debug("Initiated PATCH" + " - " + url)
-            logger.verbose("\n" + json.dumps(data, indent=4, sort_keys=True) + "\n")
+            logger.debug("Initiated PATCH - {}".format(url))
+            logger.verbose(format_str(data, is_json=True))
 
             resp = requests.patch(url, data=json.dumps(data), headers=headers)
 
-            logger.verbose("Received response code[" + str(resp.status_code) + "]")
-            logger.verbose("\n" + json.dumps(resp.json(), indent=4, sort_keys=True) + "\n")
+            logger.verbose("Received response code[{}]".format(resp.status_code))
+            logger.verbose(format_str(resp.json(), is_json=True))
 
             if "confirmation_hash" in resp.json():
                 self.confirmation_hash = resp.json()["confirmation_hash"]
-                print("Confirmation Hash : " + self.confirmation_hash)
+                print("Confirmation Hash : {}".format(self.confirmation_hash))
                 logger.notice("Confirmation Hash received!")
             else:
                 raise Exception
@@ -52,13 +53,13 @@ class WebhookHub:
             self.implementer.start()
         except Exception as ex:
             logger.alert(
-                "Failed to get confirmation hash! \n" + json.dumps(resp.json(), indent=4, sort_keys=True) + "\n")
+                "Failed to get confirmation hash! {}".format(format_str(resp.json(), is_json=True)))
             exit()
 
     # .../authorize Webhook
     def authorize(self, request):
         logger.debug("\n\n\n\n\n\t\t\t\t\t********************** AUTHORIZE **************************")
-        logger.debug("Received " + request.method + " - " + request.path)
+        logger.debug("Received {} - {}".format(request.method, request.path))
         logger.verbose("\n" + str(request.headers))
         try:
             received_hash = request.headers.get("Authorization").replace("Bearer ", "")
@@ -79,9 +80,7 @@ class WebhookHub:
                 )
             else:
                 logger.debug("Provided invalid confirmation hash!")
-                return Response(
-                    status=403
-                )
+                return Response(status=403)
         except Exception as ex:
             logger.error("Couldn't complete processing request \n")
             logger.trace(ex)
@@ -89,7 +88,7 @@ class WebhookHub:
     # .../receive_token Webhook
     def receive_token(self, request):
         logger.debug("\n\n\n\n\n\t\t\t\t\t********************** RECEIVE_TOKEN **************************")
-        logger.debug("Received " + request.method + " - " + request.path)
+        logger.debug("Received {} - {}".format(request.method, request.path))
         logger.verbose("\n" + str(request.headers))
         try:
             received_hash = request.headers.get("Authorization").replace("Bearer ", "")
@@ -97,26 +96,18 @@ class WebhookHub:
                 if request.is_json:
                     received_data = request.get_json()
                 else:
-                    return Response(
-                        status=422
-                    )
+                    return Response(status=422)
 
                 data = self.implementer.auth_response(received_data)
                 if data != None:
                     db.set_credentials(data, request.headers["X-Client-Id"], request.headers["X-Owner-Id"])
-                    return Response(
-                        status=200
-                    )
+                    return Response(status=200)
                 else:
                     logger.warning("No credentials to be stored!")
-                    return Response(
-                        status=401
-                    )
+                    return Response(status=401)
             else:
                 logger.debug("Provided invalid confirmation hash!")
-                return Response(
-                    status=403
-                )
+                return Response(status=403)
         except Exception as ex:
             logger.error("Couldn't complete processing request \n")
             logger.trace(ex)
@@ -124,7 +115,7 @@ class WebhookHub:
     # .../devices_list Webhook
     def devices_list(self, request):
         logger.debug("\n\n\n\n\n\t\t\t\t\t********************** LIST_DEVICES **************************")
-        logger.debug("Received " + request.method + " - " + request.path)
+        logger.debug("Received {} - {}".format(request.method, request.path))
         logger.verbose("\n" + str(request.headers))
         try:
             received_hash = request.headers.get("Authorization").replace("Bearer ", "")
@@ -169,7 +160,7 @@ class WebhookHub:
             received_hash = request.headers.get("Authorization").replace("Bearer ", "")
             if received_hash == self.confirmation_hash:
                 if request.is_json:
-                    logger.verbose("\n" + json.dumps(request.get_json(), indent=4, sort_keys=True))
+                    logger.verbose(format_str(request.get_json(), is_json=True))
                     message = request.get_json()["channels"]
                 else:
                     return Response(
@@ -191,10 +182,10 @@ class WebhookHub:
                         }
 
                         # Validate if still exists on Muzzley
-                        url = settings.api_server_full + "/channels/" + channel["id"]
+                        url = "{}/channels/{}".format(settings.api_server_full, channel["id"])
 
                         resp = requests.get(url, headers=headers, data=None)
-                        logger.verbose("Received response code[" + str(resp.status_code) + "]")
+                        logger.verbose("Received response code[{}]".format(resp.status_code))
                         if int(resp.status_code) not in (200, 201):
                             channel = self.create_channel_id(device)
                         else:
@@ -204,26 +195,24 @@ class WebhookHub:
 
                     # Granting permission to intervenient with id X-Client-Id
 
-                    url = settings.api_server_full + "/channels/" + channel["id"] + "/grant-access"
+                    url = "{}/channels/{}/grant-access".format(settings.api_server_full, channel["id"])
                     try:
                         data = {
                             "client_id": request.headers["X-Client-Id"],
                             "role": "application"
                         }
-                        logger.debug("Initiated POST" + " - " + url)
-                        logger.verbose("\n" + json.dumps(data, indent=4, sort_keys=True) + "\n")
+                        logger.debug("Initiated POST - {}".format(url))
+                        logger.verbose(format_str(data, is_json=True))
 
                         resp1 = requests.post(url, headers=headers, data=json.dumps(data))
 
-                        logger.debug("Received response code[" + str(resp1.status_code) + "]")
+                        logger.debug("Received response code[{}]".format(resp1.status_code))
                         if int(resp1.status_code) not in (201, 200):
-                            logger.debug("\n" + json.dumps(resp1.json(), indent=4, sort_keys=True) + "\n")
+                            logger.debug(format_str(resp1.json(), is_json=True))
                             raise Exception
                     except:
-                        logger.error("Failed to grant access to client " + str(request.headers["X-Client-Id"]))
-                        return Response(
-                            status=400
-                        )
+                        logger.error("Failed to grant access to client {}".format(str(request.headers["X-Client-Id"])))
+                        return Response(status=400)
 
                     # Granting permission to intervenient with id X-Owner-Id
                     try:
@@ -233,20 +222,18 @@ class WebhookHub:
                             "role": "user"
                         }
 
-                        logger.debug("Initiated POST" + " - " + url)
-                        logger.verbose("\n" + json.dumps(data, indent=4, sort_keys=True) + "\n")
+                        logger.debug("Initiated POST - {}".format(url))
+                        logger.verbose(format_str(data, is_json=True))
 
                         resp2 = requests.post(url, headers=headers, data=json.dumps(data))
 
-                        logger.verbose("Received response code[" + str(resp2.status_code) + "]")
+                        logger.verbose("Received response code[{}]".format(resp2.status_code))
                         if int(resp2.status_code) not in (201, 200):
-                            logger.debug("\n" + json.dumps(resp2.json(), indent=4, sort_keys=True) + "\n")
+                            logger.debug(format_str(resp2.json(), is_json=True))
                             raise Exception
                     except:
-                        logger.error("Failed to grant access to owner " + str(request.headers["X-Owner-Id"]))
-                        return Response(
-                            status=400
-                        )
+                        logger.error("Failed to grant access to owner {}".format(request.headers["X-Owner-Id"]))
+                        return Response(status=400)
 
                     channels.append(channel)
 
@@ -292,15 +279,15 @@ class WebhookHub:
             logger.debug("Initiated POST" + " - " + url)
             logger.verbose("\n" + json.dumps(data, indent=4, sort_keys=True) + "\n")
 
-            resp = requests.post(url + "/managers/self/channels", headers=headers, data=json.dumps(data))
+            resp = requests.post("{}/managers/self/channels".format(url), headers=headers, data=json.dumps(data))
 
-            logger.debug("Received response code[" + str(resp.status_code) + "]")
+            logger.debug("Received response code[{}]".format(resp.status_code))
             if int(resp.status_code) != 201:
-                logger.debug("\n" + json.dumps(resp.json(), indent=4, sort_keys=True) + "\n")
+                logger.debug(format_str(resp.json(), is_json=True))
                 raise Exception
         except Exception as ex:
             logger.error(
-                "Failed to create channel for channel template " + str(request.headers["X-Channeltemplate-Id"]))
+                "Failed to create channel for channel template {}".format(request.headers["X-Channeltemplate-Id"]))
             logger.trace(ex)
             return Response(
                 status=400
@@ -316,11 +303,11 @@ class WebhookHub:
     # .../manufacturer Webhook
     def agent(self, request):
         logger.debug("\n\n\n\n\n\t\t\t\t\t*******************MANUFACTURER****************************")
-        logger.debug("Received " + request.method + " - " + request.path)
+        logger.debug("Received {} - {}".format(request.method, request.path))
         logger.verbose("\n" + str(request.headers))
 
         if request.is_json:
-            logger.verbose("\n" + json.dumps(request.get_json(), indent=4, sort_keys=True))
+            logger.verbose(format_str(request.get_json(), is_json=True))
         else:
             logger.verbose("\n" + request.get_data(as_text=True))
 

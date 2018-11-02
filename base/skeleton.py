@@ -167,7 +167,7 @@ class Skeleton(ABC):
 
         """
 
-        url = settings.api_server_full+"/channels/"+str(channel_id)
+        url = "{}/channels/{}".format(settings.api_server_full, channel_id)
         headers = {
             "Authorization": "Bearer {0}".format(settings.block["access_token"])
         }
@@ -176,10 +176,9 @@ class Skeleton(ABC):
             # logger.debug("\n"+json.dumps(params,indent=4,sort_keys=True)+"\n")
 
             resp = requests.get(url, headers=headers)
+            logger.verbose("Received response code[{}]".format(resp.status_code))
 
-            logger.verbose("Received response code["+str(resp.status_code)+"]")
             if int(resp.status_code) == 200:
-                # logger.debug("\n"+json.dumps(resp.json(),indent=4,sort_keys=True)+"\n")
                 return resp.json()["channeltemplate_id"]
 
             else:

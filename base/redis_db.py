@@ -20,7 +20,8 @@ class DBManager(Redis):
         """
         try:
             self.hset(settings.redis_db, key, value)
-            logger.debug(" Key "+str(key)+" added/updated in database")
+
+            logger.debug(" Key {} added/updated in database".format(key))
         except Exception as ex:
             logger.error("Failed to set the key at hash.")
             logger.trace(ex)
@@ -41,14 +42,14 @@ class DBManager(Redis):
         try:
             if self.hexists(settings.redis_db, key):
                 value = self.hget(settings.redis_db, key)
-                logger.debug(" Key "+str(key)+" retrieved from database.")
+                logger.debug(" Key {} retrieved from database.".format(key))
                 try:
                     evaluated_value = ast.literal_eval(value)
                 except Exception as e:
                     evaluated_value = value
                 return evaluated_value
             else:
-                logger.warning("Key "+str(key)+" not found in database.")
+                logger.warning("Key {} not found in database.".format(key))
         except Exception as ex:
             logger.error(ex)
             logger.trace(ex)
@@ -59,7 +60,6 @@ class DBManager(Redis):
         results = []
         try:
             for element in self.hscan_iter(settings.redis_db, match=regex):
-                # logger.debug("element={}".format(element))
                 str_element = element[1].replace('\'', '\"')
                 try:
                     value = json.loads(str_element)
