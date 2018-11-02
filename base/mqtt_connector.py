@@ -70,7 +70,7 @@ class MqttConnector():
                         return
 
                     case = {
-                        "device_id": device_id,
+                        "device_id": str(device_id),
                         "channel_id": parts[5],
                         "component": parts[7],
                         "property": parts[9]
