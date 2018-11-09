@@ -51,6 +51,7 @@ class WebhookHub:
                 raise Exception
 
             self.implementer.start()
+            self.implementer.start_polling()
         except Exception as ex:
             logger.alert(
                 "Failed to get confirmation hash! {}".format(format_str(resp.json(), is_json=True)))

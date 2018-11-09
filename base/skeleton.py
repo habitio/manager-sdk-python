@@ -4,7 +4,8 @@ from base.redis_db import db
 import requests
 import logging
 from base.mqtt_connector import mqtt
-
+from base.polling import PollingManager
+from threading import Thread
 logger = logging.getLogger(__name__)
 
 
@@ -292,3 +293,23 @@ class Skeleton(ABC):
             logger.info("Credentials successfully renewed !")
         except Exception as ex:
             logger.error("Renew credentials failed!!! \n"+str(ex))
+
+    def get_polling_url(self):
+        raise NotImplementedError('polling url NOT DEFINED')
+
+    def start_polling(self):
+        logger.info('**** starting polling ****')
+        try:
+            if settings.config_polling.get('enabled') == True:
+                poll = PollingManager()
+                t = Thread(target=poll.worker, args=[self.get_polling_url()])
+                t.start()
+        except NotImplementedError as e:
+            logger.error(e)
+        except Exception as e:
+            logger.warning(e)
+
+
+
+        
+

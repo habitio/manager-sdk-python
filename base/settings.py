@@ -23,6 +23,7 @@ class Settings:
     config_modules = config_boot["modules"]
     config_tls = config_boot["tls"]
     config_manufacturer = config_boot["manufacturer"]
+    config_polling = config_boot["polling"]
 
     client_id = config_cred["client_id"]
     client_secret = config_cred["client_secret"]
