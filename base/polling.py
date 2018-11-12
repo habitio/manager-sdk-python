@@ -40,7 +40,7 @@ class PollingManager(object):
                 'channel_id': channel_id
             }
         else:
-            logger.warning('Error in request: {}'.format(response.json()))
+            logger.warning('Error in polling request: {}'.format(response.json()))
 
     async def make_requests(self, conf_data: dict):
         logger.info("{} starting {}".format(threading.currentThread().getName(),  datetime.datetime.now()))
@@ -63,7 +63,7 @@ class PollingManager(object):
             ]
             for response in await asyncio.gather(*futures):
                 # send response to webhook ?
-                if response: implementer.downstream(response)
+                if response: implementer.polling(response)
 
         logger.info("{} finishing {}".format(threading.currentThread().getName(),  datetime.datetime.now()))
 

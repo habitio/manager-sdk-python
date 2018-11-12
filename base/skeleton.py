@@ -159,6 +159,18 @@ class Skeleton(ABC):
         """
         pass
 
+    def polling(self, data):
+        """
+        Invoked by the manager itself when performing a polling request to manufacturer's API
+
+        Receives,
+            data - A dictionary with keys 'channel_id' and 'response' where response is a json object
+
+        This function is in charge
+        """
+        raise NotImplementedError('No polling handler implemented')
+
+
     def get_channel_template(self, channel_id):
         """
         Input : 
@@ -314,7 +326,7 @@ class Skeleton(ABC):
             if settings.config_polling.get('enabled') == True:
                 logger.info('**** starting polling ****')
                 poll = PollingManager()
-                t = Thread(target=poll.worker, args=[self.get_polling_conf()])
+                t = Thread(target=poll.worker, args=[self.get_polling_conf()], name="Polling")
                 t.start()
             else:
                 logger.info('**** polling is not enabled ****')
