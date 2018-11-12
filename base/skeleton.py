@@ -294,16 +294,30 @@ class Skeleton(ABC):
         except Exception as ex:
             logger.error("Renew credentials failed!!! \n"+str(ex))
 
-    def get_polling_url(self):
-        raise NotImplementedError('polling url NOT DEFINED')
+    def get_polling_conf(self):
+        """
+        Required configuration if polling is enabled
+        Returns a dictionary
+            url - polling manufacturer url
+            method - HTTP method to use: GET / POST
+            params - URL parameters to append to the URL (used by requests)
+            data - the body to attach to the request (used by requests)
+        """
+        raise NotImplementedError('polling ENABLED but conf NOT DEFINED')
 
     def start_polling(self):
-        logger.info('**** starting polling ****')
+        """
+        If polling is enabled in config file, retrieves conf for polling in implementor
+        :return:
+        """
         try:
             if settings.config_polling.get('enabled') == True:
+                logger.info('**** starting polling ****')
                 poll = PollingManager()
-                t = Thread(target=poll.worker, args=[self.get_polling_url()])
+                t = Thread(target=poll.worker, args=[self.get_polling_conf()])
                 t.start()
+            else:
+                logger.info('**** polling is not enabled ****')
         except NotImplementedError as e:
             logger.error(e)
         except Exception as e:
