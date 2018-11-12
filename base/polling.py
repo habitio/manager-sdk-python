@@ -37,7 +37,8 @@ class PollingManager(object):
         if response.status_code == requests.codes.ok:
             return {
                 'response': response.json(),
-                'channel_id': channel_id
+                'channel_id': channel_id,
+                'credentials': credentials
             }
         else:
             logger.warning('Error in polling request: {}'.format(response.json()))
