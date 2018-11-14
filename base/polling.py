@@ -18,6 +18,25 @@ class PollingManager(object):
         self.client_id = settings.client_id
         self.loop = asyncio.new_event_loop()
 
+
+    def start(self):
+        """
+        If polling is enabled in config file, retrieves conf for polling in implementor
+        :return:
+        """
+        try:
+            from base.solid import implementer
+            if settings.config_polling.get('enabled') == True:
+                logger.info('**** starting polling ****')
+                t = threading.Thread(target=self.worker, args=[implementer.get_polling_conf()], name="Polling")
+                t.start()
+            else:
+                logger.info('**** polling is not enabled ****')
+        except NotImplementedError as e:
+            logger.error(e)
+        except Exception as e:
+            logger.warning(e)
+
     def authorization(self, credentials):
         headers = {
             'Authorization': '{token_type} {access_token}'.format(
@@ -26,6 +45,7 @@ class PollingManager(object):
             'Content-Type': 'application/json'
         }
         return headers
+
 
     def send_request(self, channel_id, method, url, params, data):
         credentials = db.get_credentials(self.client_id, '*', channel_id)
@@ -43,9 +63,10 @@ class PollingManager(object):
         else:
             logger.warning('Error in polling request: {}'.format(response.json()))
 
+
     async def make_requests(self, conf_data: dict):
         logger.info("{} starting {}".format(threading.currentThread().getName(),  datetime.datetime.now()))
-        from base.solid import implementer
+
 
         url = conf_data['url']
         method = conf_data['method']
@@ -53,6 +74,7 @@ class PollingManager(object):
         params = conf_data.get('params')
 
         loop = asyncio.get_event_loop()
+
         with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
             futures = [
                 loop.run_in_executor(
@@ -77,3 +99,10 @@ class PollingManager(object):
             logger.info('new polling request {}'.format(datetime.datetime.now()))
             loop.run_until_complete(self.make_requests(conf_data))
             time.sleep(self.interval)
+
+
+try:
+    poll = PollingManager()
+except Exception as ex:
+    logger.error("Failed start polling manager")
+    logger.trace(ex)

@@ -9,6 +9,7 @@ from base.redis_db import db
 from base.settings import settings
 from base.solid import implementer
 from base.utils import format_str
+from base.polling import poll
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +19,7 @@ class WebhookHub:
     def __init__(self):
         self.confirmation_hash = ""
         self.implementer = implementer
+        self.poll = poll
 
     def webhook_registration(self):
         logger.debug("\n\n\n\t\t\t\t********************** REGISTERING WEBHOOK **************************")
@@ -51,7 +53,7 @@ class WebhookHub:
                 raise Exception
 
             self.implementer.start()
-            self.implementer.start_polling()
+            self.poll.start()
         except Exception as ex:
             logger.alert(
                 "Failed to get confirmation hash! {}".format(format_str(resp.json(), is_json=True)))

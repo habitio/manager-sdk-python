@@ -315,26 +315,5 @@ class Skeleton(ABC):
             data - the body to attach to the request (used by requests)
         """
         raise NotImplementedError('polling ENABLED but conf NOT DEFINED')
-
-    def start_polling(self):
-        """
-        If polling is enabled in config file, retrieves conf for polling in implementor
-        :return:
-        """
-        try:
-            if settings.config_polling.get('enabled') == True:
-                logger.info('**** starting polling ****')
-                poll = PollingManager()
-                t = Thread(target=poll.worker, args=[self.get_polling_conf()], name="Polling")
-                t.start()
-            else:
-                logger.info('**** polling is not enabled ****')
-        except NotImplementedError as e:
-            logger.error(e)
-        except Exception as e:
-            logger.warning(e)
-
-
-
         
 
