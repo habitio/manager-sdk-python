@@ -3,6 +3,7 @@ from base.settings import settings
 from base.redis_db import db
 import requests
 import logging
+import traceback
 from base.mqtt_connector import mqtt
 
 logger = logging.getLogger(__name__)
@@ -172,20 +173,15 @@ class Skeleton(ABC):
             "Authorization": "Bearer {0}".format(settings.block["access_token"])
         }
         try:
-            # logger.debug("Initiated GET"+" - "+url)
-            # logger.debug("\n"+json.dumps(params,indent=4,sort_keys=True)+"\n")
-
             resp = requests.get(url, headers=headers)
             logger.verbose("Received response code[{}]".format(resp.status_code))
 
             if int(resp.status_code) == 200:
                 return resp.json()["channeltemplate_id"]
-
             else:
                 raise Exception("Failed to retrieve channel_template_id")
         except Exception as ex:
-            logger.debug("\n{}\n".format(resp))
-            logger.trace(str(ex))
+            logger.debug("Unexpected error get_channel_template: {}".format(traceback.format_exc(limit=5)))
 
     def get_device_id(self, channel_id):
         """
@@ -291,4 +287,4 @@ class Skeleton(ABC):
                 credentials, sender["client_id"], sender["owner_id"], channel_id)
             logger.info("Credentials successfully renewed !")
         except Exception as ex:
-            logger.error("Renew credentials failed!!! \n"+str(ex))
+            logger.error("Renew credentials failed!!! {}".format(traceback.format_exc(limit=5)))
