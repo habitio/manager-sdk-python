@@ -32,8 +32,7 @@ class Settings:
     api_server = config_cred["server"]  # ex. https://api.platform.integrations.muzzley.com
     api_server_full = api_server + "/" + api_version  # ex. https://api.platform.integrations.muzzley.com/v3
 
-    ## Manager Info
-    # Public
+    # Manager Info Public
     parts = config_http["public"].split("://")
     schema_pub = parts[0]  # ex. https
     host_pub = parts[1]  # ex. fake.integrations.muzzley.com
@@ -54,7 +53,7 @@ class Settings:
     renew_url = api_server_full + "/auth/exchange"
     webhook_url = api_server_full + "/managers/" + client_id
 
-    # Loggging file path
+    # Logging file path
     if "file" in config_log and config_log["file"] == "{log_path}":
         parts = conf_path.split("/")
         log_path = os.path.splitext(parts[len(parts) - 1])[0] + ".log"
@@ -76,7 +75,7 @@ class Settings:
     # Getting TLS related data
     cert_path = config_tls["cert"]
 
-    # Access Property#
+    # Access Property
     access_property = "access"
     access_failed_value = "unreachable"
 
@@ -95,5 +94,5 @@ class Settings:
         return self.config_data
 
 
-# An instanece of Settings class
+# An instance of Settings class
 settings = Settings()

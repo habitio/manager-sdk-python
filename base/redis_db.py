@@ -31,10 +31,7 @@ class DBManager(Redis):
     def has_key(self, key):
         try:
             result = self.hexists(settings.redis_db, key)
-            if result == 1:
-                return True
-            else:
-                return False
+            return result == 1
         except Exception as e:
             logger.error("Failed to check if hash has key. {}".format(traceback.format_exc(limit=5)))
 
@@ -76,7 +73,7 @@ class DBManager(Redis):
     def clear_hash(self):
         try:
             self.delete(settings.redis_db)
-            logger.notice(" Redis database shutdown.")
+            logger.notice("Redis database shutdown.")
         except Exception as e:
             logger.error("Failed to clear redis database, {}".format(traceback.format_exc(limit=5)))
 

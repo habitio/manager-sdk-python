@@ -1,6 +1,9 @@
-import sys, os
+import os
+import sys
+
 sys.path.append(os.path.dirname(__file__) + "/sdk")
 from base.skeleton import Skeleton
+
 
 class Implementor(Skeleton):
 
@@ -19,7 +22,7 @@ class Implementor(Skeleton):
         [
             {
                 "method" : "<get/post>"
-                "url" : "<manufacturer's authrorize API uri and parameters>"
+                "url" : "<manufacturer's authorize API uri and parameters>"
                 "headers" : {}
             },
             ...
@@ -32,39 +35,38 @@ class Implementor(Skeleton):
             "Authorization": "Bearer {client_secret}" 
         }
 
-        Each dictionary in list respresent an individual request to be made to manufacturer's API and
+        Each dictionary in list represent an individual request to be made to manufacturer's API and
         its position denotes the order of request.
-        """ 
-        
-        response =  [
+        """
+
+        response = [
             {
-                "method" : "get",
-                "url" : "<some url>",
-                "headers" : {}
-            }
-            ,
+                "method": "get",
+                "url": "<some url>",
+                "headers": {}
+            },
             {
-                "method" : "post",
-                "url" : "<some url>",
-                "headers" : {},
-                
+                "method": "post",
+                "url": "<some url>",
+                "headers": {},
+
             }
         ]
 
         return response
 
-    def auth_response(self,response_data):
+    def auth_response(self, response_data):
         """
         *** MANDATORY ***
-        Receives the response from manufacturer's API after authrorization.
+        Receives the response from manufacturer's API after authorization.
 
         Returns dictionary of required credentials for persistence, otherwise 
-        returns None if no persistance required after analyzing.
+        returns None if no persistence required after analyzing.
         """
         credentials = response_data
         return credentials
-    
-    def get_devices(self,sender,credentials):
+
+    def get_devices(self, sender, credentials):
         """
         *** MANDATORY ***
         Receives,
@@ -87,23 +89,23 @@ class Implementor(Skeleton):
         """
         data = [
             {
-                "content" : "kitchen fridge",
-                "id" : "9323u2450nwetu"
+                "content": "kitchen fridge",
+                "id": "9323u2450nwetu"
             },
             {
-                "content" : "microwave",
-                "id" : "qiwjfoiasqp34i"
+                "content": "microwave",
+                "id": "qiwjfoiasqp34i"
             }
         ]
 
         return data
 
-    def did_pair_devices(self,credentials,sender,paired_devices):
+    def did_pair_devices(self, credentials, sender, paired_devices):
         """
         *** MANDATORY ***
         Invoked after successful device pairing.
 
-        Receieves,
+        Receives,
             credentials     - All persisted user credentials.
             sender          - A dictionary with keys 'channel_template_id', 'owner_id' and 
                             'client_id'.
@@ -112,7 +114,7 @@ class Implementor(Skeleton):
         """
         pass
 
-    def access_check(self,mode,case,credentials,sender):
+    def access_check(self, mode, case, credentials, sender):
         """
         *** MANDATORY ***
         Checks if there is access to read from/write to a component.
@@ -128,10 +130,10 @@ class Implementor(Skeleton):
         
         Returns updated valid credentials or current one or None if no access 
         """
-        #Checks for access to manufacture for a component
+        # Checks for access to manufacture for a component
         return credentials
 
-    def upstream(self,mode,case,credentials,sender,data=None):
+    def upstream(self, mode, case, credentials, sender, data=None):
         """
         *** MANDATORY ***
         Invoked when Muzzley platform intends to communicate with manufacturer's api
@@ -149,10 +151,10 @@ class Implementor(Skeleton):
 
         Expected Response,
             'r' - mode
-                Returns data on successfull read from manufacturer's API, otherwise
+                Returns data on successful read from manufacturer's API, otherwise
                 returns None.
             'w' - mode
-                Returns True on successfull write to manufacturer's API, otherwise
+                Returns True on successful write to manufacturer's API, otherwise
                 returns False.
         """
 
@@ -161,7 +163,7 @@ class Implementor(Skeleton):
         else:
             return True
 
-    def downstream(self,message):
+    def downstream(self, message):
         """
         *** MANDATORY ***
         Invoked when manufacturer's api intends to communicate with Muzzley's platform

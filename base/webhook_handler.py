@@ -88,7 +88,7 @@ class WebhookHub:
     def receive_token(self, request):
         logger.debug("\n\n\n\n\n\t\t\t\t\t********************** RECEIVE_TOKEN **************************")
         logger.debug("Received {} - {}".format(request.method, request.path))
-        logger.verbose("\n" + str(request.headers))
+        logger.verbose("headers: {}".format(request.headers))
         try:
             received_hash = request.headers.get("Authorization").replace("Bearer ", "")
             if received_hash == self.confirmation_hash:
@@ -114,7 +114,7 @@ class WebhookHub:
     def devices_list(self, request):
         logger.debug("\n\n\n\n\n\t\t\t\t\t********************** LIST_DEVICES **************************")
         logger.debug("Received {} - {}".format(request.method, request.path))
-        logger.verbose("\n" + str(request.headers))
+        logger.verbose("headers: {}".format(request.headers))
         try:
             received_hash = request.headers.get("Authorization").replace("Bearer ", "")
             if received_hash == self.confirmation_hash:
@@ -152,7 +152,7 @@ class WebhookHub:
     def select_device(self, request):
         logger.debug("\n\n\n\n\n\t\t\t\t\t*******************SELECT_DEVICE****************************")
         logger.debug("Received " + request.method + " - " + request.path)
-        logger.verbose("\n" + str(request.headers))
+        logger.verbose("headers: {}".format(request.headers))
         try:
             received_hash = request.headers.get("Authorization").replace("Bearer ", "")
             if received_hash == self.confirmation_hash:
@@ -208,8 +208,10 @@ class WebhookHub:
                             logger.debug(format_str(resp1.json(), is_json=True))
                             raise Exception
                     except:
-                        logger.error("Failed to grant access to client {} {}".format(str(request.headers["X-Client-Id"],
-                                                                                         traceback.format_exc(limit=5))))
+                        logger.error("Failed to grant access to client {} {}".format(
+                            request.headers["X-Client-Id"],
+                            traceback.format_exc(limit=5))
+                        )
                         return Response(status=400)
 
                     # Granting permission to intervenient with id X-Owner-Id

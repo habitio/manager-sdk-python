@@ -181,7 +181,7 @@ class Skeleton(ABC):
             else:
                 raise Exception("Failed to retrieve channel_template_id")
         except Exception as ex:
-            logger.debug("Unexpected error get_channel_template: {}".format(traceback.format_exc(limit=5)))
+            logger.alert("Unexpected error get_channel_template: {}".format(traceback.format_exc(limit=5)))
 
     def get_device_id(self, channel_id):
         """

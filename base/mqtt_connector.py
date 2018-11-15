@@ -30,8 +30,8 @@ class MqttConnector():
                 topic = "/{api_version}/managers/{client_id}/channels/#".format(
                     api_version=settings.api_version, client_id=settings.client_id
                 )
-                logger.notice("Mqtt - Will subscribe to {}".format(topic))
 
+                logger.notice("Mqtt - Will subscribe to {}".format(topic))
                 self.mqtt_client.subscribe(topic, qos=0)
             elif 0 < rc < 6:
                 rc_list = {
@@ -192,8 +192,7 @@ class MqttConnector():
             if all(key in case for key in ("device_id", "component", "property")):
                 channel_id = db.get_channel_id(case["device_id"])
                 if channel_id is None:
-                    logger.warning(
-                        "Mqtt - No channel id found for this device")
+                    logger.warning("Mqtt - No channel id found for this device")
                     return
 
                 topic = "/{api_version}/channels/{channel_id}/components/{component}/properties/{property}/value".format(
@@ -203,7 +202,7 @@ class MqttConnector():
                     property=case["property"]
                 )
             else:
-                logger.warning("Mqtt - Invalid arguements provided to publisher.")
+                logger.warning("Mqtt - Invalid arguments provided to publisher.")
                 raise Exception
 
             (rc, mid) = self.mqtt_client.publish(
@@ -216,7 +215,7 @@ class MqttConnector():
                 raise Exception(
                     "Mqtt - Failed to publish , result code({})".format(rc))
         except Exception as e:
-            logger.error("Mqtt - Failed to publish , ex {}".format(traceback.format_exc(limit=5)))
+            logger.alert("Mqtt - Failed to publish , ex {}".format(traceback.format_exc(limit=5)))
 
     def mqtt_decongif(self):
         try:
