@@ -217,6 +217,9 @@ class DBManager(Redis):
     def expire(self, key, time):
         logger.warning("To be implemented!")
 
+    def get_channels(self, device_id=None):
+        if not device_id : device_id = '*'
+        return list(set(db.query('channel-devices/{}'.format(device_id))))    
 
 try:
     db = DBManager(
