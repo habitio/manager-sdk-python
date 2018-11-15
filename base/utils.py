@@ -13,6 +13,7 @@ def format_response(resp):
         error_msg = format_str(resp.text, is_json=False)
     return error_msg
 
+
 def format_str(str_value, is_json):
     """
     Returns a formatted string with break lines; if is_json True, pretty format the output

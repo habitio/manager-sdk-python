@@ -1,5 +1,6 @@
 import json
 import logging
+import traceback
 
 import paho.mqtt.client as paho
 
@@ -32,7 +33,7 @@ class MqttConnector():
                 logger.notice("Mqtt - Will subscribe to {}".format(topic))
 
                 self.mqtt_client.subscribe(topic, qos=0)
-            elif rc > 0 and rc < 6:
+            elif 0 < rc < 6:
                 rc_list = {
                     0: "Connection successful",
                     1: "Connection refused - incorrect protocol version",
@@ -42,8 +43,8 @@ class MqttConnector():
                     5: "Connection refused - not authorised",
                 }
                 raise Exception(rc_list[rc])
-        except Exception as ex:
-            logger.error("Mqtt - {}".format(ex))
+        except Exception as e:
+            logger.error("Mqtt - {}".format(traceback.format_exc(limit=5)))
             exit()
 
     def on_subscribe(self, client, userdata, mid, granted_qos):
@@ -101,7 +102,7 @@ class MqttConnector():
                         if payload["io"] == "r":
                             result = implementer.upstream(
                                 mode='r', case=case, credentials=validated_credentials, sender=sender, data=data)
-                            if result != None:
+                            if result is not None:
                                 self.publisher(io="ir", data=result, case=case)
                             else:
                                 return
@@ -122,9 +123,8 @@ class MqttConnector():
                     return
             else:
                 return
-        except Exception as ex:
-            logger.error("Mqtt - Failed to handle payload.")
-            logger.trace(ex)
+        except Exception as e:
+            logger.error("Mqtt - Failed to handle payload. {}".format(traceback.format_exc(limit=5)))
 
     def on_publish(self, client, userdata, mid):
         logger.debug("\n\n\n\n\n\t\t\t\t\t******************* ON PUBLISH ****************************")
@@ -154,9 +154,8 @@ class MqttConnector():
                 if not self.mqtt_client._ssl and schema_mqtt == "mqtts":
                     logger.debug("Will set tls")
                     self.mqtt_client.tls_set(ca_certs=settings.cert_path)
-            except Exception as ex:
-                logger.alert("Mqtt - Failed to authenticate SSL certificate")
-                logger.trace(ex)
+            except Exception as e:
+                logger.alert("Mqtt - Failed to authenticate SSL certificate, {}".format(traceback.format_exc(limit=5)))
                 exit()
 
             self.mqtt_client.connect(host, port)
@@ -164,14 +163,12 @@ class MqttConnector():
             try:
                 logger.debug("Mqtt - Will start the loop")
                 self.mqtt_client.loop_start()
-            except Exception as ex:
-                logger.alert("Mqtt - Failed to listen through loop")
-                logger.trace(ex)
+            except Exception as e:
+                logger.alert("Mqtt - Failed to listen through loop, {} ".format(traceback.format_exc(limit=5)))
                 exit()
 
-        except Exception as ex:
-            logger.emergency(ex)
-            logger.trace(ex)
+        except Exception as e:
+            logger.emergency("Unexpected error: {}".format(e, traceback.format_exc(limit=5)))
             exit()
 
     def publisher(self, io, data, case=None):
@@ -218,9 +215,8 @@ class MqttConnector():
             else:
                 raise Exception(
                     "Mqtt - Failed to publish , result code({})".format(rc))
-        except Exception as ex:
-            logger.error("Mqtt - Failed to publish , ex {}".format(ex))
-            logger.trace(ex)
+        except Exception as e:
+            logger.error("Mqtt - Failed to publish , ex {}".format(traceback.format_exc(limit=5)))
 
     def mqtt_decongif(self):
         try:
@@ -229,9 +225,8 @@ class MqttConnector():
             self.mqtt_client.loop_stop()
             self.mqtt_client.disconnect()
             self.mqtt_client.disable_logger()
-        except Exception as ex:
-            logger.error("Mqtt - Failed to de-configure connection")
-            logger.trace(ex)
+        except Exception as e:
+            logger.error("Mqtt - Failed to de-configure connection {}".format(traceback.format_exc(limit=5)))
             exit()
 
 

@@ -27,7 +27,7 @@ class Skeleton(ABC):
         [
             {
                 "method" : "<get/post>"
-                "url" : "<manufacturer's authrorize API uri and parameters>"
+                "url" : "<manufacturer's authorize API uri and parameters>"
                 "headers" : {}
             },
             ...
@@ -40,7 +40,7 @@ class Skeleton(ABC):
             "Authorization": "Bearer {client_secret}" 
         }
 
-        Each dictionary in list respresent an individual request to be made to manufacturer's API and
+        Each dictionary in list represent an individual request to be made to manufacturer's API and
         its position denotes the order of request.
         """
         pass
@@ -49,10 +49,10 @@ class Skeleton(ABC):
     def auth_response(self, response_data):
         """
         *** MANDATORY ***
-        Receives the response from manufacturer's API after authrorization.
+        Receives the response from manufacturer's API after authorization.
 
         Returns dictionary of required credentials for persistence, otherwise 
-        returns None if no persistance required after analyzing.
+        returns None if no persistence required after analyzing.
         """
         pass
 

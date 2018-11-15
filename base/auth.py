@@ -1,6 +1,6 @@
-import json
 import logging
 import threading
+import traceback
 from datetime import datetime
 
 import requests
@@ -13,11 +13,11 @@ logger = logging.getLogger(__name__)
 
 
 def get_access():
-    '''
+    """
     To send authorization request with 0Auth2.0 to Muzzley platform
 
-    '''
-    logger.verbose("Trying to authroize with Muzzley...")
+    """
+    logger.verbose("Trying to authorize with Muzzley...")
     data = {
         "client_id": settings.client_id,
         "client_secret": settings.client_secret,
@@ -29,7 +29,7 @@ def get_access():
     try:
         logger.debug("Initiated POST - {}".format(url))
         resp = requests.post(url, data=data)
-        if (resp.status_code == 200):
+        if resp.status_code == 200:
             logger.notice("Manager succesfully Authorized with Muzzley")
             store_info(resp.json())
             start_refresher()
@@ -37,7 +37,7 @@ def get_access():
             error_msg = format_response(resp)
             raise Exception(error_msg)
     except Exception as e:
-        logger.alert("Unexpected error during authorization {}".format(e))
+        logger.alert("Unexpected error during authorization {}".format(traceback.format_exc(limit=5)))
         exit()
 
 
@@ -56,7 +56,7 @@ def renew_token():
         logger.debug("Initiated POST - {}".format(url))
 
         resp = requests.get(url, params=data, headers=header)
-        if (resp.status_code == 200):
+        if resp.status_code == 200:
             logger.notice("Manager succesfully performed Token refresh")
             store_info(resp.json())
             start_refresher()
@@ -64,15 +64,15 @@ def renew_token():
             error_msg = format_response(resp)
             raise Exception(error_msg)
     except Exception as e:
-        logger.alert("Unexpected error during token renewal: {}".format(e))
+        logger.alert("Unexpected error during token renewal: {}".format(traceback.format_exc(limit=5)))
         exit()
 
 
 def store_info(resp):
-    '''
+    """
     Stores the response obtained during authorization with Muzzley in base.Settings.block
 
-    '''
+    """
     logger.verbose("Caching authorization response info from Muzzley...")
     if 'access_token' and 'refresh_token' and 'expires' and 'code' and 'endpoints' in resp:
         settings.block['access_token'] = resp['access_token']
@@ -98,6 +98,7 @@ def clear_cache():
     logger.info("Memory cache cleared for security")
     pass
 
+
 def start_refresher():
     """Refreshes the access token 2 days before expiry"""
 
@@ -112,6 +113,6 @@ def start_refresher():
         timer.daemon = True
         timer.start()
     except Exception as e:
-        logger.critical("Token expiry check - thread failed \n {}".format(e))
+        logger.critical("Token expiry check - thread failed {}".format(traceback.format_exc(limit=5)))
         logger.trace(e)
         exit()

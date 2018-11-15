@@ -1,7 +1,8 @@
 import json
 import logging
-import requests
+import traceback
 
+import requests
 from flask import request, Response
 
 from base.mqtt_connector import mqtt
@@ -51,9 +52,8 @@ class WebhookHub:
                 raise Exception
 
             self.implementer.start()
-        except Exception as ex:
-            logger.alert(
-                "Failed to get confirmation hash! {}".format(format_str(resp.json(), is_json=True)))
+        except Exception as e:
+            logger.alert("Failed to get confirmation hash! {}".format(traceback.format_exc(limit=5)))
             exit()
 
     # .../authorize Webhook
@@ -81,9 +81,8 @@ class WebhookHub:
             else:
                 logger.debug("Provided invalid confirmation hash!")
                 return Response(status=403)
-        except Exception as ex:
-            logger.error("Couldn't complete processing request \n")
-            logger.trace(ex)
+        except Exception as e:
+            logger.error("Couldn't complete processing request, {}".format(traceback.format_exc(limit=5)))
 
     # .../receive_token Webhook
     def receive_token(self, request):
@@ -108,9 +107,8 @@ class WebhookHub:
             else:
                 logger.debug("Provided invalid confirmation hash!")
                 return Response(status=403)
-        except Exception as ex:
-            logger.error("Couldn't complete processing request \n")
-            logger.trace(ex)
+        except Exception as e:
+            logger.error("Couldn't complete processing request, {}".format(traceback.format_exc(limit=5)))
 
     # .../devices_list Webhook
     def devices_list(self, request):
@@ -147,9 +145,8 @@ class WebhookHub:
                 return Response(
                     status=403
                 )
-        except Exception as ex:
-            logger.error("Couldn't complete processing request \n")
-            logger.trace(ex)
+        except Exception as e:
+            logger.error("Couldn't complete processing request, {}".format(traceback.format_exc(limit=5)))
 
     # .../select_device Webhook
     def select_device(self, request):
@@ -211,7 +208,8 @@ class WebhookHub:
                             logger.debug(format_str(resp1.json(), is_json=True))
                             raise Exception
                     except:
-                        logger.error("Failed to grant access to client {}".format(str(request.headers["X-Client-Id"])))
+                        logger.error("Failed to grant access to client {} {}".format(str(request.headers["X-Client-Id"],
+                                                                                         traceback.format_exc(limit=5))))
                         return Response(status=400)
 
                     # Granting permission to intervenient with id X-Owner-Id
@@ -232,7 +230,8 @@ class WebhookHub:
                             logger.debug(format_str(resp2.json(), is_json=True))
                             raise Exception
                     except:
-                        logger.error("Failed to grant access to owner {}".format(request.headers["X-Owner-Id"]))
+                        logger.error("Failed to grant access to owner {} {}".format(request.headers["X-Owner-Id"],
+                                                                                    traceback.format_exc(limit=5)))
                         return Response(status=400)
 
                     channels.append(channel)
@@ -259,9 +258,8 @@ class WebhookHub:
                 return Response(
                     status=403
                 )
-        except Exception as ex:
-            logger.error("Couldn't complete processing request \n")
-            logger.trace(ex)
+        except Exception as e:
+            logger.error("Couldn't complete processing request, {}".format(traceback.format_exc(limit=5)))
 
     def create_channel_id(self, device):
         # Creating a new channel for the particular device"s id
@@ -287,8 +285,8 @@ class WebhookHub:
                 raise Exception
         except Exception as ex:
             logger.error(
-                "Failed to create channel for channel template {}".format(request.headers["X-Channeltemplate-Id"]))
-            logger.trace(ex)
+                "Failed to create channel for channel template {} {}".format(request.headers["X-Channeltemplate-Id"],
+                                                                             traceback.format_exc(limit=5)))
             return Response(
                 status=400
             )

@@ -1,10 +1,13 @@
+import traceback
+
 from flask import request, Response, json
+
 from base import auth
 from base import logger
 from base.mqtt_connector import mqtt
-from base.webhook_handler import webhook
 from base.settings import settings
 from base.utils import format_str
+from base.webhook_handler import webhook
 
 
 class Views:
@@ -64,6 +67,6 @@ class Views:
                     logger.debug("Responding with status code[{}]".format(response.status))
                 if response.mimetype == "application/json":
                     logger.verbose(format_str(json.loads(response.response[0])), is_json=True)
-            except:
-                logger.error("Post request logging failed !")
+            except Exception as e:
+                logger.error("Post request logging failed, {}".format(traceback.format_exc(limit=5)))
             return response
