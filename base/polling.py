@@ -9,6 +9,7 @@ import threading
 import datetime
 import logging
 import time
+import traceback
 
 logger = logging.getLogger(__name__)
 
@@ -105,6 +106,5 @@ class PollingManager(object):
 
 try:
     poll = PollingManager()
-except Exception as ex:
-    logger.error("Failed start polling manager")
-    logger.trace(ex)
+except Exception as e:
+    logger.error("Failed start polling manager, {} {}".format(e, traceback.format_exc(limit=5)))
