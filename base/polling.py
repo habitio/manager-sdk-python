@@ -83,11 +83,15 @@ class PollingManager(object):
     @rate_limited(settings.config_polling.get('rate_limit', 1))
     def send_request(self, channel_id, method, url, params, data):
         credentials = db.get_credentials(self.client_id, '*', channel_id)
-        s = requests.Session()
-        req = requests.Request(method,  url, params=params, data=data, headers=self.authorization(credentials))
-        prep = s.prepare_request(req)
-        response = s.send(prep)
 
+        # Validate if token is valid before the request
+        now = int(time.time())
+        token_expiration_date = credentials['expiration_date']
+        if now > token_expiration_date:
+            logger.info("No polling requested, access token has expired {}".format(channel_id))
+            return False
+
+        response = requests.request(method,  url, params=params, data=data, headers=self.authorization(credentials))
         if response.status_code == requests.codes.ok:
             return {
                 'response': response.json(),
@@ -95,7 +99,8 @@ class PollingManager(object):
                 'credentials': credentials
             }
         else:
-            logger.warning('Error in polling request: {}'.format(response.json()))
+            logger.warning('Error in polling request {} {}'.format(channel_id, response.json()))
+            return False
 
 
 try:
