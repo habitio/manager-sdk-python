@@ -66,7 +66,7 @@ class Views:
                 else:
                     logger.debug("Responding with status code[{}]".format(response.status))
                 if response.mimetype == "application/json":
-                    logger.verbose(format_str(json.loads(response.response[0])), is_json=True)
+                    logger.verbose(format_str(json.loads(response.response[0]), is_json=True))
             except Exception as e:
                 logger.error("Post request logging failed, {}".format(traceback.format_exc(limit=5)))
             return response
