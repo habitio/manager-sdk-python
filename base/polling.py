@@ -34,9 +34,9 @@ class PollingManager(object):
             else:
                 logger.info('**** polling is not enabled ****')
         except NotImplementedError as e:
-            logger.error(e)
+            logger.error("NotImplementedError: {}".format(e))
         except Exception as e:
-            logger.warning(e)
+            logger.alert("Unexpected exception: {} {}".format(e, traceback.format_exc(limit=5)))
 
     def authorization(self, credentials):
         headers = {
@@ -76,12 +76,11 @@ class PollingManager(object):
                 for channel_id in db.get_channels()
             ]
             for response in await asyncio.gather(*futures):
-                # send response to webhook ?
                 if response: implementer.polling(response)
 
         logger.info("{} finishing {}".format(threading.currentThread().getName(),  datetime.datetime.now()))
 
-    @rate_limited(settings.config_polling.get('rate_limit', 1))
+    @rate_limited(settings.config_polling.get('rate_limit', 1))  # 1/sec default ?
     def send_request(self, channel_id, method, url, params, data):
         credentials = db.get_credentials(self.client_id, '*', channel_id)
 
@@ -99,9 +98,9 @@ class PollingManager(object):
                 'channel_id': channel_id,
                 'credentials': credentials
             }
-        else:
-            logger.warning('Error in polling request {} {}'.format(channel_id, response.json()))
-            return False
+
+        logger.warning('Error in polling request {} {}'.format(channel_id, response.json()))
+        return False
 
 
 try:
