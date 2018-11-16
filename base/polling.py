@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class PollingManager(object):
 
     def __init__(self):
-        self.interval = settings.config_polling.get('interval')
+        self.interval = settings.config_polling.get('interval', 60)  # default 60 sec.
         self.client_id = settings.client_id
         self.loop = asyncio.new_event_loop()
 
@@ -66,7 +66,7 @@ class PollingManager(object):
 
         loop = asyncio.get_event_loop()
 
-        with concurrent.futures.ThreadPoolExecutor() as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
             futures = [
                 loop.run_in_executor(
                     executor,
@@ -101,7 +101,6 @@ class PollingManager(object):
 
         logger.warning('Error in polling request {} {}'.format(channel_id, response.json()))
         return False
-
 
 try:
     poll = PollingManager()
