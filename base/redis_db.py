@@ -139,6 +139,7 @@ class DBManager(Redis):
         if not client_id or not owner_id:
             raise Exception("Not enough keys (client or owner missing)")
         else:
+            credentials['client_id'] = client_id
             credentials_key = "/".join(['credential-clients',
                                         client_id, 'owners', owner_id])
             if channel_id:
