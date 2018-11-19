@@ -93,15 +93,19 @@ class TokenRefresherManager(object):
             try:
                 client_app_id = credentials['client_id']
             except KeyError:
-                logger.info('Missing client_id for {}'.format(channel_id))
+                logger.info('Missing client_id for {}'.format(key))
                 return
 
             # Validate if token is valid before the request
-            now = int(time.time())
-            token_expiration_date = credentials['expiration_date']
-            if now >= (token_expiration_date - settings.config_refresh.get('token_refresh_interval', DEFAULT_REFRESH_MARGIN)):
-                logger.info("Refreshing token {}".format(channel_id))
+            try:
+                now = int(time.time())
+                token_expiration_date = credentials['expiration_date']
+            except KeyError:
+                logger.info('Missing expiration_date for {}'.format(key))
+                return
 
+            if now >= (token_expiration_date - settings.config_refresh.get('token_refresh_interval', DEFAULT_REFRESH_MARGIN)):
+                logger.info("Refreshing token {}".format(key))
                 manufacturer_client_id = settings.config_manufacturer['credentials'][client_app_id].get('app_id')
 
                 params = {
@@ -113,6 +117,7 @@ class TokenRefresherManager(object):
                 response = requests.request(method,  url, params=params)
                 if response.status_code == requests.codes.ok:
                     new_credentials = self.get_new_expiration_date(response.json())
+                    logger.debug('new credentials {}'.format(key))
                     db.set_credentials(new_credentials, self.client_id, owner_id, channel_id)
                     return new_credentials
                 else:
