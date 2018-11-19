@@ -122,7 +122,7 @@ class TokenRefresherManager(object):
                 if response.status_code == requests.codes.ok:
                     new_credentials = self.get_new_expiration_date(response.json())
                     logger.debug('new credentials {}'.format(key))
-                    db.set_credentials(new_credentials, self.client_id, owner_id, channel_id)
+                    db.set_credentials(new_credentials, client_app_id, owner_id, channel_id)
                     return new_credentials
                 else:
                     logger.warning('Error in refresh token request {} {}'.format(channel_id, response.text))
