@@ -75,7 +75,7 @@ class TokenRefresherManager(object):
         logger.info("{} finishing {}".format(threading.currentThread().getName(),  datetime.datetime.now()))
 
 
-    @rate_limited(settings.config_polling.get('rate_limit', DEFAULT_RATE_LIMIT))
+    @rate_limited(settings.config_refresh.get('rate_limit', DEFAULT_RATE_LIMIT))
     def send_request(self, credentials_dict, method, url):
         try:
             key = credentials_dict['key']  # credential-owners/[owner_id]/channels/[channel_id]
@@ -87,7 +87,7 @@ class TokenRefresherManager(object):
             # Validate if token is valid before the request
             now = int(time.time())
             token_expiration_date = credentials['expiration_date']
-            if now >= (token_expiration_date - settings.config_polling.get('token_refresh_interval', DEFAULT_REFRESH_MARGIN)):
+            if now >= (token_expiration_date - settings.config_refresh.get('token_refresh_interval', DEFAULT_REFRESH_MARGIN)):
                 logger.info("Refreshing token {}".format(channel_id))
 
                 manufacturer_client_id = settings.config_manufacturer['credentials'][client_app_id].get('app_id')
