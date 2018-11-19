@@ -93,7 +93,7 @@ class TokenRefresherManager(object):
             try:
                 client_app_id = credentials['client_id']
             except KeyError:
-                logger.info('Missing client_id for {}'.format(key))
+                logger.debug('Missing client_id for {}'.format(key))
                 return
 
             # Validate if token is valid before the request
@@ -101,7 +101,7 @@ class TokenRefresherManager(object):
                 now = int(time.time())
                 token_expiration_date = credentials['expiration_date']
             except KeyError:
-                logger.info('Missing expiration_date for {}'.format(key))
+                logger.debug('Missing expiration_date for {}'.format(key))
                 return
 
             if now >= (token_expiration_date - settings.config_refresh.get('token_refresh_interval', DEFAULT_REFRESH_MARGIN)):
@@ -122,6 +122,8 @@ class TokenRefresherManager(object):
                     return new_credentials
                 else:
                     logger.warning('Error in refresh token request {} {}'.format(channel_id, response.text))
+            else:
+                logger.debug("access token hasn't expired yet {}".format(key))
         except Exception:
             logger.error('Unexpected error on send_request for refresh token, {}'.format(traceback.format_exc(limit=5)))
 
