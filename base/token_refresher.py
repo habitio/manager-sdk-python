@@ -70,10 +70,18 @@ class TokenRefresherManager(object):
                 for credentials in self.get_credential_list()
             ]
             for response in await asyncio.gather(*futures):
-                logger.info(response)
+                if response: logger.info(response)
 
         logger.info("{} finishing {}".format(threading.currentThread().getName(),  datetime.datetime.now()))
 
+    def get_new_expiration_date(self, credentials):
+        now = int(time.time())
+        token_refresh_interval = settings.config_refresh.get('token_refresh_interval', DEFAULT_REFRESH_MARGIN)
+        expires_in = int(credentials['expires_in']) - token_refresh_interval
+        expiration_date = now + expires_in
+        credentials['expiration_date'] = expiration_date
+
+        return credentials
 
     @rate_limited(settings.config_refresh.get('rate_limit', DEFAULT_RATE_LIMIT))
     def send_request(self, credentials_dict, method, url):
@@ -95,19 +103,18 @@ class TokenRefresherManager(object):
                 logger.info("Refreshing token {}".format(channel_id))
 
                 manufacturer_client_id = settings.config_manufacturer['credentials'][client_app_id].get('app_id')
-                manufacturer_client_secret = settings.config_manufacturer['credentials'][client_app_id].get('app_secret')
 
                 params = {
                     'grant_type': 'refresh_token',
                     'refresh_token': credentials['refresh_token'],
-                    'client_id': manufacturer_client_id,
-                    'client_secret': manufacturer_client_secret
+                    'client_id': manufacturer_client_id
                 }
 
                 response = requests.request(method,  url, params=params)
                 if response.status_code == requests.codes.ok:
-                    db.set_credentials(response.json(), self.client_id, owner_id, channel_id)
-                    return response.json()
+                    new_credentials = self.get_new_expiration_date(response.json())
+                    db.set_credentials(new_credentials, self.client_id, owner_id, channel_id)
+                    return new_credentials
                 else:
                     logger.warning('Error in refresh token request {} {}'.format(channel_id, response.text))
         except Exception:
