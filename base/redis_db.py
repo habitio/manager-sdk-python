@@ -70,6 +70,28 @@ class DBManager(Redis):
         except Exception as e:
             logger.error("query :: {}".format(e, traceback.format_exc(limit=5)))
 
+    def full_query(self, regex):
+        logger.debug("full query regex={}".format(regex))
+
+        results = []
+        try:
+            for element in self.hscan_iter(settings.redis_db, match=regex):
+                str_element = element[1].replace('\'', '\"')
+                try:
+                    value = json.loads(str_element)
+                except ValueError:
+                    value = str_element
+
+                results.append({
+                    'key': element[0],
+                    'value': value
+                })
+
+            logger.debug("Full Query found {} results!".format(len(results)))
+            return results
+        except Exception as e:
+            logger.error("full query :: {}".format(e, traceback.format_exc(limit=5)))
+
     def clear_hash(self):
         try:
             self.delete(settings.redis_db)
