@@ -57,6 +57,7 @@ class PollingManager(object):
             time.sleep(self.interval)
 
     async def make_requests(self, conf_data: dict):
+        from base.solid import implementer
         logger.info("{} starting {}".format(threading.currentThread().getName(),  datetime.datetime.now()))
 
         url = conf_data['url']
