@@ -67,7 +67,7 @@ class TokenRefresherManager(object):
                     self.send_request,
                     credentials, method, url
                 )
-                for credentials in db.get_credential_list()
+                for credentials in self.get_credential_list()
             ]
             for response in await asyncio.gather(*futures):
                 logger.info(response)
@@ -107,11 +107,7 @@ class TokenRefresherManager(object):
                 response = requests.request(method,  url, params=params)
                 if response.status_code == requests.codes.ok:
                     db.set_credentials(response.json(), self.client_id, owner_id, channel_id)
-                    return {
-                        'response': response.json(),
-                        'channel_id': channel_id,
-                        'credentials': credentials
-                    }
+                    return response.json()
                 else:
                     logger.warning('Error in refresh token request {} {}'.format(channel_id, response.text))
         except Exception:
