@@ -114,6 +114,6 @@ class TokenRefresherManager(object):
             logger.error('Unexpected error on send_request for refresh token, {}'.format(traceback.format_exc(limit=5)))
 
 try:
-    poll = TokenRefresherManager()
+    refresher = TokenRefresherManager()
 except Exception as e:
     logger.error("Failed start TokenRefresher manager, {} {}".format(e, traceback.format_exc(limit=5)))
