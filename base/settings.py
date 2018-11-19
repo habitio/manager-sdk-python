@@ -24,6 +24,7 @@ class Settings:
     config_tls = config_boot["tls"]
     config_manufacturer = config_boot["manufacturer"]
     config_polling = config_boot.get("polling", {})
+    config_refresh = config_boot.get("token_refresher", {})
 
     client_id = config_cred["client_id"]
     client_secret = config_cred["client_secret"]
