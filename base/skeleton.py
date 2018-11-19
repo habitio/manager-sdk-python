@@ -313,3 +313,13 @@ class Skeleton(ABC):
         """
         raise NotImplementedError('polling ENABLED but conf NOT DEFINED')
 
+
+    def get_refresh_token_conf(self):
+        """
+        Required configuration if token refresher is enabled
+        Returns a dictionary
+            url - token refresh manufacturer url
+            method - HTTP method to use: GET / POST
+        """
+        raise NotImplementedError('token refresher ENABLED but conf NOT DEFINED')
+
