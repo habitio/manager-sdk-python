@@ -3,6 +3,7 @@ import concurrent
 from base.redis_db import db
 from base.settings import settings
 from base.utils import rate_limited
+from base.constants import DEFAULT_POLLING_INTERVAL, DEFAULT_RATE_LIMIT, DEFAULT_THREAD_MAX_WORKERS
 import asyncio
 import requests
 import threading
@@ -16,14 +17,13 @@ logger = logging.getLogger(__name__)
 class PollingManager(object):
 
     def __init__(self):
-        self.interval = settings.config_polling.get('interval', 60)  # default 60 sec.
+        self.interval = settings.config_polling.get('interval', DEFAULT_POLLING_INTERVAL)  # default 60 sec.
         self.client_id = settings.client_id
         self.loop = asyncio.new_event_loop()
 
     def start(self):
         """
         If polling is enabled in config file, retrieves conf for polling in implementor
-        :return:
         """
         try:
             from base.solid import implementer
@@ -66,7 +66,7 @@ class PollingManager(object):
 
         loop = asyncio.get_event_loop()
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=DEFAULT_THREAD_MAX_WORKERS) as executor:
             futures = [
                 loop.run_in_executor(
                     executor,
@@ -80,7 +80,7 @@ class PollingManager(object):
 
         logger.info("{} finishing {}".format(threading.currentThread().getName(),  datetime.datetime.now()))
 
-    @rate_limited(settings.config_polling.get('rate_limit', 1))  # 1/sec default ?
+    @rate_limited(settings.config_polling.get('rate_limit', DEFAULT_RATE_LIMIT))
     def send_request(self, channel_id, method, url, params, data):
         credentials = db.get_credentials(self.client_id, '*', channel_id)
 
