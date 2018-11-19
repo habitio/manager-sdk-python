@@ -82,7 +82,11 @@ class TokenRefresherManager(object):
             channel_id = key.split('/')[-1]
             owner_id = key.split('/')[1]
             credentials = credentials_dict['value']
-            client_app_id = credentials['client_id']
+            try:
+                client_app_id = credentials['client_id']
+            except KeyError:
+                logger.info('Missing client_id for {}'.format(channel_id))
+                return
 
             # Validate if token is valid before the request
             now = int(time.time())
@@ -109,7 +113,7 @@ class TokenRefresherManager(object):
                         'credentials': credentials
                     }
                 else:
-                    logger.warning('Error in refresh token request {} {}'.format(channel_id, response.json()))
+                    logger.warning('Error in refresh token request {} {}'.format(channel_id, response.text))
         except Exception:
             logger.error('Unexpected error on send_request for refresh token, {}'.format(traceback.format_exc(limit=5)))
 
