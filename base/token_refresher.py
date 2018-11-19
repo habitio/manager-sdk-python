@@ -106,7 +106,11 @@ class TokenRefresherManager(object):
 
             if now >= (token_expiration_date - settings.config_refresh.get('token_refresh_interval', DEFAULT_REFRESH_MARGIN)):
                 logger.info("Refreshing token {}".format(key))
-                manufacturer_client_id = settings.config_manufacturer['credentials'][client_app_id].get('app_id')
+                try:
+                    manufacturer_client_id = settings.config_manufacturer['credentials'][client_app_id].get('app_id')
+                except KeyError:
+                    logger.debug('Credentials not found for for {}'.format(client_app_id))
+                    return
 
                 params = {
                     'grant_type': 'refresh_token',
