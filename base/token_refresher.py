@@ -3,7 +3,7 @@ import concurrent
 from base.redis_db import db
 from base.settings import settings
 from base.utils import rate_limited
-from base.constants import DEFAULT_REFRESH_INTERVAL, DEFAULT_RATE_LIMIT, DEFAULT_THREAD_MAX_WORKERS, DEFAULT_REFRESH_MARGIN
+from base.constants import DEFAULT_REFRESH_INTERVAL, DEFAULT_RATE_LIMIT, DEFAULT_THREAD_MAX_WORKERS, DEFAULT_BEFORE_EXPIRES
 import asyncio
 import requests
 import threading
