@@ -20,6 +20,7 @@ class TokenRefresherManager(object):
         self.interval = settings.config_refresh.get('interval_seconds', DEFAULT_REFRESH_INTERVAL)  # default 60 sec.
         self.client_id = settings.client_id
         self.loop = asyncio.new_event_loop()
+        self.before_expires = settings.config_refresh.get('before_expires_seconds', DEFAULT_BEFORE_EXPIRES)
 
     def start(self):
         """
@@ -76,8 +77,7 @@ class TokenRefresherManager(object):
 
     def get_new_expiration_date(self, credentials):
         now = int(time.time())
-        token_refresh_interval = settings.config_refresh.get('before_expires_seconds', DEFAULT_BEFORE_EXPIRES)
-        expires_in = int(credentials['expires_in']) - token_refresh_interval
+        expires_in = int(credentials['expires_in']) - self.before_expires
         expiration_date = now + expires_in
         credentials['expiration_date'] = expiration_date
 
@@ -104,7 +104,7 @@ class TokenRefresherManager(object):
                 logger.debug('Missing expiration_date for {}'.format(key))
                 return
 
-            if now >= (token_expiration_date - settings.config_refresh.get('token_refresh_interval', DEFAULT_REFRESH_MARGIN)):
+            if now >= (token_expiration_date - self.before_expires):
                 logger.info("Refreshing token {}".format(key))
                 try:
                     manufacturer_client_id = settings.config_manufacturer['credentials'][client_app_id].get('app_id')
