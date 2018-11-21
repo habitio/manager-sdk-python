@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 class PollingManager(object):
 
     def __init__(self):
-        self.interval = settings.config_polling.get('interval', DEFAULT_POLLING_INTERVAL)  # default 60 sec.
+        self.interval = settings.config_polling.get('interval_seconds', DEFAULT_POLLING_INTERVAL)  # default 60 sec.
         self.client_id = settings.client_id
         self.loop = asyncio.new_event_loop()
 
@@ -57,6 +57,7 @@ class PollingManager(object):
             time.sleep(self.interval)
 
     async def make_requests(self, conf_data: dict):
+        from base.solid import implementer
         logger.info("{} starting {}".format(threading.currentThread().getName(),  datetime.datetime.now()))
 
         url = conf_data['url']
