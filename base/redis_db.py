@@ -237,21 +237,6 @@ class DBManager(Redis):
         key = "/".join(['status-channels', channel_id])
         db.set_key(key, status)
 
-    def get_channel_properties(self, channel_id):
-        key = "/".join(['channel-properties', channel_id])
-
-        data = db.query(key)
-
-        if not data:
-            logger.warning("No properties found for channel {}".format(key))
-            return None
-
-        return data[0]
-
-    def set_channel_properties(self, channel_id, properties):
-        key = "/".join(['channel-properties', channel_id])
-        db.set_key(key, properties)
-
     def expire(self, key, time):
         logger.warning("To be implemented!")
 

@@ -71,7 +71,7 @@ class TokenRefresherManager(object):
                 for credentials in self.get_credential_list()
             ]
             for response in await asyncio.gather(*futures):
-                if response: logger.debug(response)
+                if response: logger.info(response)
 
         logger.info("{} finishing {}".format(threading.currentThread().getName(),  datetime.datetime.now()))
 
