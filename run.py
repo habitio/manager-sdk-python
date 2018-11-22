@@ -1,8 +1,7 @@
-from base.settings import settings
-from base import logger
 from flask import Flask
-from flask_mqtt import Mqtt
 
+from base import logger
+from base.settings import settings
 
 # Flask App
 logger.verbose("Creating Flask Object...")

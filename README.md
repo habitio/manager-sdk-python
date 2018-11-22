@@ -17,7 +17,7 @@ Internship project of a sdk for python integrations with Muzzley
 
 ---
 
-## Intergration with SDK ##
+## Integration with SDK ##
 
 * To integrate with SDK, your manager must implement the abstract class Skeleton in sdk/base/skeleton.py. 
 
@@ -45,12 +45,15 @@ The abstract methods are invoked by SDK when required and passes it required dat
 
 * To find the requests involved in performing authorization with a manufacturer.
 
+* Receives ,
+	*  _sender_      - A dictionary with keys '*channel_template_id*', '*owner_id*' and '*client_id*'.
+
 * Returns a list of dictionaries with the structure,
 
 		[
 			{
 			    "method" : "<get/post>",
-			    "url" : "<manufacturer's authrorize API uri and parameters>"
+			    "url" : "<manufacturer's authorize API uri and parameters>"
 			    "headers" : {}
 			},
 		...
@@ -63,7 +66,7 @@ The abstract methods are invoked by SDK when required and passes it required dat
 			"Authorization": "Bearer {client_secret}" 
 		}
 
-* Each dictionary in list respresent an individual request to be made to manufacturer's API and its position denotes the order of request.
+* Each dictionary in list represent an individual request to be made to manufacturer's API and its position denotes the order of request.
 
 ---
 
@@ -121,7 +124,7 @@ The abstract methods are invoked by SDK when required and passes it required dat
 	* *credentials* - credentials of user from database
 	* *sender*      - A dictionary with keys '*owner_id*' and '*client_id*'.
 
-* Returns *False* if no access, otherswise returns *True*.
+* Returns *False* if no access, otherwise returns *True*.
 
 ---
 >#### **upstream(mode,case,credentials,sender,data=None) :**
@@ -139,9 +142,9 @@ The abstract methods are invoked by SDK when required and passes it required dat
 
 * Expected Response,
 	* 'r' - mode
-        Returns data on successfull read from manufacturer's API, otherwise returns *None*.
+        Returns data on successful read from manufacturer's API, otherwise returns *None*.
 	* 'w' - mode
-        Returns *True* on successfull write to manufacturer's API, otherwise returns *False*.
+        Returns *True* on successful write to manufacturer's API, otherwise returns *False*.
 
 ---
 >#### **downstream(request) :**
@@ -157,12 +160,12 @@ The abstract methods are invoked by SDK when required and passes it required dat
 
 
 ### Inbuilt methods###
-The pre-defined methods that belongs to Skeleton class to support implmentation of abstract methods.
+The pre-defined methods that belongs to Skeleton class to support implementation of abstract methods.
 
 >#### **get\_channel\_template(channel_id) :**
 
 * Makes request to Muzzley's platform to find channel_template_id with channel_id.
- 	* *channel_id* - identfier of channel associated to a device.
+ 	* *channel_id* - identifier of channel associated to a device.
  	
 * Returns channel_template_id.
 
@@ -170,7 +173,7 @@ The pre-defined methods that belongs to Skeleton class to support implmentation 
 >#### **get\_device\_id(channel_id) :**
 
 * To retrieve device_id using channel_id
-    * *channel_id* - identfier of channel associated to a device.
+    * *channel_id* - identifier of channel associated to a device.
  	
 * Returns device_id.
 
@@ -178,7 +181,7 @@ The pre-defined methods that belongs to Skeleton class to support implmentation 
 >#### **get\_channel\_id(device_id) :**
 
 * To retrieve channel_id using device_id
-    * *device_id* - unique identfier of device assigned by manufacturer.
+    * *device_id* - unique identifier of device assigned by manufacturer.
  	
 * Returns channel_id.
 
@@ -186,20 +189,20 @@ The pre-defined methods that belongs to Skeleton class to support implmentation 
 >#### **store(key,value) :**
 
 * To store a data in database.
-	* *key* - unique indentifier corresponsing to value.
+	* *key* - unique identifier corresponding to value.
 	* *value* - data to be stored.
 
 ---
 >#### **retrieve(key) :**
 
-* To retireve a data from database with its unique identifier.
-	* *key* - unique indentifier corresponsing to value.
+* To retrieve a data from database with its unique identifier.
+	* *key* - unique identifier corresponding to value.
 
 ---
 >#### **exists(key) :**
 
 * To check if a data is already present in database with its unique identifier.
-	* *key* - unique indentifier corresponsing to value.
+	* *key* - unique identifier corresponding to value.
 	
 ---
 >#### **log(message,level) :**

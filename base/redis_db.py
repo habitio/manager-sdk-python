@@ -1,7 +1,10 @@
-import logging
 import ast
 import json
+import logging
+import traceback
+
 from redis import Redis
+
 from base.settings import settings
 
 logger = logging.getLogger(__name__)
@@ -20,38 +23,33 @@ class DBManager(Redis):
         """
         try:
             self.hset(settings.redis_db, key, value)
-            logger.debug(" Key "+str(key)+" added/updated in database")
-        except Exception as ex:
-            logger.error("Failed to set the key at hash.")
-            logger.trace(ex)
+
+            logger.debug(" Key {} added/updated in database".format(key))
+        except Exception as e:
+            logger.error("Failed to set the key at hash. {}".format(traceback.format_exc(limit=5)))
 
     def has_key(self, key):
         try:
             result = self.hexists(settings.redis_db, key)
-            if result == 1:
-                return True
-            else:
-                return False
-        except Exception as ex:
-            logger.error("Failed to check if hash has key.")
-            logger.trace(ex)
+            return result == 1
+        except Exception as e:
+            logger.error("Failed to check if hash has key. {}".format(traceback.format_exc(limit=5)))
 
     def get_key(self, key):
         """To get a key"s field from hash table"""
         try:
             if self.hexists(settings.redis_db, key):
                 value = self.hget(settings.redis_db, key)
-                logger.debug(" Key "+str(key)+" retrieved from database.")
+                logger.debug(" Key {} retrieved from database.".format(key))
                 try:
                     evaluated_value = ast.literal_eval(value)
                 except Exception as e:
                     evaluated_value = value
                 return evaluated_value
             else:
-                logger.warning("Key "+str(key)+" not found in database.")
-        except Exception as ex:
-            logger.error(ex)
-            logger.trace(ex)
+                logger.warning("Key {} not found in database.".format(key))
+        except Exception as e:
+            logger.error("get_key error, {}".format(traceback.format_exc(limit=5)))
 
     def query(self, regex):
         logger.debug("query regex={}".format(regex))
@@ -59,7 +57,6 @@ class DBManager(Redis):
         results = []
         try:
             for element in self.hscan_iter(settings.redis_db, match=regex):
-                # logger.debug("element={}".format(element))
                 str_element = element[1].replace('\'', '\"')
                 try:
                     value = json.loads(str_element)
@@ -70,26 +67,45 @@ class DBManager(Redis):
 
             logger.debug("Query found {} results!".format(len(results)))
             return results
-        except Exception as ex:
-            logger.error("query :: {}".format(ex))
-            logger.trace(ex)
+        except Exception as e:
+            logger.error("query :: {}".format(e, traceback.format_exc(limit=5)))
+
+    def full_query(self, regex):
+        logger.debug("full query regex={}".format(regex))
+
+        results = []
+        try:
+            for element in self.hscan_iter(settings.redis_db, match=regex):
+                str_element = element[1].replace('\'', '\"')
+                try:
+                    value = json.loads(str_element)
+                except ValueError:
+                    value = str_element
+
+                results.append({
+                    'key': element[0],
+                    'value': value
+                })
+
+            logger.debug("Full Query found {} results!".format(len(results)))
+            return results
+        except Exception as e:
+            logger.error("full query :: {}".format(e, traceback.format_exc(limit=5)))
 
     def clear_hash(self):
         try:
             self.delete(settings.redis_db)
-            logger.notice(" Redis database shutdown.")
-        except Exception as ex:
-            logger.error("Failed to clear redis database")
-            logger.trace(ex)
+            logger.notice("Redis database shutdown.")
+        except Exception as e:
+            logger.error("Failed to clear redis database, {}".format(traceback.format_exc(limit=5)))
 
     def save_n_exit(self):
         """ To safely exit the opened client """
         try:
             self.shutdown()
             logger.notice(" Redis database shutdown.")
-        except Exception as ex:
-            logger.error("Failed to shutdown redis database")
-            logger.trace(ex)
+        except Exception as e:
+            logger.error("Failed to shutdown redis database, {}".format(traceback.format_exc(limit=5)))
 
     def __get_credentials_old(self, client_id, owner_id, channel_id):
         '''
@@ -145,6 +161,7 @@ class DBManager(Redis):
         if not client_id or not owner_id:
             raise Exception("Not enough keys (client or owner missing)")
         else:
+            credentials['client_id'] = client_id
             credentials_key = "/".join(['credential-clients',
                                         client_id, 'owners', owner_id])
             if channel_id:
@@ -223,6 +240,9 @@ class DBManager(Redis):
     def expire(self, key, time):
         logger.warning("To be implemented!")
 
+    def get_channels(self, device_id=None):
+        if not device_id : device_id = '*'
+        return list(set(db.query('channel-devices/{}'.format(device_id))))    
 
 try:
     db = DBManager(
@@ -232,6 +252,5 @@ try:
     )
 
     logger.info("Successfully connected Redis-client to Redis-server")
-except Exception as ex:
-    logger.error("Failed to connect Redis-client to Redis server")
-    logger.trace(ex)
+except Exception as e:
+    logger.error("Failed to connect Redis-client to Redis server, {}".format(traceback.format_exc(limit=5)))

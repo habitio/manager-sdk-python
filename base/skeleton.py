@@ -1,13 +1,12 @@
 from abc import ABC, abstractmethod
-from flask import request
 from base.settings import settings
 from base.redis_db import db
 import requests
 import logging
-# from base.paho_mqtt import publisher
+import traceback
 from base.mqtt_connector import mqtt
-import json
-
+from base.polling import PollingManager
+from threading import Thread
 logger = logging.getLogger(__name__)
 
 
@@ -21,14 +20,16 @@ class Skeleton(ABC):
         pass
 
     @abstractmethod
-    def auth_requests(self):
+    def auth_requests(self, sender):
         """
         *** MANDATORY ***
+        Receives,
+            sender      - A dictionary with keys 'channel_template_id', 'owner_id' and 'client_id'.
         Returns a list of dictionaries with the structure,
         [
             {
                 "method" : "<get/post>"
-                "url" : "<manufacturer's authrorize API uri and parameters>"
+                "url" : "<manufacturer's authorize API uri and parameters>"
                 "headers" : {}
             },
             ...
@@ -41,7 +42,7 @@ class Skeleton(ABC):
             "Authorization": "Bearer {client_secret}" 
         }
 
-        Each dictionary in list respresent an individual request to be made to manufacturer's API and
+        Each dictionary in list represent an individual request to be made to manufacturer's API and
         its position denotes the order of request.
         """
         pass
@@ -50,10 +51,10 @@ class Skeleton(ABC):
     def auth_response(self, response_data):
         """
         *** MANDATORY ***
-        Receives the response from manufacturer's API after authrorization.
+        Receives the response from manufacturer's API after authorization.
 
         Returns dictionary of required credentials for persistence, otherwise 
-        returns None if no persistance required after analyzing.
+        returns None if no persistence required after analyzing.
         """
         pass
 
@@ -63,9 +64,7 @@ class Skeleton(ABC):
         *** MANDATORY ***
         Receives,
             credentials - All persisted user credentials.
-            sender      - A dictionary with keys 'channel_template_id', 'owner_id' and 
-                        'client_id'.
-
+            sender      - A dictionary with keys 'channel_template_id', 'owner_id' and  'client_id'.
         Returns a list of dictionaries with the following structure ,
 
         [
@@ -161,6 +160,18 @@ class Skeleton(ABC):
         """
         pass
 
+    def polling(self, data):
+        """
+        Invoked by the manager itself when performing a polling request to manufacturer's API
+
+        Receives,
+            data - A dictionary with keys 'channel_id' and 'response' where response is a json object
+
+        This function is in charge
+        """
+        raise NotImplementedError('No polling handler implemented')
+
+
     def get_channel_template(self, channel_id):
         """
         Input : 
@@ -170,26 +181,20 @@ class Skeleton(ABC):
 
         """
 
-        url = settings.api_server_full+"/channels/"+str(channel_id)
+        url = "{}/channels/{}".format(settings.api_server_full, channel_id)
         headers = {
             "Authorization": "Bearer {0}".format(settings.block["access_token"])
         }
         try:
-            # logger.debug("Initiated GET"+" - "+url)
-            # logger.debug("\n"+json.dumps(params,indent=4,sort_keys=True)+"\n")
-
             resp = requests.get(url, headers=headers)
+            logger.verbose("Received response code[{}]".format(resp.status_code))
 
-            logger.verbose("Received response code["+str(resp.status_code)+"]")
             if int(resp.status_code) == 200:
-                # logger.debug("\n"+json.dumps(resp.json(),indent=4,sort_keys=True)+"\n")
                 return resp.json()["channeltemplate_id"]
-
             else:
                 raise Exception("Failed to retrieve channel_template_id")
         except Exception as ex:
-            logger.debug("\n{}\n".format(resp))
-            logger.trace(str(ex))
+            logger.alert("Unexpected error get_channel_template: {}".format(traceback.format_exc(limit=5)))
 
     def get_device_id(self, channel_id):
         """
@@ -295,4 +300,26 @@ class Skeleton(ABC):
                 credentials, sender["client_id"], sender["owner_id"], channel_id)
             logger.info("Credentials successfully renewed !")
         except Exception as ex:
-            logger.error("Renew credentials failed!!! \n"+str(ex))
+            logger.error("Renew credentials failed!!! {}".format(traceback.format_exc(limit=5)))
+
+    def get_polling_conf(self):
+        """
+        Required configuration if polling is enabled
+        Returns a dictionary
+            url - polling manufacturer url
+            method - HTTP method to use: GET / POST
+            params - URL parameters to append to the URL (used by requests)
+            data - the body to attach to the request (used by requests)
+        """
+        raise NotImplementedError('polling ENABLED but conf NOT DEFINED')
+
+
+    def get_refresh_token_conf(self):
+        """
+        Required configuration if token refresher is enabled
+        Returns a dictionary
+            url - token refresh manufacturer url
+            method - HTTP method to use: GET / POST
+        """
+        raise NotImplementedError('token refresher ENABLED but conf NOT DEFINED')
+

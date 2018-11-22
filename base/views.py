@@ -1,9 +1,13 @@
-from flask import request,Response,json
+import traceback
+
+from flask import request, Response, json
+
 from base import auth
 from base import logger
-from base.mqtt_connector import mqtt 
-from base.webhook_handler import webhook
+from base.mqtt_connector import mqtt
 from base.settings import settings
+from base.utils import format_str
+from base.webhook_handler import webhook
 
 
 class Views:
@@ -24,7 +28,6 @@ class Views:
             mqtt.mqtt_config()
             webhook.webhook_registration()
 
-
     def route_setup(self, app):
         logger.debug("App {}".format(app))
 
@@ -32,42 +35,38 @@ class Views:
         def starter():
             return Response(status=200)
 
-        @app.route("/"+settings.api_version+"/authorize",methods=["GET"])
+        @app.route("/{api_version}/authorize".format(api_version=settings.api_version), methods=["GET"])
         def authorize():
             return webhook.authorize(request)
 
-        @app.route("/"+settings.api_version+"/receive_token",methods=["POST"])
+        @app.route("/{api_version}/receive_token".format(api_version=settings.api_version), methods=["POST"])
         def receive_token():
             return webhook.receive_token(request)
 
-        @app.route("/"+settings.api_version+"/devices_list",methods=["POST"])
+        @app.route("/{api_version}/devices_list".format(api_version=settings.api_version), methods=["POST"])
         def devices_list():
             return webhook.devices_list(request)
 
-        @app.route("/"+settings.api_version+"/select_device",methods=["POST"])
+        @app.route("/{api_version}/select_device".format(api_version=settings.api_version), methods=["POST"])
         def select_device():
             return webhook.select_device(request)
 
-        @app.route("/"+settings.api_version+"/manufacturer",methods=["POST"])
+        @app.route("/{api_version}/manufacturer".format(api_version=settings.api_version), methods=["POST"])
         def agent():
             webhook.agent(request)
             return Response(
                 status=200
             )
-                
+
         @app.after_request
         def after(response):
             try:
                 if "Location" in response.headers:
-                    logger.debug("Redirect "+response.headers["Location"]+" code["+response.status+"]")
+                    logger.debug("Redirect {} code[{}]".format(response.headers["Location"], response.status))
                 else:
-                    logger.debug("Responding with status code["+response.status+"]") 
+                    logger.debug("Responding with status code[{}]".format(response.status))
                 if response.mimetype == "application/json":
-                    logger.verbose("\n"+json.dumps(json.loads(response.response[0]),indent=4,sort_keys=True)+"\n")
-            except:
-                logger.error("Post request logging failed !")
+                    logger.verbose(format_str(json.loads(response.response[0]), is_json=True))
+            except Exception as e:
+                logger.error("Post request logging failed, {}".format(traceback.format_exc(limit=5)))
             return response
-
-    
-    
-

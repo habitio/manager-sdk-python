@@ -6,3 +6,6 @@ mv3
 __pycache__
 .vscode
 base/implementor.py
+
+# pycharm
+.idea
