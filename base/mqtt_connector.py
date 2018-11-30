@@ -7,6 +7,8 @@ import paho.mqtt.client as paho
 from base.redis_db import db
 from base.settings import settings
 from base.utils import format_str
+from base.constants import DEFAULT_RETRY_WAIT
+from retrying import retry
 
 logger = logging.getLogger(__name__)
 
@@ -139,6 +141,7 @@ class MqttConnector():
     def on_log(self, userdata, level, buf):
         logger.debug("Mqtt - Paho log: {}".format(buf))
 
+    @retry(wait_fixed=DEFAULT_RETRY_WAIT)
     def mqtt_config(self):
         logger.info("Setting up Mqtt connection")
         try:

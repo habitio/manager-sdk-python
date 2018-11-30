@@ -60,6 +60,7 @@ class WebhookHub:
 
         except Exception as e:
             logger.alert("Failed at patch endpoints! {}".format(traceback.format_exc(limit=5)))
+            exit()
 
     def webhook_registration(self):
 
