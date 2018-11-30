@@ -12,6 +12,8 @@ from base.solid import implementer
 from base.utils import format_str
 from base.polling import poll
 from base.token_refresher import refresher
+from base.constants import DEFAULT_RETRY_WAIT
+from retrying import retry
 
 logger = logging.getLogger(__name__)
 
@@ -24,22 +26,23 @@ class WebhookHub:
         self.poll = poll
         self.refresher = refresher
 
-    def webhook_registration(self):
-        logger.debug("\n\n\n\t\t\t\t********************** REGISTERING WEBHOOK **************************")
-        full_host = "{}://{}/{}".format(settings.schema_pub, settings.host_pub, settings.api_version)
-        data = {
-            "authorize": "{}/authorize".format(full_host),
-            "receive_token": "{}/receive_token".format(full_host),
-            "devices_list": "{}/devices_list".format(full_host),
-            "select_device": "{}/select_device".format(full_host)
-        }
-
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer {0}".format(settings.block["access_token"])
-        }
-        url = settings.webhook_url
+    @retry(wait_fixed=DEFAULT_RETRY_WAIT)
+    def patch_endpoints(self):
         try:
+            full_host = "{}://{}/{}".format(settings.schema_pub, settings.host_pub, settings.api_version)
+            data = {
+                "authorize": "{}/authorize".format(full_host),
+                "receive_token": "{}/receive_token".format(full_host),
+                "devices_list": "{}/devices_list".format(full_host),
+                "select_device": "{}/select_device".format(full_host)
+            }
+
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer {0}".format(settings.block["access_token"])
+            }
+            url = settings.webhook_url
+
             logger.debug("Initiated PATCH - {}".format(url))
             logger.verbose(format_str(data, is_json=True))
 
@@ -55,12 +58,18 @@ class WebhookHub:
             else:
                 raise Exception
 
+        except Exception as e:
+            logger.alert("Failed at patch endpoints! {}".format(traceback.format_exc(limit=5)))
+
+    def webhook_registration(self):
+
+        try:
+            self.patch_endpoints()
             self.implementer.start()
             self.poll.start()
             self.refresher.start()
-
         except Exception as e:
-            logger.alert("Failed to get confirmation hash! {}".format(traceback.format_exc(limit=5)))
+            logger.alert("Unexpected exception {}".format(traceback.format_exc(limit=5)))
             exit()
 
     # .../authorize Webhook
