@@ -8,10 +8,12 @@ from dateutil import parser, tz
 
 from base.settings import settings
 from base.utils import format_response
+from base.constants import DEFAULT_RETRY_WAIT
+from retrying import retry
 
 logger = logging.getLogger(__name__)
 
-
+@retry(wait_fixed=DEFAULT_RETRY_WAIT)
 def get_access():
     """
     To send authorization request with 0Auth2.0 to Muzzley platform
@@ -114,5 +116,4 @@ def start_refresher():
         timer.start()
     except Exception as e:
         logger.critical("Token expiry check - thread failed {}".format(traceback.format_exc(limit=5)))
-        logger.trace(e)
         exit()
