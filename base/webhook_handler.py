@@ -28,7 +28,6 @@ class WebhookHub:
 
     @retry(wait=wait_fixed(DEFAULT_RETRY_WAIT))
     def patch_endpoints(self):
-        import time; time.sleep(10)
         try:
             full_host = "{}://{}/{}".format(settings.schema_pub, settings.host_pub, settings.api_version)
             data = {
