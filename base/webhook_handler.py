@@ -13,7 +13,7 @@ from base.utils import format_str
 from base.polling import poll
 from base.token_refresher import refresher
 from base.constants import DEFAULT_RETRY_WAIT
-from retrying import retry
+from tenacity import retry, wait_fixed
 
 logger = logging.getLogger(__name__)
 
@@ -26,8 +26,9 @@ class WebhookHub:
         self.poll = poll
         self.refresher = refresher
 
-    @retry(wait_fixed=DEFAULT_RETRY_WAIT)
+    @retry(wait=wait_fixed(DEFAULT_RETRY_WAIT))
     def patch_endpoints(self):
+        import time; time.sleep(10)
         try:
             full_host = "{}://{}/{}".format(settings.schema_pub, settings.host_pub, settings.api_version)
             data = {
@@ -53,14 +54,13 @@ class WebhookHub:
 
             if "confirmation_hash" in resp.json():
                 self.confirmation_hash = resp.json()["confirmation_hash"]
-                print("Confirmation Hash : {}".format(self.confirmation_hash))
-                logger.notice("Confirmation Hash received!")
+                logger.notice("Confirmation Hash : {}".format(self.confirmation_hash))
             else:
                 raise Exception
 
         except Exception as e:
             logger.alert("Failed at patch endpoints! {}".format(traceback.format_exc(limit=5)))
-            exit()
+            raise
 
     def webhook_registration(self):
 

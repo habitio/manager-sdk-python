@@ -8,7 +8,7 @@ from base.redis_db import db
 from base.settings import settings
 from base.utils import format_str
 from base.constants import DEFAULT_RETRY_WAIT
-from retrying import retry
+from tenacity import retry, wait_fixed
 
 logger = logging.getLogger(__name__)
 
@@ -141,7 +141,7 @@ class MqttConnector():
     def on_log(self, userdata, level, buf):
         logger.debug("Mqtt - Paho log: {}".format(buf))
 
-    @retry(wait_fixed=DEFAULT_RETRY_WAIT)
+    @retry(wait=wait_fixed(DEFAULT_RETRY_WAIT))
     def mqtt_config(self):
         logger.info("Setting up Mqtt connection")
         try:
@@ -159,7 +159,7 @@ class MqttConnector():
                     self.mqtt_client.tls_set(ca_certs=settings.cert_path)
             except Exception as e:
                 logger.alert("Mqtt - Failed to authenticate SSL certificate, {}".format(traceback.format_exc(limit=5)))
-                exit()
+                raise
 
             self.mqtt_client.connect(host, port)
             logger.debug( "Mqtt - Did start connect w/ host:{} and port:{}".format(host, port))
@@ -168,11 +168,11 @@ class MqttConnector():
                 self.mqtt_client.loop_start()
             except Exception as e:
                 logger.alert("Mqtt - Failed to listen through loop, {} ".format(traceback.format_exc(limit=5)))
-                exit()
+                raise
 
         except Exception as e:
             logger.emergency("Unexpected error: {}".format(e, traceback.format_exc(limit=5)))
-            exit()
+            raise
 
     def publisher(self, io, data, case=None):
         """
