@@ -8,4 +8,7 @@ DEFAULT_POLLING_INTERVAL = 60  # 60 seconds
 
 # refresh token
 DEFAULT_REFRESH_INTERVAL = 60  # 60 seconds
-DEFAULT_BEFORE_EXPIRES = 300
+DEFAULT_BEFORE_EXPIRES = 300  # 300 seconds
+
+# Retry connection
+DEFAULT_RETRY_WAIT = 2  # 2 seconds
