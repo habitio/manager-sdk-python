@@ -10,7 +10,7 @@ from threading import Thread
 logger = logging.getLogger(__name__)
 
 
-class Skeleton(ABC):
+class SkeletonBase(ABC):
 
     @abstractmethod
     def start(self):
@@ -323,3 +323,7 @@ class Skeleton(ABC):
         """
         raise NotImplementedError('token refresher ENABLED but conf NOT DEFINED')
 
+class Skeleton(SkeletonBase):
+    pass
+
+SkeletonBase.register(Skeleton)

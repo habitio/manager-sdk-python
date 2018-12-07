@@ -7,11 +7,11 @@ Internship project of a sdk for python integrations with Muzzley
 
 1. Clone the SDK into a directory named *sdk* in you project folder from,
 
-	    git@bitbucket.org:muzzley/manager-sdk-python.git
+	    $ git@bitbucket.org:muzzley/manager-sdk-python.git
 
 2. Install the dependencies of SDK from sdk/requiremnts.txt using,
 
-	    pip install -r sdk/requirements.txt
+	    $ pip install -r sdk/requirements.txt
 	    
 3. Requires python 3.5.x or later version to execute the manager with SDK.
 
@@ -27,12 +27,12 @@ Internship project of a sdk for python integrations with Muzzley
         from base.skeleton import Skeleton
 
         class Implementor(Skeleton):
-            #Your Implementation
+            # Your Implementation
 
 * Your concrete class has to implement every abstract methods of Skeleton.
 	
 	
-		Tip: A sample implementation of Skeleton has been provided in sdk/base/sample-implementor.py
+		Tip: A sample implementation of Skeleton has been provided in sdk/base/sample_implementor.py
 
 
 ### Abstract methods ###

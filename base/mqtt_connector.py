@@ -12,6 +12,14 @@ from tenacity import retry, wait_fixed
 
 logger = logging.getLogger(__name__)
 
+RC_LIST = {
+    0: "Connection successful",
+    1: "Connection refused - incorrect protocol version",
+    2: "Connection refused - invalid client identifier",
+    3: "Connection refused - server unavailable",
+    4: "Connection refused - bad username or password",
+    5: "Connection refused - not authorised"
+}
 
 class MqttConnector():
 
@@ -24,10 +32,16 @@ class MqttConnector():
         self.mqtt_client.on_message = self.on_message
         self.mqtt_client.on_disconnect = self.on_disconnect
         self.mqtt_client.on_publish = self.on_publish
+        self.implementer = None
 
     def on_connect(self, client, userdata, flags, rc):
         try:
             if rc == 0:
+
+                from base.solid import implementer
+
+                self.implementer = implementer
+
                 logger.notice("Mqtt - Connected , result code {}".format(rc))
                 topic = "/{api_version}/managers/{client_id}/channels/#".format(
                     api_version=settings.api_version, client_id=settings.client_id
@@ -36,17 +50,9 @@ class MqttConnector():
                 logger.notice("Mqtt - Will subscribe to {}".format(topic))
                 self.mqtt_client.subscribe(topic, qos=0)
             elif 0 < rc < 6:
-                rc_list = {
-                    0: "Connection successful",
-                    1: "Connection refused - incorrect protocol version",
-                    2: "Connection refused - invalid client identifier",
-                    3: "Connection refused - server unavailable",
-                    4: "Connection refused - bad username or password",
-                    5: "Connection refused - not authorised",
-                }
-                raise Exception(rc_list[rc])
+                raise Exception(RC_LIST[rc])
         except Exception as e:
-            logger.error("Mqtt - {}".format(traceback.format_exc(limit=5)))
+            logger.error("Mqtt Exception- {}".format(traceback.format_exc(limit=5)))
             exit()
 
     def on_subscribe(self, client, userdata, mid, granted_qos):
@@ -54,8 +60,6 @@ class MqttConnector():
 
     def on_message(self, client, userdata, msg):
         try:
-            from base.solid import implementer
-
             topic = msg.topic
             payload = json.loads(msg.payload.decode("utf-8"))
 
@@ -79,10 +83,7 @@ class MqttConnector():
                         "property": parts[9]
                     }
 
-                    if "data" in payload:
-                        data = payload["data"]
-                    else:
-                        data = None
+                    data = payload.get("data")
 
                     sender = {
                         "client_id": payload["sender"],
@@ -96,13 +97,13 @@ class MqttConnector():
                         logger.error("Mqtt - credentials not found in database.")
                         return
 
-                    validated_credentials = implementer.access_check(
+                    validated_credentials = self.implementer.access_check(
                         mode='r', case=case, credentials=credentials, sender=sender)
                     if validated_credentials is not None:
 
                         logger.debug("inside the access check")
                         if payload["io"] == "r":
-                            result = implementer.upstream(
+                            result = self.implementer.upstream(
                                 mode='r', case=case, credentials=validated_credentials, sender=sender, data=data)
                             if result is not None:
                                 self.publisher(io="ir", data=result, case=case)
@@ -134,7 +135,7 @@ class MqttConnector():
 
     def on_disconnect(self, client, userdata, rc):
         if rc != 0:
-            logger.error("Mqtt - Unexpected disconnection.")
+            logger.error("Mqtt - Unexpected disconnection: {}".format(RC_LIST.get(rc)))
         else:
             logger.error("Mqtt - Expected disconnection.")
 
