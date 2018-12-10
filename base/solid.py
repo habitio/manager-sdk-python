@@ -3,7 +3,7 @@ from base.settings import settings
 print('[Solid]: Settings: OK')
 
 print('[Solid]: Skeleton: Setting up')
-from base import skeleton_device
+from base import skeleton_device, skeleton_application
 print('[Solid]: Skeleton: OK')
 
 print('[Solid]: ImportLib::Utils: Setting up')
@@ -16,6 +16,8 @@ print('[Solid]: Inspect and Logging: OK')
 
 logger = logging.getLogger(__name__)
 
+class ImplementorNotFound(Exception):
+    pass
 
 def get_implementer():
     try:
@@ -32,18 +34,21 @@ def get_implementer():
                 logger.trace('-------------------------------')
                 logger.trace('Item: {} - {}'.format(_name, _obj))
                 logger.trace('Is class? {}'.format(inspect.isclass(_obj)))
-                logger.trace('Is subclass from Skeleton? {}'.format(issubclass(_obj, (skeleton_device.SkeletonDevice,))))
+                logger.trace('Is subclass from Skeleton? {}'.format(issubclass(_obj, (
+                    skeleton_device.SkeletonDevice,
+                    skeleton_application.SkeletonApplication))))
 
-                if inspect.isclass(_obj) and issubclass(_obj, skeleton_device.SkeletonDevice,):
+                if inspect.isclass(_obj) and issubclass(_obj, (
+                        skeleton_device.SkeletonDevice,
+                        skeleton_application.SkeletonApplication)):
                     logger.debug("Implementation class found: {}".format(_obj))
                     return _obj()
             except TypeError:
                 continue
 
-        logger.critical("Failed to find Skeleton implementer class")
+        raise ImplementorNotFound
 
     except Exception:
-
         logger.critical("Failed to find Skeleton implementer class {}".format(traceback.format_exc(limit=5)))
         exit()
 
