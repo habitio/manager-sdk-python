@@ -85,6 +85,8 @@ class Settings:
         self.access_property = "access"
         self.access_failed_value = "unreachable"
 
+        self.skeleton_type = self.config_boot.get("skeleton_type", "device")
+
         # The block stores all information obtained my manager through request to platform and
         # to be made available to multiple modules.
         self.block = {
