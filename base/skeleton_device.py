@@ -6,35 +6,7 @@ class SkeletonDevice(SkeletonBase):
 
     def __init__(self):
         super(SkeletonDevice, self).__init__()
-        self._type = 'device'
         self.DEFAULT_BEFORE_EXPIRES = DEFAULT_BEFORE_EXPIRES
-
-    @abstractmethod
-    def upstream(self, mode, case, credentials, sender, data=None):
-        """
-        *** MANDATORY ***
-        Invoked when Muzzley platform intends to communicate with manufacturer's api
-        to read/update device's information.
-
-        Receives,
-            mode        - 'r' or 'w'
-                r - read from manufacturer's API
-                w - write to manufacturer's API
-            case       - A dictionary with keys 'device_id','channel_id','component' and 'property'.
-            data        - data if any sent by Muzzley's platform.
-            credentials - credentials of user from database
-            sender      - A dictionary with keys 'owner_id' and
-                        'client_id'.
-
-        Expected Response,
-            'r' - mode
-                Returns data on successfull read from manufacturer's API, otherwise
-                returns None.
-            'w' - mode
-                Returns True on successfull write to manufacturer's API, otherwise
-                returns False.
-        """
-        pass
 
     @abstractmethod
     def auth_requests(self, sender):
@@ -61,17 +33,6 @@ class SkeletonDevice(SkeletonBase):
 
         Each dictionary in list represent an individual request to be made to manufacturer's API and
         its position denotes the order of request.
-        """
-        pass
-
-    @abstractmethod
-    def auth_response(self, response_data):
-        """
-        *** MANDATORY ***
-        Receives the response from manufacturer's API after authorization.
-
-        Returns dictionary of required credentials for persistence, otherwise
-        returns None if no persistence required after analyzing.
         """
         pass
 
@@ -131,23 +92,74 @@ class SkeletonDevice(SkeletonBase):
         """
         pass
 
-    @abstractmethod
-    def downstream(self, request):
+    def polling(self, data):
         """
-        *** MANDATORY ***
-        Invoked when manufacturer's api intends to communicate with Muzzley's platform
-        to update device's information.
+        Invoked by the manager itself when performing a polling request to manufacturer's API
 
         Receives,
-            request - A flask.request object received from manufacturer's API.
+            data - A dictionary with keys 'channel_id' and 'response' where response is a json object
 
-        Returns a tuple as (case, data),
-            case - Expecting a dictionary with keys 'device_id', 'component' and 'property',
-                   otherwise if None is returned for case, then NO data will be send to muzzley
-            data - Any data that has to be send to Muzzley's platform
+        This function is in charge
+        """
+        raise NotImplementedError('No polling handler implemented')
 
+    def get_channel_template(self, channel_id):
+        """
+        Input :
+            channel_id - channel_id of the device.
+
+        Returns channel_template_id
 
         """
-        pass
+
+        url = "{}/channels/{}".format(settings.api_server_full, channel_id)
+        headers = {
+            "Authorization": "Bearer {0}".format(settings.block["access_token"])
+        }
+        try:
+            resp = requests.get(url, headers=headers)
+            logger.verbose("Received response code[{}]".format(resp.status_code))
+
+            if int(resp.status_code) == 200:
+                return resp.json()["channeltemplate_id"]
+            else:
+                raise Exception("Failed to retrieve channel_template_id")
+        except Exception as ex:
+            logger.alert("Unexpected error get_channel_template: {}".format(traceback.format_exc(limit=5)))
+
+    def get_device_id(self, channel_id):
+        """
+        To retrieve device_id using channel_id
+
+        """
+        return db.get_device_id(channel_id)
+
+    def get_channel_id(self, device_id):
+        """
+        To retrieve channel_id using device_id
+
+        """
+        return db.get_channel_id(device_id)
+
+    def get_polling_conf(self):
+        """
+        Required configuration if polling is enabled
+        Returns a dictionary
+            url - polling manufacturer url
+            method - HTTP method to use: GET / POST
+            params - URL parameters to append to the URL (used by requests)
+            data - the body to attach to the request (used by requests)
+        """
+        raise NotImplementedError('polling ENABLED but conf NOT DEFINED')
+
+    def get_refresh_token_conf(self):
+        """
+        Required configuration if token refresher is enabled
+        Returns a dictionary
+            url - token refresh manufacturer url
+            method - HTTP method to use: GET / POST
+        """
+        raise NotImplementedError('token refresher ENABLED but conf NOT DEFINED')
+
 
 SkeletonBase.register(SkeletonDevice)
