@@ -16,7 +16,7 @@ class SkeletonBase(ABC):
 
     def __init__(self):
         super(SkeletonBase, self).__init__()
-        self._type = settings.skeleton_type
+        self._type = settings.implementor_type
 
     @abstractmethod
     def start(self):

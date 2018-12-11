@@ -3,6 +3,7 @@ import json
 import os
 import sys
 from os import path
+from .constants import MANAGER_SCOPE, APPLICATION_SCOPE
 
 
 class Settings:
@@ -57,7 +58,7 @@ class Settings:
         # All urls
         self.auth_url = "{}{}".format(self.api_server_full, "/auth/authorize")
         self.renew_url = "{}{}".format(self.api_server_full, "/auth/exchange")
-        self.webhook_url = "{}{}{}".format(self.api_server_full, "/managers/", self.client_id)
+
 
         # Logging file path
         if "file" in self.config_log and self.config_log["file"] == "{log_path}":
@@ -85,7 +86,22 @@ class Settings:
         self.access_property = "access"
         self.access_failed_value = "unreachable"
 
-        self.skeleton_type = self.config_boot.get("skeleton_type", "device")
+        # Identify skeleton/implementor type by scope
+        parts = self.config_cred["scope"].split(' ')
+        if MANAGER_SCOPE in parts:
+            self.implementor_type = 'device'
+            self.webhook_url = "{}{}{}".format(self.api_server_full, "/managers/", self.client_id)
+        elif APPLICATION_SCOPE in parts:
+            self.implementor_type = 'application'
+            self.webhook_url = None
+        else:
+            raise Exception('Error to find the implementor type in credentials, not device or application implementor!')
+            exit()
+
+        # Application specific conf
+        self.services = self.config_boot.get('services', [])
+        self.usecases = self.config_boot.get('usecases', [])
+        self.channels_grant_access_to_user = self.config_boot.get('channels_grant_access_to_user', [])
 
         # The block stores all information obtained my manager through request to platform and
         # to be made available to multiple modules.

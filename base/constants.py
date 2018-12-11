@@ -14,6 +14,8 @@ DEFAULT_BEFORE_EXPIRES = 300  # 300 seconds
 # Retry connection
 DEFAULT_RETRY_WAIT = 2  # 2 seconds
 
+MANAGER_SCOPE = 'manager'
+APPLICATION_SCOPE = 'application'
 
 def get_log_table(_file_name):
 
