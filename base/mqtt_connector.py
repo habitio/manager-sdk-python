@@ -47,8 +47,10 @@ class MqttConnector():
 
                 logger.notice("Mqtt - Connected , result code {}".format(rc))
 
-                topic = "/{api_version}/managers/{client_id}/channels/#".format(
-                    api_version=settings.api_version, client_id=settings.client_id
+                topic = "/{api_version}/{mqtt_topic}/{client_id}/channels/#".format(
+                    mqtt_topic=settings.mqtt_topic,
+                    api_version=settings.api_version,
+                    client_id=settings.client_id
                 )
 
                 logger.notice("Mqtt - Will subscribe to {}".format(topic))
