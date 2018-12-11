@@ -11,8 +11,9 @@ from base.settings import settings
 from base.utils import format_str
 from base.constants import DEFAULT_RETRY_WAIT
 from base.mqtt_connector import mqtt
-from base.polling import poll
-from base.token_refresher import refresher
+
+from .polling import poll
+from .token_refresher import refresher
 
 
 logger = logging.getLogger(__name__)

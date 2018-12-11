@@ -31,10 +31,6 @@ def get_implementer():
             try:
                 logger.trace('-------------------------------')
                 logger.trace('Item: {} - {}'.format(_name, _obj))
-                logger.trace('Is class? {}'.format(inspect.isclass(_obj)))
-                logger.trace('Is subclass from Skeleton? {}'.format(issubclass(_obj, (
-                    skeleton_device.SkeletonDevice,
-                    skeleton_application.SkeletonApplication))))
 
                 if inspect.isclass(_obj) and issubclass(_obj, (
                         skeleton_device.SkeletonDevice,
