@@ -5,7 +5,6 @@ from flask import Response
 from base.common.webhook_base import WebhookHubBase
 from base.settings import settings
 from base.constants import DEFAULT_RETRY_WAIT
-from base.mqtt_connector import mqtt
 
 logger = logging.getLogger(__name__)
 
@@ -88,7 +87,6 @@ class WebhookHubApplication(WebhookHubBase):
 
     def webhook_registration(self):
         try:
-            mqtt.add_topic("/{}/applications/{}/channels/#".format(settings.api_version, settings.client_id))
             self.patch_endpoints()
             self.implementer.start()
         except Exception as e:

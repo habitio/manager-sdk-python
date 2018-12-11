@@ -10,7 +10,6 @@ from base.redis_db import db
 from base.settings import settings
 from base.utils import format_str
 from base.constants import DEFAULT_RETRY_WAIT
-from base.mqtt_connector import mqtt
 
 from .polling import poll
 from .token_refresher import refresher
@@ -279,7 +278,6 @@ class WebhookHubDevice(WebhookHubBase):
     def webhook_registration(self):
 
         try:
-            mqtt.add_topic("/{}/managers/{}/channels/#".format(settings.api_version, settings.client_id))
             self.patch_endpoints()
             self.implementer.start()
             self.poll.start()

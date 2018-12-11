@@ -47,13 +47,12 @@ class MqttConnector():
 
                 logger.notice("Mqtt - Connected , result code {}".format(rc))
 
-                for _topic in self._topics:
-                    logger.notice("Mqtt - Will subscribe to {}".format(_topic))
-                    self.mqtt_client.subscribe(_topic, qos=0)
+                topic = "/{api_version}/managers/{client_id}/channels/#".format(
+                    api_version=settings.api_version, client_id=settings.client_id
+                )
 
-                #topic = "/{api_version}/managers/{client_id}/channels/#".format(
-                #    api_version=settings.api_version, client_id=settings.client_id
-                #)
+                logger.notice("Mqtt - Will subscribe to {}".format(topic))
+                self.mqtt_client.subscribe(topic, qos=0)
 
                 if self._on_connect_callback:
                     self._on_connect_callback.__call__(**self._on_connect_callback_params)
