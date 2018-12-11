@@ -1,5 +1,5 @@
 from flask import request
-from base.router_base import RoutesBase
+from base.common.router_base import RoutesBase
 from base.settings import settings
 
 import logging

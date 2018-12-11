@@ -5,7 +5,7 @@ import traceback
 from flask import Response, request
 from tenacity import retry, wait_fixed
 
-from base.webhook_base import WebhookHubBase
+from base.common.webhook_base import WebhookHubBase
 from base.redis_db import db
 from base.settings import settings
 from base.utils import format_str

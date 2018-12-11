@@ -2,7 +2,7 @@ import traceback, json, sys, logging, requests
 from tenacity import retry, wait_fixed
 from flask import Response
 
-from base.webhook_base import WebhookHubBase
+from base.common.webhook_base import WebhookHubBase
 from base.settings import settings
 from base.constants import DEFAULT_RETRY_WAIT
 from base.mqtt_connector import mqtt

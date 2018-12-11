@@ -1,4 +1,4 @@
-from base.skeleton_base import SkeletonBase
+from base.common.skeleton_base import SkeletonBase
 from base.constants import DEFAULT_BEFORE_EXPIRES
 
 from abc import abstractmethod

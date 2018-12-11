@@ -1,4 +1,4 @@
-from base.skeleton_base import SkeletonBase
+from base.common.skeleton_base import SkeletonBase
 from .router import *
 from .webhook import *
 
