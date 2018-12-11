@@ -204,9 +204,9 @@ class MqttConnector():
             logger.debug("Mqtt - Received on_message {topic} {payload}".format(
                 topic=topic, payload=format_str(payload, is_json=True)))
 
-            if settings.implementor_type == MANAGER_SCOPE:
+            if settings.implementor_type == 'device':
                 self.on_message_manager(client, topic, payload)
-            elif settings.implementor_type == APPLICATION_SCOPE:
+            elif settings.implementor_type == 'application':
                 self.on_message_application(client, topic, payload)
 
         except Exception as e:
