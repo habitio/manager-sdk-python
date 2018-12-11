@@ -1,5 +1,6 @@
-from .skeleton_base import SkeletonBase
-
+from base.skeleton_base import SkeletonBase
+from .router import *
+from .webhook import *
 
 class SkeletonApplication(SkeletonBase):
     pass

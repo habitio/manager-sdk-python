@@ -2,9 +2,6 @@ print('[Solid]: Settings: Setting up')
 from base.settings import settings
 print('[Solid]: Settings: OK')
 
-print('[Solid]: Skeleton: Setting up')
-from base import skeleton_device, skeleton_application
-print('[Solid]: Skeleton: OK')
 
 print('[Solid]: ImportLib::Utils: Setting up')
 from importlib import util
@@ -21,6 +18,7 @@ class ImplementorNotFound(Exception):
 
 def get_implementer():
     try:
+        from base import skeleton_device, skeleton_application
         _spec = util.spec_from_file_location("implementor", settings.skeleton_path)
 
         _module = util.module_from_spec(_spec)

@@ -1,6 +1,11 @@
-from .skeleton_base import SkeletonBase
-from .constants import DEFAULT_BEFORE_EXPIRES
+from base.skeleton_base import SkeletonBase
+from base.constants import DEFAULT_BEFORE_EXPIRES
+
 from abc import abstractmethod
+
+from .router import *
+from .webhook import *
+
 
 class SkeletonDevice(SkeletonBase):
 
