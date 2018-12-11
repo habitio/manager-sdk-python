@@ -27,7 +27,7 @@ class Settings:
         self.config_redis = self.config_boot["redis"]["managers"]
         self.config_modules = self.config_boot["modules"]
         self.config_tls = self.config_boot["tls"]
-        self.config_manufacturer = self.config_boot["manufacturer"]
+        self.config_manufacturer = self.config_boot.get("manufacturer", {})
         self.config_polling = self.config_boot.get("polling", {})
         self.config_refresh = self.config_boot.get("token_refresher", {})
 
