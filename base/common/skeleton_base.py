@@ -74,6 +74,7 @@ class SkeletonBase(ABC):
             case - Expecting a dictionary with keys 'device_id', 'component' and 'property',
                    otherwise if None is returned for case, then NO data will be send to muzzley
             data - Any data that has to be send to Muzzley's platform
+            response (optional) - flask Response object, if not defined returns a Response with 200 status_code
 
 
         """
