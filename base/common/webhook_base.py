@@ -4,6 +4,8 @@ import logging, json, traceback
 from base.redis_db import db
 from base.settings import settings
 from base.mqtt_connector import mqtt
+from base.utils import format_str
+
 logger = logging.getLogger(__name__)
 
 class WebhookHubBase:
@@ -43,17 +45,25 @@ class WebhookHubBase:
 
     def inbox(self, request):
 
-        logger.debug("\n\n\n\n\n\t\t\t\t\t*******************MANUFACTURER****************************")
-        logger.debug("Received "+request.method+" - "+request.path)
-
-        logger.verbose("\n"+str(request.headers))
+        logger.debug("\n\n\n\n\n\t\t\t\t\t*******************INBOX****************************")
+        logger.debug("Received {} - {}".format(request.method, request.path))
+        logger.verbose("\n{}".format(request.headers))
 
         if request.is_json:
-            logger.verbose("\n"+json.dumps(request.get_json(),indent=4, sort_keys=True))
+            logger.verbose(format_str(request.get_json(), is_json=True))
         else:
-            logger.verbose("\n"+request.get_data(as_text=True))
+            logger.verbose("\n{}".format(request.get_data(as_text=True)))
 
-        case, data = self.implementer.downstream(request)
+        downstream_tuple = self.implementer.downstream(request)
+
+        case = downstream_tuple[0]
+        data = downstream_tuple[1]
+        try:
+            response = downstream_tuple[2]
+        except IndexError:
+            response = Response(status=200)
 
         if case:
             mqtt.publisher(io="iw", data=data, case=case)
+
+        return response

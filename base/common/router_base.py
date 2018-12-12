@@ -20,10 +20,7 @@ class RoutesBase:
         return self.webhook.receive_token(request)
 
     def inbox(self):
-        self.webhook.inbox(request)
-        return Response(
-            status=200
-        )
+        return self.webhook.inbox(request)
 
     def after(self, response):
 
