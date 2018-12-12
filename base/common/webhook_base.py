@@ -60,12 +60,12 @@ class WebhookHubBase:
             case = downstream_tuple[0]
             data = downstream_tuple[1]
             mqtt.publisher(io="iw", data=data, case=case)
-        except KeyError:
-            pass
+        except (TypeError, KeyError):
+            logger.debug('downstream method returned {}'.format(downstream_tuple))
 
         try:
             response = downstream_tuple[2]
-        except IndexError:
+        except (IndexError, TypeError):
             response = Response(status=200)
 
         return response
