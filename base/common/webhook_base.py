@@ -56,14 +56,16 @@ class WebhookHubBase:
 
         downstream_tuple = self.implementer.downstream(request)
 
-        case = downstream_tuple[0]
-        data = downstream_tuple[1]
+        try:
+            case = downstream_tuple[0]
+            data = downstream_tuple[1]
+            mqtt.publisher(io="iw", data=data, case=case)
+        except KeyError:
+            pass
+
         try:
             response = downstream_tuple[2]
         except IndexError:
             response = Response(status=200)
-
-        if case:
-            mqtt.publisher(io="iw", data=data, case=case)
 
         return response
