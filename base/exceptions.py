@@ -1,0 +1,3 @@
+
+class ChannelTemplateNotFound(Exception):
+    pass

@@ -1,5 +1,6 @@
 from base.common.skeleton_base import SkeletonBase
 from base.constants import DEFAULT_BEFORE_EXPIRES
+from base.exceptions import ChannelTemplateNotFound
 
 from abc import abstractmethod
 
@@ -128,7 +129,11 @@ class SkeletonDevice(SkeletonBase):
             if int(resp.status_code) == 200:
                 return resp.json()["channeltemplate_id"]
             else:
-                raise Exception("Failed to retrieve channel_template_id")
+                raise ChannelTemplateNotFound("Failed to retrieve channel_template_id")
+
+        except (OSError, ChannelTemplateNotFound) as e:
+            logger.error('Error while making request to platform: {}'.format(e))
+            return ''
         except Exception as ex:
             logger.alert("Unexpected error get_channel_template: {}".format(traceback.format_exc(limit=5)))
 
