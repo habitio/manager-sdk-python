@@ -73,19 +73,6 @@ class MqttConnector():
         self._on_connect_callback = _func
         self._on_connect_callback_params = kwargs
 
-    def add_topic(self, _topic):
-
-        if _topic not in self._topics:
-            self._topics.append(_topic)
-            return True
-
-        return False
-
-    def add_topics(self, _topics):
-
-        for _topic in _topics:
-            self.add_topic(_topic)
-
     def on_message_manager(self, client, topic, payload):
         try:
             parts = str(topic).split('/')
