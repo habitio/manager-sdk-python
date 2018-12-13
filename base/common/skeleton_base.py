@@ -80,6 +80,13 @@ class SkeletonBase(ABC):
         """
         return NotImplemented
 
+    def get_channel_status(self, channel_id):
+        """
+        To retrieve channel status using channel_id
+
+        """
+        db.get_channel_status(channel_id)
+
     def store_channel_status(self, channel_id, status):
         """
         To store a value to database with a unique identifier called key
