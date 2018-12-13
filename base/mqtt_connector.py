@@ -7,7 +7,8 @@ import paho.mqtt.client as paho
 from base.redis_db import db
 from base.settings import settings
 from base.utils import format_str
-from base.constants import DEFAULT_RETRY_WAIT, MANAGER_SCOPE, APPLICATION_SCOPE
+from base.constants import DEFAULT_RETRY_WAIT
+from base.exceptions import NoAccessDevice
 from tenacity import retry, wait_fixed
 
 logger = logging.getLogger(__name__)
@@ -87,6 +88,16 @@ class MqttConnector():
 
     def on_message_manager(self, client, topic, payload):
         try:
+            parts = str(topic).split('/')
+            channel_id = parts[5]
+            component = parts[7]
+            property = parts[9]
+
+            case = {
+                "channel_id": channel_id,
+                "component": component,
+                "property": property
+            }
 
             if "io" in payload and payload["io"] in ("r", "w"):
 
@@ -97,19 +108,13 @@ class MqttConnector():
                     logger.debug("Mqtt - Received on_message_manager: {}\n{}".format(
                         topic, json.dumps(payload, indent=4, sort_keys=True)))
 
-                    parts = str(topic).split('/')
                     device_id = db.get_device_id(parts[5])
 
                     if not device_id:
                         logger.warning("Mqtt - channel_id {} not found in database.".format(parts[5]))
-                        return
+                        raise NoAccessDevice
 
-                    case = {
-                        "device_id": str(device_id),
-                        "channel_id": parts[5],
-                        "component": parts[7],
-                        "property": parts[9]
-                    }
+                    case["device_id"] = str(device_id)
 
                     data = payload.get("data")
 
@@ -153,9 +158,8 @@ class MqttConnector():
                                 return
 
                     else:
-                        case["property"] = settings.access_property
-                        self.publisher(
-                            io="ir", data=settings.access_failed_value, case=case)
+                        raise NoAccessDevice
+
                 else:
 
                     logger.error("Mqtt - No 'sender'/'on_behalf_of' in payload")
@@ -163,7 +167,12 @@ class MqttConnector():
 
             else:
                 return
-
+        except NoAccessDevice:
+            if not "device_id" in case:
+                case["device_id"] = ""
+            case["property"] = settings.access_property
+            self.publisher(
+                io="ir", data=settings.access_failed_value, case=case)
         except Exception as e:
             logger.error("Mqtt - Failed to handle payload. {}".format(traceback.format_exc(limit=5)))
 
@@ -285,7 +294,7 @@ class MqttConnector():
 
             if all(key in case for key in ("device_id", "component", "property")):
 
-                channel_id = db.get_channel_id(case["device_id"])
+                channel_id = case["channel_id"] if "channel_id" in case else db.get_channel_id(case["device_id"])
 
                 if channel_id is None:
                     logger.warning("Mqtt - No channel id found for this device")
