@@ -4,3 +4,6 @@ class ChannelTemplateNotFound(Exception):
 
 class NoAccessDevice(Exception):
     pass
+
+class InvalidAccessCredentials(Exception):
+    pass

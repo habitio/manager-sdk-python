@@ -36,3 +36,14 @@ def get_log_table(_file_name):
             9: logger.verbose
         }
     )
+
+
+# Access variables
+ACCESS_NO_POWER = 'no_power'
+ACCESS_DISCONNECTED = 'disconnected'
+ACCESS_UNREACHABLE_VALUE = 'unreachable'
+ACCESS_REMOTE_CONTROL_DISABLED = 'remote_control_disabled'
+ACCESS_PERMISSION_REVOKED = 'permission_revoked'
+ACCESS_SERVICE_ERROR_VALUE = 'service_error'
+ACCESS_UNAUTHORIZED_VALUE = 'unauthorized'
+ACCESS_API_UNREACHABLE = 'api_unreachable'

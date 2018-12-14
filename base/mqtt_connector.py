@@ -7,8 +7,8 @@ import paho.mqtt.client as paho
 from base.redis_db import db
 from base.settings import settings
 from base.utils import format_str
-from base.constants import DEFAULT_RETRY_WAIT
-from base.exceptions import NoAccessDevice
+from base.constants import DEFAULT_RETRY_WAIT, ACCESS_SERVICE_ERROR_VALUE, ACCESS_UNAUTHORIZED_VALUE
+from base.exceptions import NoAccessDevice, InvalidAccessCredentials
 from tenacity import retry, wait_fixed
 
 logger = logging.getLogger(__name__)
@@ -85,6 +85,7 @@ class MqttConnector():
                 "component": component,
                 "property": property
             }
+            access_failed_value = None
 
             if "io" in payload and payload["io"] in ("r", "w"):
 
@@ -99,6 +100,8 @@ class MqttConnector():
 
                     if not device_id:
                         logger.warning("Mqtt - channel_id {} not found in database.".format(parts[5]))
+                        case["device_id"] = ""
+                        access_failed_value = ACCESS_SERVICE_ERROR_VALUE
                         raise NoAccessDevice
 
                     case["device_id"] = str(device_id)
@@ -145,7 +148,8 @@ class MqttConnector():
                                 return
 
                     else:
-                        raise NoAccessDevice
+                        access_failed_value = ACCESS_UNAUTHORIZED_VALUE
+                        raise InvalidAccessCredentials
 
                 else:
 
@@ -154,12 +158,9 @@ class MqttConnector():
 
             else:
                 return
-        except NoAccessDevice:
-            if not "device_id" in case:
-                case["device_id"] = ""
-            case["property"] = settings.access_property
+        except (NoAccessDevice, InvalidAccessCredentials):
             self.publisher(
-                io="ir", data=settings.access_failed_value, case=case)
+                io="ir", data=access_failed_value, case=case)
         except Exception as e:
             logger.error("Mqtt - Failed to handle payload. {}".format(traceback.format_exc(limit=5)))
 
