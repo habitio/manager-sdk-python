@@ -8,6 +8,7 @@ from base.mqtt_connector import mqtt
 from base.settings import settings
 from base.utils import format_str
 from base.webhook_handler import webhook
+from base.watchdog import watchdog_monitor
 
 
 class Views:
@@ -27,6 +28,7 @@ class Views:
         if settings.block["access_token"] != "":
             mqtt.mqtt_config()
             webhook.webhook_registration()
+            watchdog_monitor.start()
 
     def route_setup(self, app):
         logger.debug("App {}".format(app))
