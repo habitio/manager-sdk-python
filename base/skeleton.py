@@ -193,8 +193,11 @@ class Skeleton(ABC):
                 return resp.json()["channeltemplate_id"]
             else:
                 raise Exception("Failed to retrieve channel_template_id")
+        except OSError as e:
+            logger.error('Error while making request to platform: {}'.format(e))
         except Exception as ex:
             logger.alert("Unexpected error get_channel_template: {}".format(traceback.format_exc(limit=5)))
+        return ''
 
     def get_device_id(self, channel_id):
         """
@@ -215,7 +218,7 @@ class Skeleton(ABC):
         To retrieve channel status using channel_id
 
         """
-        db.get_channel_status(channel_id)
+        return db.get_channel_status(channel_id)
 
     def store_channel_status(self, channel_id, status):
         """
