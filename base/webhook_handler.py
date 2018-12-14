@@ -203,6 +203,10 @@ class WebhookHub:
                             channel = self.create_channel_id(device)
                         else:
                             logger.info("Channel still valid in Muzzley")
+
+                            # Ensure persistence of manufacturer"s device id (key) to channel id (field) in redis hash
+                            db.set_channel_id(device["id"], channel_id, True)
+                            logger.verbose("Channel added to database")
                     else:
                         channel = self.create_channel_id(device)
 
@@ -309,7 +313,7 @@ class WebhookHub:
                 status=400
             )
 
-        # Ensure persistance of manufacturer"s device id (key) to channel id (field) in redis hash
+        # Ensure persistence of manufacturer"s device id (key) to channel id (field) in redis hash
         logger.verbose("Channel added to database")
         db.set_channel_id(device["id"], resp.json()["id"], True)
 
