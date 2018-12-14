@@ -161,6 +161,7 @@ class MqttConnector():
             else:
                 return
         except (NoAccessDevice, InvalidAccessCredentials):
+            case["property"] = settings.access_property
             self.publisher(
                 io="ir", data=access_failed_value, case=case)
         except Exception as e:
