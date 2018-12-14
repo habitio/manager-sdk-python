@@ -44,6 +44,9 @@ ACCESS_DISCONNECTED = 'disconnected'
 ACCESS_UNREACHABLE_VALUE = 'unreachable'
 ACCESS_REMOTE_CONTROL_DISABLED = 'remote_control_disabled'
 ACCESS_PERMISSION_REVOKED = 'permission_revoked'
-ACCESS_SERVICE_ERROR_VALUE = 'service_error'
-ACCESS_UNAUTHORIZED_VALUE = 'unauthorized'
+ACCESS_SERVICE_ERROR_VALUE = 'service_error'  # this retry reading the property
+ACCESS_UNAUTHORIZED_VALUE = 'unauthorized'  # this shows a blue
 ACCESS_API_UNREACHABLE = 'api_unreachable'
+ACCESS_NOK_VALUE = 'nok'
+
+HEARTBEAT_PROP = 'heartbeat'

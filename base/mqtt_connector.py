@@ -7,7 +7,7 @@ import paho.mqtt.client as paho
 from base.redis_db import db
 from base.settings import settings
 from base.utils import format_str
-from base.constants import DEFAULT_RETRY_WAIT, ACCESS_SERVICE_ERROR_VALUE, ACCESS_UNAUTHORIZED_VALUE
+from base.constants import DEFAULT_RETRY_WAIT, ACCESS_NOK_VALUE, ACCESS_UNAUTHORIZED_VALUE, HEARTBEAT_PROP
 from base.exceptions import NoAccessDevice, InvalidAccessCredentials
 from tenacity import retry, wait_fixed
 
@@ -99,6 +99,8 @@ class MqttConnector():
                     device_id = db.get_device_id(parts[5])
 
                     if not device_id:
+                        if property == HEARTBEAT_PROP:
+                            return
                         logger.warning("Mqtt - channel_id {} not found in database.".format(parts[5]))
                         case["device_id"] = ""
                         access_failed_value = ACCESS_SERVICE_ERROR_VALUE
