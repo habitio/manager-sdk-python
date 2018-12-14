@@ -7,7 +7,7 @@ import paho.mqtt.client as paho
 from base.redis_db import db
 from base.settings import settings
 from base.utils import format_str
-from base.constants import DEFAULT_RETRY_WAIT, ACCESS_NOK_VALUE, ACCESS_UNAUTHORIZED_VALUE, HEARTBEAT_PROP
+from base.constants import DEFAULT_RETRY_WAIT, ACCESS_SERVICE_ERROR_VALUE, ACCESS_UNAUTHORIZED_VALUE, HEARTBEAT_PROP
 from base.exceptions import NoAccessDevice, InvalidAccessCredentials
 from tenacity import retry, wait_fixed
 
