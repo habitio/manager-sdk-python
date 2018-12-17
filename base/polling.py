@@ -112,6 +112,7 @@ class PollingManager(object):
                     logger.warning('[Polling] Error in polling request {} {}'.format(channel_id, response.json()))
         except Exception:
             logger.error('[Polling] Error on polling.send_request {}'.format(traceback.format_exc(limit=5)))
+        logger.notice('[Polling] No valid credentials found for channel {}'.format(channel_id))
         return False
 
 try:
