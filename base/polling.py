@@ -83,24 +83,35 @@ class PollingManager(object):
 
     @rate_limited(settings.config_polling.get('rate_limit', DEFAULT_RATE_LIMIT))
     def send_request(self, channel_id, method, url, params, data):
-        credentials = db.get_credentials(self.client_id, '*', channel_id)
+        try:
+            #credentials = db.get_credentials(self.client_id, '*', channel_id)
+            credentials_list = db.full_query('credential-owners/*/channels/{}'.format(channel_id))
+            logger.info('{} results found for channel_id: {}'.format(len(credentials_list), channel_id))
 
-        # Validate if token is valid before the request
-        now = int(time.time())
-        token_expiration_date = credentials['expiration_date']
-        if now > token_expiration_date:
-            logger.info("No polling requested, access token has expired {}".format(channel_id))
-            return False
+            for credential_dict in credentials_list:  # try until we find valid credentials
+                cred_key = credential_dict['key']
+                credentials = credential_dict['value']
 
-        response = requests.request(method,  url, params=params, data=data, headers=self.authorization(credentials))
-        if response.status_code == requests.codes.ok:
-            return {
-                'response': response.json(),
-                'channel_id': channel_id,
-                'credentials': credentials
-            }
+                # Validate if token is valid before the request
+                now = int(time.time())
+                token_expiration_date = credentials['expiration_date']
+                if now > token_expiration_date:
+                    logger.debug("access token expired {} - now:{}, expiration:{}".format(
+                        cred_key, now, token_expiration_date))
+                    continue
 
-        logger.warning('Error in polling request {} {}'.format(channel_id, response.json()))
+                response = requests.request(method,  url, params=params, data=data, headers=self.authorization(credentials))
+                if response.status_code == requests.codes.ok:
+                    logger.info('polling request successful with {}'.format(cred_key))
+                    return {
+                        'response': response.json(),
+                        'channel_id': channel_id,
+                        'credentials': credentials
+                    }
+                else:
+                    logger.warning('Error in polling request {} {}'.format(channel_id, response.json()))
+        except Exception:
+            logger.error('Error on polling.send_request {}'.format(traceback.format_exc(limit=5)))
         return False
 
 try:
