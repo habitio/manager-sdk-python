@@ -86,7 +86,7 @@ class TokenRefresherManager(object):
 
     def update_all_owners(self, new_credentials, orig_owner_id, channel_id, client_app_id):
         all_owners_credentials = db.full_query('credential-owners/*/channels/{}'.format(channel_id))
-        logger.info('[TokenRefresher] update_all_owners: {} keys found'.format(len(len(all_owners_credentials))))
+        logger.info('[TokenRefresher] update_all_owners: {} keys found'.format(len(all_owners_credentials)))
         for cred_dict in all_owners_credentials:
             key = cred_dict['key']
             owner_id = key.split('/')[1]
@@ -142,6 +142,7 @@ class TokenRefresherManager(object):
             else:
                 logger.debug("[TokenRefresher] access token hasn't expired yet {}".format(key))
         except Exception:
+
             logger.error('[TokenRefresher] Unexpected error on send_request for refresh token, {}'.format(traceback.format_exc(limit=5)))
 
 try:
