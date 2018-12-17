@@ -21,6 +21,7 @@ class TokenRefresherManager(object):
         self.client_id = settings.client_id
         self.loop = asyncio.new_event_loop()
         self.before_expires = settings.config_refresh.get('before_expires_seconds', DEFAULT_BEFORE_EXPIRES)
+        self.update_all = settings.config_refresh.get('config_refresh', False)
 
     def start(self):
         """
@@ -83,6 +84,16 @@ class TokenRefresherManager(object):
 
         return credentials
 
+    def update_all_owners(self, new_credentials, orig_owner_id, channel_id, client_app_id):
+        all_owners_credentials = db.full_query('credential-owners/*/channels/{}'.format(channel_id))
+        logger.info('[TokenRefresher] update_all_owners: {} keys found'.format(len(len(all_owners_credentials))))
+        for cred_dict in all_owners_credentials:
+            key = cred_dict['key']
+            owner_id = key.split('/')[1]
+            if owner_id == orig_owner_id:
+                continue  # ignoring original owner
+            db.set_credentials(new_credentials, client_app_id, owner_id, channel_id)
+
     @rate_limited(settings.config_refresh.get('rate_limit', DEFAULT_RATE_LIMIT))
     def send_request(self, credentials_dict, method, url):
         try:
@@ -123,6 +134,8 @@ class TokenRefresherManager(object):
                     new_credentials = self.get_new_expiration_date(response.json())
                     logger.debug('[TokenRefresher] new credentials {}'.format(key))
                     db.set_credentials(new_credentials, client_app_id, owner_id, channel_id)
+                    if self.update_all:
+                        self.update_all_owners(new_credentials, owner_id, channel_id, client_app_id)
                     return new_credentials
                 else:
                     logger.warning('[TokenRefresher] Error in refresh token request {} {}'.format(channel_id, response.text))
