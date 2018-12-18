@@ -53,7 +53,10 @@ class PollingManager(object):
 
         while True:
             logger.info('[Polling] new polling request {}'.format(datetime.datetime.now()))
-            loop.run_until_complete(self.make_requests(conf_data))
+            try:
+                loop.run_until_complete(self.make_requests(conf_data))
+            except Exception:
+                logger.error('[Polling] Error on worker loop, preventing to break thread, {}'.format(traceback.format_exc(limit=5)))
             time.sleep(self.interval)
 
     async def make_requests(self, conf_data: dict):
@@ -84,7 +87,6 @@ class PollingManager(object):
     @rate_limited(settings.config_polling.get('rate_limit', DEFAULT_RATE_LIMIT))
     def send_request(self, channel_id, method, url, params, data):
         try:
-            #credentials = db.get_credentials(self.client_id, '*', channel_id)
             credentials_list = db.full_query('credential-owners/*/channels/{}'.format(channel_id))
             logger.info('[Polling] {} results found for channel_id: {}'.format(len(credentials_list), channel_id))
 
