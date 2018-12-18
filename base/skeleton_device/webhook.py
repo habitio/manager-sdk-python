@@ -254,9 +254,9 @@ class WebhookHubDevice(WebhookHubBase):
             full_host = "{}://{}/{}".format(settings.schema_pub, settings.host_pub, settings.api_version)
             data = {
                 "authorize": "{}/authorize".format(full_host),
-                "receive_token": "{}/receive_token".format(full_host),
-                "devices_list": "{}/devices_list".format(full_host),
-                "select_device": "{}/select_device".format(full_host)
+                "receive_token": "{}/receive-token".format(full_host),
+                "devices_list": "{}/devices-list".format(full_host),
+                "select_device": "{}/select-device".format(full_host)
             }
 
             url = settings.webhook_url
