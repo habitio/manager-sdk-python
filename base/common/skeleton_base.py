@@ -85,7 +85,7 @@ class SkeletonBase(ABC):
         To retrieve channel status using channel_id
 
         """
-        db.get_channel_status(channel_id)
+        return db.get_channel_status(channel_id)
 
     def store_channel_status(self, channel_id, status):
         """
@@ -152,7 +152,7 @@ class SkeletonBase(ABC):
             case - a dictionary with keys  'device_id', 'component' and 'property'
             data - data to be published
         """
-        logger.debug("Will publisher to mqtt")
+        self.log("Will publisher to mqtt", 7)
         mqtt.publisher(io="iw", data=data, case=case)
 
     def renew_credentials(self, channel_id, sender, credentials):
@@ -166,9 +166,9 @@ class SkeletonBase(ABC):
         try:
             db.set_credentials(
                 credentials, sender["client_id"], sender["owner_id"], channel_id)
-            logger.info("Credentials successfully renewed !")
+            self.log("Credentials successfully renewed !", 6)
         except Exception as ex:
-            logger.error("Renew credentials failed!!! {}".format(traceback.format_exc(limit=5)))
+            self.log("Renew credentials failed!!! {}".format(traceback.format_exc(limit=5)), 4)
 
     def get_type(self):
         return self._type

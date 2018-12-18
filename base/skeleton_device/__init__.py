@@ -133,9 +133,9 @@ class SkeletonDevice(SkeletonBase):
 
         except (OSError, ChannelTemplateNotFound) as e:
             logger.error('Error while making request to platform: {}'.format(e))
-            return ''
         except Exception as ex:
             logger.alert("Unexpected error get_channel_template: {}".format(traceback.format_exc(limit=5)))
+        return ''
 
     def get_device_id(self, channel_id):
         """
