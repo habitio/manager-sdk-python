@@ -41,7 +41,6 @@ def is_json(str_value):
     Rate-limits the decorated function locally, for one process.
     source: https://gist.github.com/gregburek/1441055#gistcomment-945625
 """
-
 def rate_limited(max_per_second: int):
     """Rate-limits the decorated function locally, for one process."""
     lock = threading.Lock()
