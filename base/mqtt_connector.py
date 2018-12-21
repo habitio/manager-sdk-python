@@ -280,7 +280,7 @@ class MqttConnector():
             io    - mode of operation ('ir','iw'). By default, io takes value 'iw'.
             data  - data to be published
             case  - if topic not available, a dictionary used to construct the topic from 
-                    keys 'device_id', 'component' and 'property'
+                    keys 'device_id' or 'channel_id', 'component' and 'property'
         """
         try:
             payload = dict()
@@ -292,7 +292,7 @@ class MqttConnector():
             logger.debug(
                 "Mqtt - Case {} and settings.api_version={}".format(case, settings.api_version))
 
-            if all(key in case for key in ("device_id", "component", "property")):
+            if all(key in case for key in ("device_id", "component", "property")) or all(key in case for key in ("channel_id", "component", "property")):
 
                 channel_id = case["channel_id"] if "channel_id" in case else db.get_channel_id(case["device_id"])
 

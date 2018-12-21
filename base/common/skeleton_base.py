@@ -71,10 +71,10 @@ class SkeletonBase(ABC):
             request - A flask.request object received from manufacturer's API.
 
         Returns a tuple as (case, data),
-            case - Expecting a dictionary with keys 'device_id', 'component' and 'property',
+            case - Expecting a dictionary with keys 'device_id' or 'channel_id', 'component' and 'property',
                    otherwise if None is returned for case, then NO data will be send to muzzley
             data - Any data that has to be send to Muzzley's platform
-            response (optional) - flask Response object, if not defined returns a Response with 200 status_code
+            status_code (optional) - http status code, if not defined 200 status is set as default
 
 
         """
