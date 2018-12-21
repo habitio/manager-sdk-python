@@ -13,3 +13,6 @@ class RemoteControlDisabledException(Exception):
 
 class PermissionRevokedException(Exception):
     pass
+
+class UnauthorizedException(Exception):
+    pass

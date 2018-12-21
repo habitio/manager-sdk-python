@@ -152,7 +152,7 @@ class MqttConnector():
 
                     else:
                         access_failed_value = ACCESS_UNAUTHORIZED_VALUE
-                        raise InvalidAccessCredentials
+                        raise InvalidAccessCredentialsException
 
                 else:
 
@@ -165,6 +165,10 @@ class MqttConnector():
             case["property"] = settings.access_property
             self.publisher(
                 io="ir", data=access_failed_value, case=case)
+        except UnauthorizedException:
+            case["property"] = settings.access_property
+            self.publisher(
+                io="ir", data=ACCESS_UNAUTHORIZED_VALUE, case=case)
         except RemoteControlDisabledException:
             case["property"] = settings.access_property
             self.publisher(
