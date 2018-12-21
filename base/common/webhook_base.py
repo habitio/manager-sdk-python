@@ -1,5 +1,5 @@
 from flask import Response
-import logging, json, traceback
+import logging, traceback
 
 from base.redis_db import db
 from base.settings import settings
@@ -64,8 +64,8 @@ class WebhookHubBase:
             logger.debug('downstream method returned {}'.format(downstream_tuple))
 
         try:
-            response = downstream_tuple[2]
+            status_code = int(downstream_tuple[2])
         except (IndexError, TypeError):
-            response = Response(status=200)
+            status_code = 200
 
-        return response
+        return Response(status=status_code)
