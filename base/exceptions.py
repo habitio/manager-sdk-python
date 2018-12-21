@@ -2,8 +2,14 @@
 class ChannelTemplateNotFound(Exception):
     pass
 
-class NoAccessDevice(Exception):
+class NoAccessDeviceException(Exception):
     pass
 
-class InvalidAccessCredentials(Exception):
+class InvalidAccessCredentialsException(Exception):
+    pass
+
+class RemoteControlDisabledException(Exception):
+    pass
+
+class PermissionRevokedException(Exception):
     pass

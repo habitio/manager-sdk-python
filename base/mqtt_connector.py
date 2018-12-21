@@ -7,8 +7,9 @@ import paho.mqtt.client as paho
 from base.redis_db import db
 from base.settings import settings
 from base.utils import format_str
-from base.constants import DEFAULT_RETRY_WAIT, ACCESS_SERVICE_ERROR_VALUE, ACCESS_UNAUTHORIZED_VALUE, HEARTBEAT_PROP
-from base.exceptions import NoAccessDevice, InvalidAccessCredentials
+from base.constants import DEFAULT_RETRY_WAIT, ACCESS_SERVICE_ERROR_VALUE, \
+    ACCESS_UNAUTHORIZED_VALUE, HEARTBEAT_PROP, ACCESS_REMOTE_CONTROL_DISABLED
+from base.exceptions import *
 from tenacity import retry, wait_fixed
 
 logger = logging.getLogger(__name__)
@@ -160,10 +161,18 @@ class MqttConnector():
 
             else:
                 return
-        except (NoAccessDevice, InvalidAccessCredentials):
+        except (NoAccessDeviceException, InvalidAccessCredentialsException):
             case["property"] = settings.access_property
             self.publisher(
                 io="ir", data=access_failed_value, case=case)
+        except RemoteControlDisabledException:
+            case["property"] = settings.access_property
+            self.publisher(
+                io="ir", data=ACCESS_REMOTE_CONTROL_DISABLED, case=case)
+        except PermissionRevokedException:
+            case["property"] = settings.access_property
+            self.publisher(
+                io="ir", data=ACCESS_PERMISSION_REVOKED, case=case)
         except Exception as e:
             logger.error("Mqtt - Failed to handle payload. {}".format(traceback.format_exc(limit=5)))
 
