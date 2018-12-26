@@ -40,7 +40,7 @@ class SkeletonDevice(SkeletonBase):
         Each dictionary in list represent an individual request to be made to manufacturer's API and
         its position denotes the order of request.
         """
-        pass
+        return NotImplemented
 
     @abstractmethod
     def get_devices(self, sender, credentials):
@@ -62,28 +62,26 @@ class SkeletonDevice(SkeletonBase):
 
         Each dictionary in list denotes a device of user.
         """
-        pass
+        return NotImplemented
 
-    @abstractmethod
     def did_pair_devices(self, credentials, sender, paired_devices):
         """
         *** MANDATORY ***
         Invoked after successful device pairing.
 
-        Receieves,
+        Receives,
             credentials     - All persisted user credentials.
-            sender          - A dictionary with keys 'channel_template_id', 'owner_id' and
-                        'client_id'.
-            paired_devices     - A list of dictionaries with selected device's data
+            sender          - A dictionary with keys 'channel_template_id', 'owner_id' and 'client_id'.
+            paired_devices  - A list of dictionaries with selected device's data
 
         """
-        pass
+        return NotImplemented
 
     @abstractmethod
     def access_check(self, mode, case, credentials, sender):
         """
         *** MANDATORY ***
-        Checks if there is access to read from/write to a component.
+        Checks for access to manufacture for a component
 
         Receives,
             mode        - 'r' or 'w'
@@ -96,7 +94,7 @@ class SkeletonDevice(SkeletonBase):
 
         Returns updated valid credentials or current one  or None if no access
         """
-        pass
+        return NotImplemented
 
     def polling(self, data):
         """
