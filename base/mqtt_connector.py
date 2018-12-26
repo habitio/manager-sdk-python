@@ -188,7 +188,6 @@ class MqttConnector():
             self.implementer.upstream(
                 mode=payload["io"],
                 case=case,
-                credentials={},
                 sender=sender,
                 data=data
             )
