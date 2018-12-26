@@ -35,6 +35,31 @@ class SkeletonBase(ABC):
         """
         return NotImplemented
 
+    def upstream(self, mode, case, credentials, sender, data=None):
+        """
+        *** MANDATORY ***
+        Invoked when Muzzley platform intends to communicate with manufacturer's api
+        to read/update device's information.
+
+        Receives,
+            mode        - 'r' or 'w'
+                r - read from manufacturer's API
+                w - write to manufacturer's API
+            case       - A dictionary with keys 'device_id','channel_id','component' and 'property'.
+            data        - data if any sent by Muzzley's platform.
+            credentials - credentials of user from database
+            sender      - A dictionary with keys 'owner_id' and
+                        'client_id'.
+
+        Expected Response,
+            'r' - mode
+                Returns data on successfull read from manufacturer's API, otherwise
+                returns None.
+            'w' - mode
+                Returns True on successfull write to manufacturer's API, otherwise
+                returns False.
+        """
+        return NotImplemented
 
     def downstream(self, request):
         """

@@ -98,31 +98,6 @@ class SkeletonDevice(SkeletonBase):
         """
         pass
 
-    def upstream(self, mode, case, credentials, sender, data=None):
-        """
-        *** MANDATORY ***
-        Invoked when Muzzley platform intends to communicate with manufacturer's api
-        to read/update device's information.
-
-        Receives,
-            mode        - 'r' or 'w'
-                            r - read from manufacturer's API
-                            w - write to manufacturer's API
-            case        - A dictionary with keys 'channel_id', 'component', 'property' and 'device_id'.
-            data        - data if any sent by Muzzley's platform.
-            credentials - credentials of user from database
-            sender      - A dictionary with keys 'owner_id' and 'client_id'.
-
-        Expected Response,
-            'r' - mode
-                Returns data on successful read from manufacturer's API, otherwise
-                returns None.
-            'w' - mode
-                Returns True on successful write to manufacturer's API, otherwise
-                returns False.
-        """
-        return NotImplemented
-
     def polling(self, data):
         """
         Invoked by the manager itself when performing a polling request to manufacturer's API
