@@ -53,10 +53,10 @@ class SkeletonBase(ABC):
 
         Expected Response,
             'r' - mode
-                Returns data on successfull read from manufacturer's API, otherwise
+                Returns data on successful read from manufacturer's API, otherwise
                 returns None.
             'w' - mode
-                Returns True on successfull write to manufacturer's API, otherwise
+                Returns True on successful write to manufacturer's API, otherwise
                 returns False.
         """
         return NotImplemented
