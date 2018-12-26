@@ -96,7 +96,10 @@ To find the requests involved in performing authorization with a manufacturer.
 	*  _sender_      - A dictionary with keys _'channel_template_id'_, _'owner_id'_ and _'client_id'_.
 
 **client_id** should be used to get manufacturer private credentials from config file.
-`credentials = settings.config_manufacturer['credentials'][sender['client_id']]`
+
+```
+credentials = settings.config_manufacturer['credentials'][sender['client_id']]
+```
 
 * Returns a list of dictionaries with the structure,
 
@@ -232,6 +235,7 @@ Returns a dict with the entire data in configuration file.
 
 ##### **publisher(case, data)**
 Publish data to some topic (case) using mqtt. **io** used to publish the message will always be **iw**
+
 * **case**: a dictionary with keys _'component'_, _'property'_, _'device_id'_ if is a Device Manager or _'channel_id'_ if is an Application Manager.
 * **data**: data to be published.
 
@@ -254,15 +258,21 @@ Returned a formatted datetime as timestamp string
 
 ##### **get_channel_template(channel_id)**
 Makes an http request to Muzzley's platform to find a _channel_template_id_ for a channel_id. Returns channel_template_id or an empty string if results are not found. Http URI requested
-`/channels/[CHANNEL_ID]`
+```
+/channels/[CHANNEL_ID]
+```
 
 ##### **get_device_id(channel_id)**
 Retrieve manufacturer device_id from database using channel_id value. If more than 1 result is found, returns first coincidence. Query to db key
-`device-channels/[CHANNEL_ID]`
+```
+device-channels/[CHANNEL_ID]
+```
 
 #### **get_channel_id(device_id) :**
 Retrieve channel_id using device_id. If more than 1 result is found, returns first coincidence. Query to db key
-`channel-devices/[DEVICE_ID]`
+```
+channel-devices/[DEVICE_ID]
+```
 
 ---
 
