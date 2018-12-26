@@ -187,6 +187,24 @@ Checks if access to read from/write to a component exists.
 
 * Returns **updated** valid credentials or **current** ones. Returns **None** if no access.
 
+##### **get_refresh_token_conf()**
+When Token Refresh configuration is enabled, manager should implement this additional method.
+
+* Returns a python dictionary with 'url' and 'method' key. This will define what type of request should be made and which url.
+
+##### **get_polling_conf()**
+If Polling configuration is enabled, manager should implement this method
+
+* Returns a python dictionary with 'url', 'method', 'params', 'data' key. These will be used as params on a "requests.request" object to perform polling to manufacturer's API.
+
+##### **polling(data)**
+This method is invoked by a polling thread if enabled.
+
+- Receives a data dictionary with 'response', 'channel_id' and 'credentials'.
+    - response: polling response as a json object.
+    - channel_id: device channel_id which performed the polling request.
+    - credentials: manufacturer credentials used during the polling request. This also can be use if a new request needs to be done.
+
 ---
 
 ### Common Inbuilt methods ###
@@ -197,7 +215,9 @@ Retrieves channel status data from db using channel_id. **None** is returned if 
 
 ##### **store_channel_status(channel_id, status)**
 Store in db status data for a given channel_id. db key has the following format
-`status-channels/[CHANNEL_ID]`
+```
+status-channels/[CHANNEL_ID]
+```
 
 ##### **store(key, value)**
 To store a data in database.
@@ -268,7 +288,7 @@ Retrieve manufacturer device_id from database using channel_id value. If more th
 device-channels/[CHANNEL_ID]
 ```
 
-#### **get_channel_id(device_id) :**
+##### **get_channel_id(device_id)**
 Retrieve channel_id using device_id. If more than 1 result is found, returns first coincidence. Query to db key
 ```
 channel-devices/[DEVICE_ID]

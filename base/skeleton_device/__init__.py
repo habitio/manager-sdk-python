@@ -101,7 +101,7 @@ class SkeletonDevice(SkeletonBase):
         Invoked by the manager itself when performing a polling request to manufacturer's API
 
         Receives,
-            data - A dictionary with keys 'channel_id' and 'response' where response is a json object
+            data - A dictionary with keys 'channel_id', 'credentials' and 'response' where response is a json object
 
         This function is in charge
         """
