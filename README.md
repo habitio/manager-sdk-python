@@ -41,9 +41,9 @@ Following, the manager must implement the Skeleton Class according to your manag
 
 or **SkeletonDevice** for DeviceManagers:
 
-        from base.skeleton_application import SkeletonApplication
+        from base.skeleton_device import SkeletonDevice
 
-        class Implementor(SkeletonApplication):
+        class Implementor(SkeletonDevice):
             # Your Implementation
 
 Both Skeletons share functions that can be found in sdk/common/skeleton_base.py
