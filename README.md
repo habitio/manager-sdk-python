@@ -53,10 +53,10 @@ Both Skeletons share functions that can be found in sdk/common/skeleton_base.py
 ### Common Abstract methods ###
 The abstract methods are invoked by SDK when required and passes it required data to perform specific functions. SDK may except returned data to follow a pre-defined structure or/and type.
 
->##### **start**
+##### **start**
 Should be always implemented, is executed right after all the configuration is done. Can be used to perform any initial configuration. Does not receive
 
->##### **upstream(mode, case, credentials, sender, data=None)**
+##### **upstream(mode, case, credentials, sender, data=None)**
 Invoked when Muzzley platform intends to communicate with the manager about a read with manufacturer's api to read/update device's information.
 
 * Receives params
@@ -74,7 +74,7 @@ Invoked when Muzzley platform intends to communicate with the manager about a re
 	* **w** (mode)
         Returns **True** on successful write to manufacturer's API, otherwise returns **False**.
 
->##### **downstream(request) :**
+##### **downstream(request) :**
 Invoked when manufacturer's api intends to communicate with Muzzley's platform to update information.
 
 * Receives
@@ -89,7 +89,7 @@ Invoked when manufacturer's api intends to communicate with Muzzley's platform t
 ### Device abstract methods ###
 Methods only invoked by Device Manager, directly related to Device Manufacturer's functions
 
->##### **auth_requests(self, sender) :**
+##### **auth_requests(self, sender) :**
 To find the requests involved in performing authorization with a manufacturer.
 
 * Receives
@@ -132,12 +132,12 @@ location = [
 ]
 ```
 
->##### **auth_response(response_data) :**
+##### **auth_response(response_data) :**
 Used to handle the response received in the final authorization request to manufacturer. Also gathers all essential data required to initiate any request to the manufacturer so the gathered data can be persisted.
 
 * Returns dictionary of required credentials for persistence, otherwise returns *None* if no persistence required after analyzing.
 
->##### **get_devices(sender, credentials) :**
+##### **get_devices(sender, credentials) :**
 Identify a user's device list from manufacturer to integrate with Muzzley.
 
 * Receives ,
@@ -171,7 +171,7 @@ Invoked after successful device pairing.
 	* **sender**: A dictionary with keys _'channel_template_id'_, _'owner_id'_ and _'client_id'_.
 	* **paired_devices**: A list of dictionaries with selected device's data
 
->##### **access_check(mode, case, credentials, sender) :**
+##### **access_check(mode, case, credentials, sender) :**
 Checks if access to read from/write to a component exists.
 
 * Receives,
@@ -189,27 +189,27 @@ Checks if access to read from/write to a component exists.
 ### Common Inbuilt methods ###
 The pre-defined methods that belongs to Skeleton class to support implementation of abstract methods.
 
->##### **get_channel_status(channel_id)**
+##### **get_channel_status(channel_id)**
 Retrieves channel status data from db using channel_id. **None** is returned if no information is found.
 
->##### **store_channel_status(channel_id, status)**
+##### **store_channel_status(channel_id, status)**
 Store in db status data for a given channel_id. db key has the following format
 `status-channels/[CHANNEL_ID]`
 
->##### **store(key, value)**
+##### **store(key, value)**
 To store a data in database.
 	* _key_: unique identifier corresponding to value.
 	* _value_: data to be stored.
 
->##### **retrieve(key)**
+##### **retrieve(key)**
 Retrieve a data from database with its unique identifier.
 	* _key_: unique identifier corresponding to value.
 
->##### **exists(key)**
+##### **exists(key)**
 Check if a data is already present in database with its unique identifier.
 	* _key_: unique identifier corresponding to value.
 
->##### **log(message,level)**
+##### **log(message,level)**
 Log a message to log file
 	* _message_: message to be logged.
 	* _level_: denotes the logging priority. The level-priority relation given below,
@@ -227,40 +227,40 @@ Log a message to log file
 |trace		|8		|
 |verbose	|9		|
 
->##### **get_config()**
+##### **get_config()**
 Returns a dict with the entire data in configuration file.
 
->##### **publisher(case, data)**
+##### **publisher(case, data)**
 Publish data to some topic (case) using mqtt. **io** used to publish the message will always be **iw**
 * **case**: a dictionary with keys _'component'_, _'property'_, _'device_id'_ if is a Device Manager or _'channel_id'_ if is an Application Manager.
 * **data**: data to be published.
 
->##### **renew_credentials(sender, channel_id, sender, credentials)**
+##### **renew_credentials(sender, channel_id, sender, credentials)**
 Update credentials in database
 
 * **channel_id**: channel_id of the device.
 * **credentials**: a dictionary with data to be updated.
 * **sender**: a dictionary with keys _'owner_id'_ and _'client_id'_.
 
->##### **get_type()**
+##### **get_type()**
 Returns type of the implementor: "device" if is a Device Manager, "application" if is an Application Manager
 
->##### **format_datetime()**
+##### **format_datetime()**
 Returned a formatted datetime as timestamp string
 
 ---
 
 ### Device Inbuilt methods ###
 
->##### **get_channel_template(channel_id)**
+##### **get_channel_template(channel_id)**
 Makes an http request to Muzzley's platform to find a _channel_template_id_ for a channel_id. Returns channel_template_id or an empty string if results are not found. Http URI requested
 `/channels/[CHANNEL_ID]`
 
->##### **get_device_id(channel_id)**
+##### **get_device_id(channel_id)**
 Retrieve manufacturer device_id from database using channel_id value. If more than 1 result is found, returns first coincidence. Query to db key
 `device-channels/[CHANNEL_ID]`
 
->#### **get_channel_id(device_id) :**
+#### **get_channel_id(device_id) :**
 Retrieve channel_id using device_id. If more than 1 result is found, returns first coincidence. Query to db key
 `channel-devices/[DEVICE_ID]`
 
