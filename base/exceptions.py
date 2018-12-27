@@ -19,3 +19,6 @@ class UnauthorizedException(Exception):
 
 class InvalidRequestException(Exception):
     pass
+
+class ImplementorTypeNotFoundException(Exception):
+    pass

@@ -17,7 +17,6 @@ class WebhookHubHardware(WebhookHubBase):
 
     def __init__(self):
         super(WebhookHubHardware, self).__init__()
-        self.confirmation_hash = ""
 
     def inbox(self, request):
 
