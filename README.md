@@ -302,7 +302,7 @@ channel-devices/[DEVICE_ID]
 * All placeholders in configuration file should be replaced with appropriate values.
 * **Important :** The *{implementor_path}*  placeholder of sample has to be replaced with the path to the *.py* file of your manager that implements Skeleton class.
 
-#### Device Manager specific configurations
+#### Device Manager configurations
 
 ##### manufacturer
 
@@ -343,6 +343,12 @@ This section is optional, when an automatic token refresh process needs to be en
 * rate_limit: Is the limited amount of request by second. Useful to follow possible restrictions on manufacturer's api. If not defined, default value is `DEFAULT_RATE_LIMIT` (constants.py)
 * before_expires_seconds: This is the time margin before an access token expires. Leaving enough space to the refresh token process to successful execute. This means, if an access_token has an expiration time of 1 hour and before_expires_seconds is defined by 300 seconds. This token will try to refresh after 5 minutes before it expires. If not defined, default value is `DEFAULT_BEFORE_EXPIRES` (constants.py).
 * update_owners: boolean value (true/false). Default False. If enabled while refreshing a Token will also try to find all owners associated to the current refreshing channel and update their credentials as well.
+
+#### Application Manager configurations
+
+##### services
+
+##### usecases
 
 ---
 
