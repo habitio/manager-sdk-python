@@ -2,6 +2,7 @@ import json
 from abc import ABC, abstractmethod
 from datetime import timedelta
 
+from base.exceptions import ChannelTemplateNotFound
 from base.settings import settings
 from base.redis_db import db
 from base.constants import get_log_table
@@ -202,3 +203,30 @@ class SkeletonBase(ABC):
 
         return _response
 
+    def get_channeltemplate_data(self, channeltemplate_id):
+        """
+        Input :
+            channeltemplate_id - Muzzley channeltemplate_id
+
+        Returns channel_template_id
+
+        """
+
+        url = "{}/channel-templates/{}".format(settings.api_server_full, channeltemplate_id)
+        headers = {
+            "Authorization": "Bearer {0}".format(settings.block["access_token"])
+        }
+        try:
+            resp = requests.get(url, headers=headers)
+            self.log("Received response code[{}]".format(resp.status_code), 9)
+
+            if int(resp.status_code) == 200:
+                return resp.json()
+            else:
+                raise ChannelTemplateNotFound("Failed to retrieve channel_template_id")
+
+        except (OSError, ChannelTemplateNotFound) as e:
+            self.log('Error while making request to platform: {}'.format(e), 3)
+        except Exception as ex:
+            self.log("Unexpected error get_channel_template: {}".format(traceback.format_exc(limit=5)), 3)
+        return {}

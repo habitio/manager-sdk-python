@@ -16,3 +16,6 @@ class PermissionRevokedException(Exception):
 
 class UnauthorizedException(Exception):
     pass
+
+class InvalidRequestException(Exception):
+    pass
