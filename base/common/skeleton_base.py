@@ -53,10 +53,10 @@ class SkeletonBase(ABC):
 
         Expected Response,
             'r' - mode
-                Returns data on successfull read from manufacturer's API, otherwise
+                Returns data on successful read from manufacturer's API, otherwise
                 returns None.
             'w' - mode
-                Returns True on successfull write to manufacturer's API, otherwise
+                Returns True on successful write to manufacturer's API, otherwise
                 returns False.
         """
         return NotImplemented
@@ -71,10 +71,10 @@ class SkeletonBase(ABC):
             request - A flask.request object received from manufacturer's API.
 
         Returns a tuple as (case, data),
-            case - Expecting a dictionary with keys 'device_id', 'component' and 'property',
+            case - Expecting a dictionary with keys 'device_id' or 'channel_id', 'component' and 'property',
                    otherwise if None is returned for case, then NO data will be send to muzzley
             data - Any data that has to be send to Muzzley's platform
-            response (optional) - flask Response object, if not defined returns a Response with 200 status_code
+            status_code (optional) - http status code, if not defined 200 status is set as default
 
 
         """
