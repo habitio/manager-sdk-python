@@ -1,11 +1,11 @@
 from flask import request
-from base.common.router_base import RoutesBase
+from base.common.router_base import RouterBase
 from base.settings import settings
 
 import logging
 logger = logging.getLogger(__name__)
 
-class RouterApplication(RoutesBase):
+class RouterApplication(RouterBase):
 
     def activate(self):
         return self.webhook.activate(request)
