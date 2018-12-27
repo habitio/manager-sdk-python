@@ -18,7 +18,7 @@ class ImplementorNotFound(Exception):
 
 def get_implementer():
     try:
-        from base import skeleton_device, skeleton_application
+        from base import skeleton_device, skeleton_application, skeleton_hardware
         _spec = util.spec_from_file_location("implementor", settings.skeleton_path)
 
         _module = util.module_from_spec(_spec)
@@ -34,7 +34,8 @@ def get_implementer():
 
                 if inspect.isclass(_obj) and issubclass(_obj, (
                         skeleton_device.SkeletonDevice,
-                        skeleton_application.SkeletonApplication)):
+                        skeleton_application.SkeletonApplication,
+                        skeleton_hardware.SkeletonHardware)):
                     logger.debug("Implementation class found: {}".format(_obj))
                     return _obj()
             except TypeError:
