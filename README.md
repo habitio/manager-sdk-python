@@ -298,9 +298,51 @@ channel-devices/[DEVICE_ID]
 
 ### Managing Configuration file ##
 
-* The configuration file of your manager must follow the template in *sample-manager-sdk-python.conf* file available in sdk folder.
+* The configuration file of your manager must follow the template in _sample-manager-sdk-python.conf_ for Device Managers and _sample-application-sdk-python.conf_ for Application Managers file available in sdk folder.
 * All placeholders in configuration file should be replaced with appropriate values.
 * **Important :** The *{implementor_path}*  placeholder of sample has to be replaced with the path to the *.py* file of your manager that implements Skeleton class.
+
+#### Device Manager specific configurations
+
+##### manufacturer
+
+* application_id: Application unique ID given by Muzzley
+* manufacturer_app_id: Usually known as client_id or api_key (Oauth2)
+* manufacturer_app_secret: Also known as client_secret, sometimes this could be optional
+
+##### channel_templates
+This can be used to easily identify with a namespace what type of device correspond to a channel_id
+
+```
+"channel_templates": {
+    "thermostat": "0000-1111-0000-1111"
+}
+```
+
+##### photo_url
+In this section a device photo url can be define by configuration, this later can be use by list_devices on pairing process. Image url should be under muzzley cdn.
+
+```
+"photo_url": {
+    "0000-1111-0000-1111"": "https://cdn.muzzley.com/things/profiles/[MANUFACTURER_NAMESPACE]/[IMAGE_NAME]"
+}
+```
+
+##### polling (optional)
+This section is optional, when polling needs to be enabled.  Http polling requests will be made channel by channel. Channels are found by querying all devices under `channel-devices/[CHANNEL_ID]` keys.
+
+* enabled: boolean value (true/false)
+* interval_seconds: Is the period of time where a polling thread will perform requests to manufacturer's api. If not defined, default value is `DEFAULT_POLLING_INTERVAL` (constants.py).
+* rate_limit: Is the limited amount of request by second. Useful to follow possible restrictions on manufacturer's api. If not defined, default value is `DEFAULT_RATE_LIMIT` (constants.py)
+
+##### token_refresher (optional)
+This section is optional, when an automatic token refresh process needs to be enabled. Http refresh token requests will be made by owner credentials. Credentials are found by querying all owners credentials of all their channels `credential-owners/*/channels/*`
+
+* enabled: boolean value (true/false)
+* interval_seconds: Is the period of time where a token_refresher thread will perform requests to manufacturer's api. If not defined, default value is `DEFAULT_REFRESH_INTERVAL` (constants.py).
+* rate_limit: Is the limited amount of request by second. Useful to follow possible restrictions on manufacturer's api. If not defined, default value is `DEFAULT_RATE_LIMIT` (constants.py)
+* before_expires_seconds: This is the time margin before an access token expires. Leaving enough space to the refresh token process to successful execute. This means, if an access_token has an expiration time of 1 hour and before_expires_seconds is defined by 300 seconds. This token will try to refresh after 5 minutes before it expires. If not defined, default value is `DEFAULT_BEFORE_EXPIRES` (constants.py).
+* update_owners: boolean value (true/false). Default False. If enabled while refreshing a Token will also try to find all owners associated to the current refreshing channel and update their credentials as well.
 
 ---
 
