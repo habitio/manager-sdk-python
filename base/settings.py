@@ -87,7 +87,7 @@ class Settings:
         self.access_property = "access"
         self.access_failed_value = "unreachable"
 
-        self.implementor_type = self.config_boot.get('manager_type', None)
+        self.implementor_type = self.config_boot.get('implementor_type', None)
 
         if not self.implementor_type:
             raise ImplementorTypeNotFoundException('Error to find the implementor type in credentials, not device, '
