@@ -59,7 +59,8 @@ class WebhookHubBase:
         try:
             case = downstream_tuple[0]
             data = downstream_tuple[1]
-            mqtt.publisher(io="iw", data=data, case=case)
+            if case and data:
+                mqtt.publisher(io="iw", data=data, case=case)
         except (TypeError, KeyError):
             logger.debug('downstream method returned {}'.format(downstream_tuple))
 
