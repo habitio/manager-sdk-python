@@ -1,11 +1,11 @@
 from flask import request
-from base.common.router_base import RoutesBase
+from base.common.router_base import RouterBase
 from base.settings import settings
 
 import logging
 logger = logging.getLogger(__name__)
 
-class RouterDevice(RoutesBase):
+class RouterDevice(RouterBase):
 
     def devices_list(self):
         return self.webhook.devices_list(request)

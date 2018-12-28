@@ -16,3 +16,9 @@ class PermissionRevokedException(Exception):
 
 class UnauthorizedException(Exception):
     pass
+
+class InvalidRequestException(Exception):
+    pass
+
+class ImplementorTypeNotFoundException(Exception):
+    pass

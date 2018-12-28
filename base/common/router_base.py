@@ -4,10 +4,10 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class RoutesBase:
+class RouterBase:
 
     def __init__(self, webhook):
-        super(RoutesBase, self).__init__()
+        super(RouterBase, self).__init__()
         self.webhook = webhook
 
     def starter(self):
