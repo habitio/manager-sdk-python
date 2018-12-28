@@ -1,4 +1,4 @@
-from flask import Response
+from flask import Response, jsonify
 import logging, traceback
 
 from base.redis_db import db
@@ -63,9 +63,16 @@ class WebhookHubBase:
         except (TypeError, KeyError):
             logger.debug('downstream method returned {}'.format(downstream_tuple))
 
+        status_code = 200
         try:
-            status_code = int(downstream_tuple[2])
-        except (IndexError, TypeError):
-            status_code = 200
+            response = downstream_tuple[2]
+            if type(response) is dict:  # status and data keys are mandatory
+                status_code = response['status']
+                response_data = jsonify(data)
+                return response_data, status_code
+            else:
+                status_code = int(response)
+        except (IndexError, TypeError) as e:
+            logger.info('Custom response data not found. {}'.format(e))
 
         return Response(status=status_code)
