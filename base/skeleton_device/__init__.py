@@ -14,7 +14,6 @@ class SkeletonDevice(SkeletonBase):
         super(SkeletonDevice, self).__init__()
         self.DEFAULT_BEFORE_EXPIRES = DEFAULT_BEFORE_EXPIRES
 
-    @abstractmethod
     def auth_requests(self, sender):
         """
         *** MANDATORY ***
@@ -42,7 +41,6 @@ class SkeletonDevice(SkeletonBase):
         """
         return NotImplemented
 
-    @abstractmethod
     def get_devices(self, sender, credentials):
         """
         *** MANDATORY ***
@@ -77,7 +75,6 @@ class SkeletonDevice(SkeletonBase):
         """
         return NotImplemented
 
-    @abstractmethod
     def access_check(self, mode, case, credentials, sender):
         """
         *** MANDATORY ***
