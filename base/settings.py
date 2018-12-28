@@ -98,7 +98,7 @@ class Settings:
             self.webhook_url = None
             self.mqtt_topic = 'applications'
         else:
-            raise Exception('Error to find the implementor type in credentials, not device or application implementor!')
+            raise ImplementorTypeNotFoundException('Error to find the implementor type in credentials, not device or application implementor!')
             exit()
 
         # Application specific conf
