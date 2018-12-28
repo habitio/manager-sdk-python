@@ -69,7 +69,7 @@ class WebhookHubBase:
             response = downstream_tuple[2]
             if type(response) is dict:  # status and data keys are mandatory
                 status_code = response['status']
-                response_data = jsonify(data)
+                response_data = jsonify(response['data'])
                 return response_data, status_code
             else:
                 status_code = int(response)
