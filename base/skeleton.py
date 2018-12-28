@@ -10,8 +10,3 @@ elif settings.implementor_type == 'application':
     Skeleton = skeleton_application.SkeletonApplication
     Router = skeleton_application.router.RouterApplication
     Webhook = skeleton_application.webhook.WebhookHubApplication
-elif settings.implementor_type == 'hardware':
-    from base import skeleton_hardware
-    Skeleton = skeleton_hardware.SkeletonHardware
-    Router = skeleton_hardware.router.RouterHardware
-    Webhook = skeleton_hardware.webhook.WebhookHubHardware

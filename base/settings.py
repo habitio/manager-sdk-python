@@ -87,25 +87,18 @@ class Settings:
         self.access_property = "access"
         self.access_failed_value = "unreachable"
 
-        self.implementor_type = self.config_boot.get('implementor_type', None)
-
-        if not self.implementor_type:
-            raise ImplementorTypeNotFoundException('Error to find the implementor type in credentials, not device, '
-                                                   'application or hardware implementor!')
-            exit()
-
-        if self.implementor_type == 'device':
+        # Identify skeleton/implementor type by scope
+        parts = self.config_cred["scope"].split(' ')
+        if MANAGER_SCOPE in parts:
+            self.implementor_type = 'device'
             self.webhook_url = "{}{}{}".format(self.api_server_full, "/managers/", self.client_id)
             self.mqtt_topic = 'managers'
-        elif self.implementor_type == 'application':
+        elif APPLICATION_SCOPE in parts:
+            self.implementor_type = 'application'
             self.webhook_url = None
             self.mqtt_topic = 'applications'
-        elif self.implementor_type == 'hardware':
-            self.webhook_url = None
-            self.mqtt_topic = 'devices'
         else:
-            raise ImplementorTypeNotFoundException('Error to find the implementor type in credentials, not device, '
-                                                   'application or hardware implementor!')
+            raise Exception('Error to find the implementor type in credentials, not device or application implementor!')
             exit()
 
         # Application specific conf
