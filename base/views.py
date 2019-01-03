@@ -2,7 +2,6 @@ from base import auth
 from base import logger
 from base.mqtt_connector import mqtt
 from base.settings import settings
-from base.utils import format_str
 from base.skeleton import Webhook, Router
 
 
