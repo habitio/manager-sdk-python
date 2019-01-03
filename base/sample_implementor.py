@@ -176,6 +176,7 @@ class Implementor(Skeleton):
             case - Expecting a dictionary with keys 'device_id', 'component' and 'property', 
                    otherwise if None is returned for case, then NO data will be send to muzzley
             data - Any data that has to be send to Muzzley's platform
+            status_code (optional) - http status code, if not defined 200 status is set as default
 
         
         """

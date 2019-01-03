@@ -1,78 +1,30 @@
 import json
 import logging
-import traceback
-
 import requests
-from flask import request, Response
+import traceback
+from flask import Response, request
+from tenacity import retry, wait_fixed
 
-from base.mqtt_connector import mqtt
+from base.common.webhook_base import WebhookHubBase
 from base.redis_db import db
 from base.settings import settings
-from base.solid import implementer
 from base.utils import format_str
-from base.polling import poll
-from base.token_refresher import refresher
 from base.constants import DEFAULT_RETRY_WAIT
-from tenacity import retry, wait_fixed
+
+from .polling import poll
+from .token_refresher import refresher
+
 
 logger = logging.getLogger(__name__)
 
-
-class WebhookHub:
+class WebhookHubDevice(WebhookHubBase):
 
     def __init__(self):
+        super(WebhookHubDevice, self).__init__()
         self.confirmation_hash = ""
-        self.implementer = implementer
         self.poll = poll
         self.refresher = refresher
 
-    @retry(wait=wait_fixed(DEFAULT_RETRY_WAIT))
-    def patch_endpoints(self):
-        try:
-            full_host = "{}://{}/{}".format(settings.schema_pub, settings.host_pub, settings.api_version)
-            data = {
-                "authorize": "{}/authorize".format(full_host),
-                "receive_token": "{}/receive_token".format(full_host),
-                "devices_list": "{}/devices_list".format(full_host),
-                "select_device": "{}/select_device".format(full_host)
-            }
-
-            headers = {
-                "Content-Type": "application/json",
-                "Authorization": "Bearer {0}".format(settings.block["access_token"])
-            }
-            url = settings.webhook_url
-
-            logger.debug("Initiated PATCH - {}".format(url))
-            logger.verbose(format_str(data, is_json=True))
-
-            resp = requests.patch(url, data=json.dumps(data), headers=headers)
-
-            logger.verbose("Received response code[{}]".format(resp.status_code))
-            logger.verbose(format_str(resp.json(), is_json=True))
-
-            if "confirmation_hash" in resp.json():
-                self.confirmation_hash = resp.json()["confirmation_hash"]
-                logger.notice("Confirmation Hash : {}".format(self.confirmation_hash))
-            else:
-                raise Exception
-
-        except Exception as e:
-            logger.alert("Failed at patch endpoints! {}".format(traceback.format_exc(limit=5)))
-            raise
-
-    def webhook_registration(self):
-
-        try:
-            self.patch_endpoints()
-            self.implementer.start()
-            self.poll.start()
-            self.refresher.start()
-        except Exception as e:
-            logger.alert("Unexpected exception {}".format(traceback.format_exc(limit=5)))
-            exit()
-
-    # .../authorize Webhook
     def authorize(self, request):
         logger.debug("\n\n\n\n\n\t\t\t\t\t********************** AUTHORIZE **************************")
         logger.debug("Received {} - {}".format(request.method, request.path))
@@ -100,33 +52,6 @@ class WebhookHub:
         except Exception as e:
             logger.error("Couldn't complete processing request, {}".format(traceback.format_exc(limit=5)))
 
-    # .../receive_token Webhook
-    def receive_token(self, request):
-        logger.debug("\n\n\n\n\n\t\t\t\t\t********************** RECEIVE_TOKEN **************************")
-        logger.debug("Received {} - {}".format(request.method, request.path))
-        logger.verbose("headers: {}".format(request.headers))
-        try:
-            received_hash = request.headers.get("Authorization").replace("Bearer ", "")
-            if received_hash == self.confirmation_hash:
-                if request.is_json:
-                    received_data = request.get_json()
-                else:
-                    return Response(status=422)
-
-                data = self.implementer.auth_response(received_data)
-                if data != None:
-                    db.set_credentials(data, request.headers["X-Client-Id"], request.headers["X-Owner-Id"])
-                    return Response(status=200)
-                else:
-                    logger.warning("No credentials to be stored!")
-                    return Response(status=401)
-            else:
-                logger.debug("Provided invalid confirmation hash!")
-                return Response(status=403)
-        except Exception as e:
-            logger.error("Couldn't complete processing request, {}".format(traceback.format_exc(limit=5)))
-
-    # .../devices_list Webhook
     def devices_list(self, request):
         logger.debug("\n\n\n\n\n\t\t\t\t\t********************** LIST_DEVICES **************************")
         logger.debug("Received {} - {}".format(request.method, request.path))
@@ -164,7 +89,6 @@ class WebhookHub:
         except Exception as e:
             logger.error("Couldn't complete processing request, {}".format(traceback.format_exc(limit=5)))
 
-    # .../select_device Webhook
     def select_device(self, request):
         logger.debug("\n\n\n\n\n\t\t\t\t\t*******************SELECT_DEVICE****************************")
         logger.debug("Received " + request.method + " - " + request.path)
@@ -203,6 +127,10 @@ class WebhookHub:
                             channel = self.create_channel_id(device)
                         else:
                             logger.info("Channel still valid in Muzzley")
+
+                            # Ensure persistence of manufacturer"s device id (key) to channel id (field) in redis hash
+                            db.set_channel_id(device["id"], channel_id, True)
+                            logger.verbose("Channel added to database")
                     else:
                         channel = self.create_channel_id(device)
 
@@ -280,11 +208,13 @@ class WebhookHub:
             logger.error("Couldn't complete processing request, {}".format(traceback.format_exc(limit=5)))
 
     def create_channel_id(self, device):
+
         # Creating a new channel for the particular device"s id
         headers = {
             "Content-Type": "application/json",
             "Authorization": "Bearer {0}".format(settings.block["access_token"])
         }
+
         data = {
             "name": "Device" if not "content" in device else device["content"],
             "channeltemplate_id": request.headers["X-Channeltemplate-Id"]
@@ -298,9 +228,11 @@ class WebhookHub:
             resp = requests.post("{}/managers/self/channels".format(url), headers=headers, data=json.dumps(data))
 
             logger.debug("Received response code[{}]".format(resp.status_code))
+
             if int(resp.status_code) != 201:
                 logger.debug(format_str(resp.json(), is_json=True))
                 raise Exception
+
         except Exception as ex:
             logger.error(
                 "Failed to create channel for channel template {} {}".format(request.headers["X-Channeltemplate-Id"],
@@ -309,28 +241,53 @@ class WebhookHub:
                 status=400
             )
 
-        # Ensure persistance of manufacturer"s device id (key) to channel id (field) in redis hash
+        # Ensure persistence of manufacturer"s device id (key) to channel id (field) in redis hash
         logger.verbose("Channel added to database")
         db.set_channel_id(device["id"], resp.json()["id"], True)
 
         channel = resp.json()
         return channel
 
-    # .../manufacturer Webhook
-    def agent(self, request):
-        logger.debug("\n\n\n\n\n\t\t\t\t\t*******************MANUFACTURER****************************")
-        logger.debug("Received {} - {}".format(request.method, request.path))
-        logger.verbose("\n" + str(request.headers))
+    @retry(wait=wait_fixed(DEFAULT_RETRY_WAIT))
+    def patch_endpoints(self):
+        try:
+            full_host = "{}://{}/{}".format(settings.schema_pub, settings.host_pub, settings.api_version)
+            data = {
+                "authorize": "{}/authorize".format(full_host),
+                "receive_token": "{}/receive-token".format(full_host),
+                "devices_list": "{}/devices-list".format(full_host),
+                "select_device": "{}/select-device".format(full_host)
+            }
 
-        if request.is_json:
-            logger.verbose(format_str(request.get_json(), is_json=True))
-        else:
-            logger.verbose("\n" + request.get_data(as_text=True))
+            url = settings.webhook_url
 
-        case, data = implementer.downstream(request)
-        if case != None:
-            mqtt.publisher(io="iw", data=data, case=case)
+            logger.debug("Initiated PATCH - {} {}".format(url, self.headers))
+            logger.verbose(format_str(data, is_json=True))
 
+            resp = requests.patch(url, data=json.dumps(data), headers=self.headers)
 
-# Creating an instance of WebhookHub
-webhook = WebhookHub()
+            logger.verbose("Received response code[{}]".format(resp.status_code))
+            logger.verbose(format_str(resp.json(), is_json=True))
+
+            if "confirmation_hash" in resp.json():
+                self.confirmation_hash = resp.json()["confirmation_hash"]
+                logger.notice("Confirmation Hash : {}".format(self.confirmation_hash))
+            else:
+                raise Exception
+
+        except Exception as e:
+            logger.alert("Failed at patch endpoints! {}".format(traceback.format_exc(limit=5)))
+            raise
+
+    def webhook_registration(self):
+
+        try:
+            self.patch_endpoints()
+            self.implementer.start()
+            self.poll.start()
+            self.refresher.start()
+            if self.watchdog_monitor:
+                self.watchdog_monitor.start()
+        except Exception as e:
+            logger.alert("Unexpected exception {}".format(traceback.format_exc(limit=5)))
+            exit()

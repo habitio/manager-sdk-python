@@ -43,10 +43,3 @@ class Watchdog:
             logger.warn('systemd not imported {}'.format(traceback.format_exc(limit=5)))
         except:
             logger.alert('Unexpected exception {}'.format(traceback.format_exc(limit=5)))
-
-
-try:
-    watchdog_monitor = Watchdog()
-except Exception as e:
-    logger.error("Failed to start Watchdog, {} {}".format(e, traceback.format_exc(limit=5)))
-
