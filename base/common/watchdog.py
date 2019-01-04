@@ -33,7 +33,7 @@ class Watchdog:
             logger.debug('watchdog... everything is ok')
             notify('WATCHDOG=1')
 
-            while not event.wait(self.interval):
+            while not event.wait(self.interval - 1):
                 main_thread_alive = threading.main_thread().is_alive()
                 logger.debug('is alive {}'.format(main_thread_alive))
                 if main_thread_alive:
