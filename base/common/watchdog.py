@@ -21,12 +21,17 @@ class Watchdog:
                 t.start()
             except:
                 logger.alert('Unexpected exception {}'.format(traceback.format_exc(limit=5)))
-        logger.info('[Watchdog] not enabled, keep_alive missing or 0')
+        else:
+            logger.info('[Watchdog] not enabled, keep_alive missing or 0')
 
     def send_notification(self):
         try:
             from systemd.daemon import notify
             event = threading.Event()
+
+            # send first notification on init
+            logger.debug('watchdog... everything is ok')
+            notify('WATCHDOG=1')
 
             while not event.wait(self.interval):
                 main_thread_alive = threading.main_thread().is_alive()
