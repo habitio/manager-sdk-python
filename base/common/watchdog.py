@@ -20,7 +20,7 @@ class Watchdog:
                 t = threading.Thread(target=self.send_notification, name="watchdog")
                 t.start()
             except:
-                logger.alert('Unexpected exception {}'.format(traceback.format_exc(limit=5)))
+                logger.alert('[Watchdog] Unexpected exception {}'.format(traceback.format_exc(limit=5)))
         else:
             logger.info('[Watchdog] not enabled, keep_alive missing or 0')
 
@@ -30,22 +30,22 @@ class Watchdog:
             event = threading.Event()
 
             # send first notification on init
-            logger.debug('watchdog... everything is ok')
+            logger.debug('[Watchdog]... everything is ok')
             notify('WATCHDOG=1')
 
             while not event.wait(self.interval - 1):
                 main_thread_alive = threading.main_thread().is_alive()
-                logger.debug('is alive {}'.format(main_thread_alive))
+                logger.debug('[Watchdog] is alive {}'.format(main_thread_alive))
                 if main_thread_alive:
-                    logger.debug('watchdog...')
+                    logger.debug('[Watchdog]...')
                     url = settings.config_http['bind']
                     resp = requests.get(url)
                     if resp.status_code == 200:
-                        logger.debug('everything is ok')
+                        logger.debug('[Watchdog] everything is ok')
                         notify('WATCHDOG=1')
         except (KeyError, TypeError, ValueError):
-            logger.info('Watchdog not enabled, keep_alive missing')
+            logger.info('[Watchdog] not enabled, keep_alive missing')
         except ImportError:
-            logger.warn('systemd not imported {}'.format(traceback.format_exc(limit=5)))
+            logger.warn('[Watchdog] systemd not imported {}'.format(traceback.format_exc(limit=5)))
         except:
-            logger.alert('Unexpected exception {}'.format(traceback.format_exc(limit=5)))
+            logger.alert('[Watchdog] Unexpected exception {}'.format(traceback.format_exc(limit=5)))
