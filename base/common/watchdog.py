@@ -15,12 +15,13 @@ class Watchdog:
             logger.info('Watchdog not enabled, keep_alive missing')
 
     def start(self):
-        if self.interval is not None:
+        if self.interval is not None and self.interval > 0:
             try:
                 t = threading.Thread(target=self.send_notification, name="watchdog")
                 t.start()
             except:
                 logger.alert('Unexpected exception {}'.format(traceback.format_exc(limit=5)))
+        logger.info('Watchdog not enabled')
 
     def send_notification(self):
         try:
