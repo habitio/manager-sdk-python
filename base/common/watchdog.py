@@ -10,9 +10,9 @@ class Watchdog:
         self.interval = None
         try:
             self.interval = int(settings.config_boot['keep_alive'])
-            logger.debug('watchdog interval {}'.format(self.interval))
+            logger.debug('[Watchdog] interval {}'.format(self.interval))
         except (KeyError, TypeError, ValueError):
-            logger.info('Watchdog not enabled, keep_alive missing')
+            logger.info('[Watchdog] not enabled, keep_alive missing')
 
     def start(self):
         if self.interval is not None and self.interval > 0:
@@ -21,7 +21,7 @@ class Watchdog:
                 t.start()
             except:
                 logger.alert('Unexpected exception {}'.format(traceback.format_exc(limit=5)))
-        logger.info('Watchdog not enabled')
+        logger.info('[Watchdog] not enabled, keep_alive missing or 0')
 
     def send_notification(self):
         try:
