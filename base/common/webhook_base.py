@@ -5,6 +5,7 @@ from base.redis_db import db
 from base.settings import settings
 from base.mqtt_connector import mqtt
 from base.utils import format_str
+from .watchdog import Watchdog
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +18,11 @@ class WebhookHubBase:
             "Content-Type": "application/json",
             "Authorization": "Bearer {0}".format(settings.block["access_token"])
         }
+        try:
+            self.watchdog_monitor = Watchdog()
+        except Exception as e:
+            logger.error("Failed to start Watchdog, {} {}".format(e, traceback.format_exc(limit=5)))
+            self.watchdog_monitor = None
 
     def receive_token(self, request):
         logger.debug("\n\n\n\n\n\t\t\t\t\t********************** RECEIVE_TOKEN **************************")

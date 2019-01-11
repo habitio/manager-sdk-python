@@ -286,6 +286,8 @@ class WebhookHubDevice(WebhookHubBase):
             self.implementer.start()
             self.poll.start()
             self.refresher.start()
+            if self.watchdog_monitor:
+                self.watchdog_monitor.start()
         except Exception as e:
             logger.alert("Unexpected exception {}".format(traceback.format_exc(limit=5)))
             exit()

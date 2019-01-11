@@ -89,6 +89,8 @@ class WebhookHubApplication(WebhookHubBase):
         try:
             self.patch_endpoints()
             self.implementer.start()
+            if self.watchdog_monitor:
+                self.watchdog_monitor.start()
         except Exception as e:
             logger.alert("Unexpected exception {}".format(traceback.format_exc(limit=5)))
             exit()

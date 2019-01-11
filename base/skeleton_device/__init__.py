@@ -2,8 +2,6 @@ from base.common.skeleton_base import SkeletonBase
 from base.constants import DEFAULT_BEFORE_EXPIRES
 from base.exceptions import ChannelTemplateNotFound
 
-from abc import abstractmethod
-
 from .router import *
 from .webhook import *
 
