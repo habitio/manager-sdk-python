@@ -105,7 +105,7 @@ class MqttConnector():
                         logger.warning("Mqtt - channel_id {} not found in database.".format(parts[5]))
                         case["device_id"] = ""
                         access_failed_value = ACCESS_SERVICE_ERROR_VALUE
-                        raise NoAccessDevice
+                        raise NoAccessDeviceException
 
                     case["device_id"] = str(device_id)
 
