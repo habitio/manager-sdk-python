@@ -60,26 +60,32 @@ class WebhookHubBase:
         else:
             logger.verbose("\n{}".format(request.get_data(as_text=True)))
 
-        downstream_tuple = self.implementer.downstream(request)
+        downstream_result = self.implementer.downstream(request)
+        downstream_list = downstream_result if type(downstream_result) == list else [downstream_result]
 
-        try:
-            case = downstream_tuple[0]
-            data = downstream_tuple[1]
-            if case and data:
-                mqtt.publisher(io="iw", data=data, case=case)
-        except (TypeError, KeyError):
-            logger.debug('downstream method returned {}'.format(downstream_tuple))
+        for downstream_tuple in downstream_list:
+
+            try:
+                case = downstream_tuple[0]
+                data = downstream_tuple[1]
+                if case and data:
+                    mqtt.publisher(io="iw", data=data, case=case)
+            except (TypeError, KeyError):
+                logger.debug('downstream method returned {}'.format(downstream_tuple))
 
         status_code = 200
-        try:
-            response = downstream_tuple[2]
-            if type(response) is dict:  # status and data keys are mandatory
-                status_code = response['status']
-                response_data = jsonify(response['data'])
-                return response_data, status_code
-            else:
-                status_code = int(response)
-        except (IndexError, TypeError) as e:
-            logger.info('Custom response data not found. {}'.format(e))
+        logger.info('Custom response disabled for multiple publish properties')
+
+        if type(downstream_result) is tuple:
+            try:
+                response = downstream_tuple[2]
+                if type(response) is dict:  # status and data keys are mandatory
+                    status_code = response['status']
+                    response_data = jsonify(response.get('data'))
+                    return response_data, status_code
+                else:
+                    status_code = int(response)
+            except (IndexError, TypeError) as e:
+                logger.info('Custom response data not found. {}'.format(e))
 
         return Response(status=status_code)
