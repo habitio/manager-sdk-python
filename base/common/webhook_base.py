@@ -74,7 +74,6 @@ class WebhookHubBase:
                 logger.debug('downstream method returned {}'.format(downstream_tuple))
 
         status_code = 200
-        logger.info('Custom response disabled for multiple publish properties')
 
         if type(downstream_result) is tuple:
             try:
@@ -87,5 +86,7 @@ class WebhookHubBase:
                     status_code = int(response)
             except (IndexError, TypeError) as e:
                 logger.info('Custom response data not found. {}'.format(e))
+        else:
+            logger.info('Custom response disabled for multiple publish properties')
 
         return Response(status=status_code)
