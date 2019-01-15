@@ -7,7 +7,7 @@ Internship project of a sdk for python integrations with Muzzley
 
 1. Add the sdk as a submodule of your main repository. By default, submodules will add the sub-project into a directory named the same as the repository. You can add a different path at the end of the command, in this case **sdk**.
 
-	    $ git submodule add https://bitbucket.org/muzzley/manager-sdk-python.git sdk
+	    $ git submodule add git@bitbucket.org:muzzley/manager-sdk-python.git sdk
 
 2. Install dependencies from sdk/requirements.txt, (Requires python 3.5.x or later version)
 
