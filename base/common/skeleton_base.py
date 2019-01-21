@@ -2,7 +2,7 @@ import json
 from abc import ABC, abstractmethod
 from datetime import timedelta
 
-from base.exceptions import ChannelTemplateNotFound
+from base.exceptions import ChannelTemplateNotFound, PropertyHistoryNotFoundException
 from base.settings import settings
 from base.redis_db import db
 from base.constants import get_log_table
@@ -229,4 +229,27 @@ class SkeletonBase(ABC):
             self.log('Error while making request to platform: {}'.format(e), 3)
         except Exception as ex:
             self.log("Unexpected error get_channel_template: {}".format(traceback.format_exc(limit=5)), 3)
+        return {}
+
+    def get_latest_property_value(self, channel_id, component, property):
+        url = "{}/channels/{channel_id}/components/{component}/properties/{property}/history".format(
+            settings.api_server_full, channel_id=channel_id, component=component, property=property
+        )
+
+        headers = {
+            "Authorization": "Bearer {0}".format(settings.block["access_token"])
+        }
+        try:
+            resp = requests.get(url, headers=headers)
+            self.log("Received response code[{}]".format(resp.status_code), 9)
+
+            if int(resp.status_code) == 200:
+                return resp.json()["elements"][0]["value"]
+            else:
+                raise PropertyHistoryNotFoundException("Failed to retrieve latest_property_value")
+
+        except (OSError, PropertyHistoryNotFoundException) as e:
+            self.log('Error while making request to platform: {}'.format(e), 3)
+        except Exception as ex:
+            self.log("Unexpected error get_latest_property_value: {}".format(traceback.format_exc(limit=5)), 3)
         return {}
