@@ -272,6 +272,12 @@ Returns type of the implementor: "device" if is a Device Manager, "application" 
 ##### **format_datetime()**
 Returned a formatted datetime as timestamp string
 
+##### **get_channeltemplate_data(channeltemplate_id)**
+Retrieves channel template data given an channeltemplate_id, returns an empty dict if not data is found.
+
+##### **get_latest_property_value(channel_id, component, property)**
+Return the latest value received by the platform for a given channel_id/component/property, an empty dict is returned if no data if found.
+
 ---
 
 ### Device Inbuilt methods ###
