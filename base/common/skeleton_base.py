@@ -244,7 +244,7 @@ class SkeletonBase(ABC):
             self.log("Received response code[{}]".format(resp.status_code), 9)
 
             if int(resp.status_code) == 200:
-                return resp.json()["value"]
+                return resp.json()["elements"][0]["value"]
             else:
                 raise PropertyHistoryNotFoundException("Failed to retrieve latest_property_value")
 
