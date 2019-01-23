@@ -272,6 +272,12 @@ Returns type of the implementor: "device" if is a Device Manager, "application" 
 ##### **format_datetime()**
 Returned a formatted datetime as timestamp string
 
+##### **get_channeltemplate_data(channeltemplate_id)**
+Retrieves channel template data given an channeltemplate_id, returns an empty dict if not data is found.
+
+##### **get_latest_property_value(channel_id, component, property)**
+Return the latest value received by the platform for a given channel_id/component/property, an empty dict is returned if no data if found.
+
 ---
 
 ### Device Inbuilt methods ###
@@ -335,6 +341,8 @@ This section is optional, when polling needs to be enabled.  Http polling reques
 * interval_seconds: Is the period of time where a polling thread will perform requests to manufacturer's api. If not defined, default value is `DEFAULT_POLLING_INTERVAL` (constants.py).
 * rate_limit: Is the limited amount of request by second. Useful to follow possible restrictions on manufacturer's api. If not defined, default value is `DEFAULT_RATE_LIMIT` (constants.py)
 
+*see polling section in [sample configuration file](sample-manager-sdk-python.conf)*
+
 ##### token_refresher (optional)
 This section is optional, when an automatic token refresh process needs to be enabled. Http refresh token requests will be made by owner credentials. Credentials are found by querying all owners credentials of all their channels `credential-owners/*/channels/*`
 
@@ -343,6 +351,8 @@ This section is optional, when an automatic token refresh process needs to be en
 * rate_limit: Is the limited amount of request by second. Useful to follow possible restrictions on manufacturer's api. If not defined, default value is `DEFAULT_RATE_LIMIT` (constants.py)
 * before_expires_seconds: This is the time margin before an access token expires. Leaving enough space to the refresh token process to successful execute. This means, if an access_token has an expiration time of 1 hour and before_expires_seconds is defined by 300 seconds. This token will try to refresh after 5 minutes before it expires. If not defined, default value is `DEFAULT_BEFORE_EXPIRES` (constants.py).
 * update_owners: boolean value (true/false). Default False. If enabled while refreshing a Token will also try to find all owners associated to the current refreshing channel and update their credentials as well.
+
+*see token_refresher section in [sample configuration file](sample-manager-sdk-python.conf)*
 
 #### Application Manager configurations
 

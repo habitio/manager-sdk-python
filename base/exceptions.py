@@ -25,3 +25,6 @@ class ImplementorTypeNotFoundException(Exception):
 
 class ApiConnectionErrorException(Exception):
     pass
+
+class PropertyHistoryNotFoundException(Exception):
+    pass
