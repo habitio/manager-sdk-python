@@ -163,6 +163,8 @@ class MqttConnector():
                 return
         except (NoAccessDeviceException, InvalidAccessCredentialsException):
             case["property"] = settings.access_property
+            if access_failed_value is None:
+                access_failed_value = ACCESS_UNAUTHORIZED_VALUE
             self.publisher(
                 io="ir", data=access_failed_value, case=case)
         except UnauthorizedException:
@@ -177,6 +179,10 @@ class MqttConnector():
             case["property"] = settings.access_property
             self.publisher(
                 io="ir", data=ACCESS_PERMISSION_REVOKED, case=case)
+        except ApiConnectionErrorException:
+            case["property"] = settings.access_property
+            self.publisher(
+                io="ir", data=ACCESS_API_UNREACHABLE, case=case)
         except Exception as e:
             logger.error("Mqtt - Failed to handle payload. {}".format(traceback.format_exc(limit=5)))
 
