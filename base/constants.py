@@ -48,5 +48,7 @@ ACCESS_SERVICE_ERROR_VALUE = 'service_error'  # this retry reading the property
 ACCESS_UNAUTHORIZED_VALUE = 'unauthorized'  # this shows a blue
 ACCESS_API_UNREACHABLE = 'api_unreachable'
 ACCESS_NOK_VALUE = 'nok'
+ACCESS_CONNECTED = 'connected'
+ACCESS_OK_VALUE = 'ok'
 
 HEARTBEAT_PROP = 'heartbeat'
