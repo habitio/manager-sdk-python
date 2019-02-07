@@ -79,7 +79,6 @@ class WebhookHubDevice(WebhookHubBase):
                     status=200,
                     mimetype="application/json"
                 )
-                # else:
 
             else:
                 logger.debug("Provided invalid confirmation hash!")
