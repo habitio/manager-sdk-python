@@ -119,6 +119,7 @@ class TokenRefresherManager(object):
                 logger.info("[TokenRefresher] Refreshing token {}".format(key))
                 try:
                     manufacturer_client_id = settings.config_manufacturer['credentials'][client_app_id].get('app_id')
+                    manufacturer_client_secret = settings.config_manufacturer['credentials'][client_app_id].get('app_secret')
                 except KeyError:
                     logger.debug('[TokenRefresher] Credentials not found for for {}'.format(client_app_id))
                     return
@@ -128,6 +129,9 @@ class TokenRefresherManager(object):
                     'refresh_token': credentials['refresh_token'],
                     'client_id': manufacturer_client_id
                 }
+
+                if manufacturer_client_secret is not None:
+                    params['client_secret'] = manufacturer_client_secret
 
                 response = requests.request(method,  url, params=params)
                 if response.status_code == requests.codes.ok:
