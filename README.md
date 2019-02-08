@@ -13,6 +13,7 @@ Internship project of a sdk for python integrations with Muzzley
 
 	    $ pip install -r sdk/requirements.txt
 
+> _systemd-python only works under linux os_
 ---
 
 ## Integration with SDK ##
