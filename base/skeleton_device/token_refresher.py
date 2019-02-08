@@ -59,6 +59,7 @@ class TokenRefresherManager(object):
 
         url = conf_data['url']
         method = conf_data['method']
+        is_json = conf_data.get('is_json', False)
 
         loop = asyncio.get_event_loop()
 
@@ -67,7 +68,7 @@ class TokenRefresherManager(object):
                 loop.run_in_executor(
                     executor,
                     self.send_request,
-                    credentials, method, url
+                    credentials, method, url, is_json
                 )
                 for credentials in self.get_credential_list()
             ]
@@ -95,7 +96,7 @@ class TokenRefresherManager(object):
             db.set_credentials(new_credentials, client_app_id, owner_id, channel_id)
 
     @rate_limited(settings.config_refresh.get('rate_limit', DEFAULT_RATE_LIMIT))
-    def send_request(self, credentials_dict, method, url):
+    def send_request(self, credentials_dict, method, url, is_json=False):
         try:
             key = credentials_dict['key']  # credential-owners/[owner_id]/channels/[channel_id]
             channel_id = key.split('/')[-1]
@@ -133,7 +134,11 @@ class TokenRefresherManager(object):
                 if manufacturer_client_secret is not None:
                     params['client_secret'] = manufacturer_client_secret
 
-                response = requests.request(method,  url, params=params)
+                if is_json:
+                    response = requests.request(method,  url, json=params)
+                else:
+                    response = requests.request(method,  url, params=params)
+
                 if response.status_code == requests.codes.ok:
                     new_credentials = self.get_new_expiration_date(response.json())
                     logger.debug('[TokenRefresher] new credentials {}'.format(key))
