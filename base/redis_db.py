@@ -152,8 +152,7 @@ class DBManager(Redis):
 
         credentials = data[0]
 
-        logger.debug("[DB] Credentials Found!")
-        # logger.verbose("credentials={}".format(credentials) )
+        logger.debug("[DB] Credentials Found! {}".format(credentials_key))
 
         return credentials
 
@@ -164,6 +163,7 @@ class DBManager(Redis):
             credentials['client_id'] = client_id
             credentials_key = "/".join(['credential-clients',
                                         client_id, 'owners', owner_id])
+
             if channel_id:
                 credentials_key = "/".join(['credential-owners',
                                             owner_id, 'channels', channel_id])
