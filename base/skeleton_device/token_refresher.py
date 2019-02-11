@@ -141,8 +141,13 @@ class TokenRefresherManager(object):
 
                 if response.status_code == requests.codes.ok:
                     new_credentials = self.get_new_expiration_date(response.json())
+
+                    if 'refresh_token' not in new_credentials:  # we need to keep same refresh_token always
+                        new_credentials['refresh_token'] = credentials['refresh_token']
+
                     logger.debug('[TokenRefresher] new credentials {}'.format(key))
                     db.set_credentials(new_credentials, client_app_id, owner_id, channel_id)
+
                     if self.update_owners:
                         self.update_all_owners(new_credentials, owner_id, channel_id, client_app_id)
                     return new_credentials
