@@ -55,6 +55,7 @@ class TokenRefresherManager(object):
         return credentials_list
 
     async def make_requests(self, conf_data: dict):
+        from base.solid import implementer
         logger.info("[TokenRefresher] {} starting {}".format(threading.currentThread().getName(),  datetime.datetime.now()))
 
         url = conf_data['url']
@@ -73,7 +74,7 @@ class TokenRefresherManager(object):
                 for credentials in self.get_credential_list()
             ]
             for response in await asyncio.gather(*futures):
-                if response: logger.info(response)
+                if response: implementer.after_refresh(response)
 
         logger.info("[TokenRefresher] {} finishing {}".format(threading.currentThread().getName(),  datetime.datetime.now()))
 
@@ -150,7 +151,10 @@ class TokenRefresherManager(object):
 
                     if self.update_owners:
                         self.update_all_owners(new_credentials, owner_id, channel_id, client_app_id)
-                    return new_credentials
+                    return {
+                        'channel_id': channel_id,
+                        'credentials': new_credentials
+                    }
                 else:
                     logger.warning('[TokenRefresher] Error in refresh token request {} {}'.format(channel_id, response.text))
             else:
