@@ -60,7 +60,6 @@ class TokenRefresherManager(object):
 
         url = conf_data['url']
         method = conf_data['method']
-        is_json = conf_data.get('is_json', False)
 
         loop = asyncio.get_event_loop()
 
@@ -69,7 +68,7 @@ class TokenRefresherManager(object):
                 loop.run_in_executor(
                     executor,
                     self.send_request,
-                    credentials, method, url, is_json
+                    credentials, method, url
                 )
                 for credentials in self.get_credential_list()
             ]
@@ -135,7 +134,7 @@ class TokenRefresherManager(object):
                 if manufacturer_client_secret is not None:
                     params['client_secret'] = manufacturer_client_secret
 
-                if is_json:
+                if method == 'POST':
                     response = requests.request(method,  url, json=params)
                 else:
                     response = requests.request(method,  url, params=params)
