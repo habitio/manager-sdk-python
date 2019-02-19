@@ -7,8 +7,7 @@ import paho.mqtt.client as paho
 from base.redis_db import db
 from base.settings import settings
 from base.utils import format_str
-from base.constants import DEFAULT_RETRY_WAIT, ACCESS_SERVICE_ERROR_VALUE, \
-    ACCESS_UNAUTHORIZED_VALUE, HEARTBEAT_PROP, ACCESS_REMOTE_CONTROL_DISABLED
+from base.constants import *
 from base.exceptions import *
 from tenacity import retry, wait_fixed
 
@@ -134,7 +133,6 @@ class MqttConnector():
 
                             result = self.implementer.upstream(
                                 mode='r', case=case, credentials=validated_credentials, sender=sender, data=data)
-
                             if result is not None:
                                 self.publisher(io="ir", data=result, case=case)
                             else:
@@ -161,26 +159,31 @@ class MqttConnector():
 
             else:
                 return
-        except (NoAccessDeviceException, InvalidAccessCredentialsException):
+        except (NoAccessDeviceException, InvalidAccessCredentialsException) as e:
             case["property"] = settings.access_property
             if access_failed_value is None:
                 access_failed_value = ACCESS_UNAUTHORIZED_VALUE
+            logger.error('Access exception raised: {}, sending value: {}'.format(e, access_failed_value))
             self.publisher(
                 io="ir", data=access_failed_value, case=case)
-        except UnauthorizedException:
+        except UnauthorizedException as e:
             case["property"] = settings.access_property
+            logger.error('Access exception raised: {}, sending value: {}'.format(e, ACCESS_UNAUTHORIZED_VALUE))
             self.publisher(
                 io="ir", data=ACCESS_UNAUTHORIZED_VALUE, case=case)
-        except RemoteControlDisabledException:
+        except RemoteControlDisabledException as e:
             case["property"] = settings.access_property
+            logger.error('Access exception raised: {}, sending value: {}'.format(e, ACCESS_REMOTE_CONTROL_DISABLED))
             self.publisher(
                 io="ir", data=ACCESS_REMOTE_CONTROL_DISABLED, case=case)
-        except PermissionRevokedException:
+        except PermissionRevokedException as e:
             case["property"] = settings.access_property
+            logger.error('Access exception raised: {}, sending value: {}'.format(e, ACCESS_PERMISSION_REVOKED))
             self.publisher(
                 io="ir", data=ACCESS_PERMISSION_REVOKED, case=case)
-        except ApiConnectionErrorException:
+        except ApiConnectionErrorException as e:
             case["property"] = settings.access_property
+            logger.error('Access exception raised: {}, sending value: {}'.format(e, ACCESS_API_UNREACHABLE))
             self.publisher(
                 io="ir", data=ACCESS_API_UNREACHABLE, case=case)
         except Exception as e:

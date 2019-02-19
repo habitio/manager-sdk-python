@@ -67,3 +67,6 @@ def rate_limited(max_per_second: int):
         return rate_limited_function
 
     return decorate
+
+def mask_token(token):
+    return '{}...{}'.format(token[:8], token[-5:])

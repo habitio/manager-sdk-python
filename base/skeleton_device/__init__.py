@@ -164,5 +164,16 @@ class SkeletonDevice(SkeletonBase):
         """
         raise NotImplementedError('token refresher ENABLED but conf NOT DEFINED')
 
+    def after_refresh(self, data):
+        """
+        Invoked by the manager itself when successfully refreshing a token
+
+        Receives,
+            data - A dictionary with keys 'channel_id' and 'new_credentials'
+
+        + not required +
+        """
+        pass
+
 
 SkeletonBase.register(SkeletonDevice)

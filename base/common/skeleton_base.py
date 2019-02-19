@@ -1,11 +1,12 @@
 import json
+import time
 from abc import ABC, abstractmethod
 from datetime import timedelta
 
 from base.exceptions import ChannelTemplateNotFound, PropertyHistoryNotFoundException
 from base.settings import settings
 from base.redis_db import db
-from base.constants import get_log_table
+from base.constants import get_log_table, DEFAULT_BEFORE_EXPIRES
 import requests
 import traceback
 from base.mqtt_connector import mqtt
@@ -253,3 +254,12 @@ class SkeletonBase(ABC):
         except Exception as ex:
             self.log("Unexpected error get_latest_property_value: {}".format(traceback.format_exc(limit=5)), 3)
         return {}
+
+    def get_new_expiration_date(self, credentials):
+        now = int(time.time())
+        before_expires_sec = settings.config_refresh.get('before_expires_seconds', DEFAULT_BEFORE_EXPIRES)
+        expires_in = int(credentials['expires_in']) - before_expires_sec
+        expiration_date = now + expires_in
+        credentials['expiration_date'] = expiration_date
+
+        return credentials
