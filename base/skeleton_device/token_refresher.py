@@ -109,6 +109,17 @@ class TokenRefresherManager(object):
                 logger.debug('[TokenRefresher] Missing client_id for {}'.format(key))
                 return
 
+            # validate if channel exists
+            from base.solid import implementer
+            try:
+                channel_template_id = implementer.get_channel_template(channel_id)
+            except Exception as e:
+                logger.debug('[TokenRefresher] {}'.format(e))
+                channel_template_id = None
+
+            if not channel_template_id:
+                return
+
             # Validate if token is valid before the request
             try:
                 now = int(time.time())
