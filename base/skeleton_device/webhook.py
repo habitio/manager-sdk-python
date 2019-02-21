@@ -12,7 +12,7 @@ from base.utils import format_str
 from base.constants import DEFAULT_RETRY_WAIT
 
 from .polling import poll
-from .token_refresher import refresher
+from .token_refresher import TokenRefresherManager
 
 
 logger = logging.getLogger(__name__)
@@ -23,7 +23,11 @@ class WebhookHubDevice(WebhookHubBase):
         super(WebhookHubDevice, self).__init__()
         self.confirmation_hash = ""
         self.poll = poll
-        self.refresher = refresher
+        try:
+            self.refresher = TokenRefresherManager()
+        except Exception as e:
+            logger.error("[TokenRefresher] Failed start TokenRefresher manager, {} {}".format(e, traceback.format_exc(limit=5)))
+            self.refresher = None
 
     def authorize(self, request):
         logger.debug("\n\n\n\n\n\t\t\t\t\t********************** AUTHORIZE **************************")
@@ -282,11 +286,14 @@ class WebhookHubDevice(WebhookHubBase):
 
         try:
             self.patch_endpoints()
-            self.implementer.start()
             self.poll.start()
-            self.refresher.start()
+            if self.refresher:
+                self.refresher.start()
+
             if self.watchdog_monitor:
                 self.watchdog_monitor.start()
+
+            self.implementer.start()
         except Exception as e:
             logger.alert("Unexpected exception {}".format(traceback.format_exc(limit=5)))
             exit()
