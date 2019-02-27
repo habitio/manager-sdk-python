@@ -97,11 +97,11 @@ class TokenRefresherManager(object):
             db.set_credentials(new_credentials, client_app_id, owner_id, channel_id)
 
     @rate_limited(settings.config_refresh.get('rate_limit', DEFAULT_RATE_LIMIT))
-    def send_request(self, credentials_dict, method, url, is_json=False):
+    def send_request(self, credentials_dict, method, url, is_json=False, **kwargs):
         try:
             key = credentials_dict['key']  # credential-owners/[owner_id]/channels/[channel_id]
-            channel_id = key.split('/')[-1]
-            owner_id = key.split('/')[1]
+            channel_id = key.split('/')[-1] if 'channel_id' not in kwargs else kwargs['channel_id']
+            owner_id = key.split('/')[1] if 'owner_id' not in kwargs else kwargs['owner_id']
             credentials = credentials_dict['value']
             try:
                 client_app_id = credentials['client_id']
@@ -134,7 +134,7 @@ class TokenRefresherManager(object):
                     manufacturer_client_id = settings.config_manufacturer['credentials'][client_app_id].get('app_id')
                     manufacturer_client_secret = settings.config_manufacturer['credentials'][client_app_id].get('app_secret')
                 except KeyError:
-                    logger.debug('[TokenRefresher] Credentials not found for for {}'.format(client_app_id))
+                    logger.debug('[TokenRefresher] Credentials not found for {}'.format(client_app_id))
                     return
 
                 params = {

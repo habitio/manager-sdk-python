@@ -169,31 +169,31 @@ class MqttConnector():
             case["property"] = settings.access_property
             if access_failed_value is None:
                 access_failed_value = ACCESS_UNAUTHORIZED_VALUE
-            logger.error('Access exception raised: {}, sending value: {}'.format(e, access_failed_value))
+            logger.error('1. Access exception raised: {}, sending value: {}'.format(e, access_failed_value))
             self.publisher(
                 io="ir", data=access_failed_value, case=case)
         except UnauthorizedException as e:
             case["property"] = settings.access_property
-            logger.error('Access exception raised: {}, sending value: {}'.format(e, ACCESS_UNAUTHORIZED_VALUE))
+            logger.error('2. Access exception raised: {}, sending value: {}'.format(e, ACCESS_UNAUTHORIZED_VALUE))
             self.publisher(
                 io="ir", data=ACCESS_UNAUTHORIZED_VALUE, case=case)
         except RemoteControlDisabledException as e:
             case["property"] = settings.access_property
-            logger.error('Access exception raised: {}, sending value: {}'.format(e, ACCESS_REMOTE_CONTROL_DISABLED))
+            logger.error('3. Access exception raised: {}, sending value: {}'.format(e, ACCESS_REMOTE_CONTROL_DISABLED))
             self.publisher(
                 io="ir", data=ACCESS_REMOTE_CONTROL_DISABLED, case=case)
         except PermissionRevokedException as e:
             case["property"] = settings.access_property
-            logger.error('Access exception raised: {}, sending value: {}'.format(e, ACCESS_PERMISSION_REVOKED))
+            logger.error('4. Access exception raised: {}, sending value: {}'.format(e, ACCESS_PERMISSION_REVOKED))
             self.publisher(
                 io="ir", data=ACCESS_PERMISSION_REVOKED, case=case)
         except ApiConnectionErrorException as e:
             case["property"] = settings.access_property
-            logger.error('Access exception raised: {}, sending value: {}'.format(e, ACCESS_API_UNREACHABLE))
+            logger.error('5. Access exception raised: {}, sending value: {}'.format(e, ACCESS_API_UNREACHABLE))
             self.publisher(
                 io="ir", data=ACCESS_API_UNREACHABLE, case=case)
         except Exception as e:
-            logger.error("Mqtt - Failed to handle payload. {}".format(traceback.format_exc(limit=5)))
+            logger.error("6. Mqtt - Failed to handle payload. {}".format(traceback.format_exc(limit=5)))
 
     def on_message_application(self, client, topic, payload):
 
