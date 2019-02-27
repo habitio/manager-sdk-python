@@ -24,15 +24,16 @@ RC_LIST = {
 
 class MqttConnector():
 
-    def __init__(self, client_id=None, access_token=None):
+    def __init__(self, client_id=None, access_token=None, **kwargs):
         logger.debug("Mqtt - Init")
         self.mqtt_client = paho.Client()
         self.mqtt_client.enable_logger()
-        self.mqtt_client.on_connect = self.on_connect
-        self.mqtt_client.on_subscribe = self.on_subscribe
-        self.mqtt_client.on_message = self.on_message
-        self.mqtt_client.on_disconnect = self.on_disconnect
-        self.mqtt_client.on_publish = self.on_publish
+
+        self.mqtt_client.on_connect = self.on_connect if 'on_connect' not in kwargs else kwargs['on_connect']
+        self.mqtt_client.on_subscribe = self.on_subscribe if 'on_subscribe' not in kwargs else kwargs['on_subscribe']
+        self.mqtt_client.on_message = self.on_message if 'on_message' not in kwargs else kwargs['on_message']
+        self.mqtt_client.on_disconnect = self.on_disconnect if 'on_disconnect' not in kwargs else kwargs['on_disconnect']
+        self.mqtt_client.on_publish = self.on_publish if 'on_publish' not in kwargs else kwargs['on_publish']
         self.implementer = None
         self._topics = []
         self._on_connect_callback = None
