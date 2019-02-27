@@ -19,8 +19,8 @@ logger = logging.getLogger(__name__)
 
 class WebhookHubDevice(WebhookHubBase):
 
-    def __init__(self):
-        super(WebhookHubDevice, self).__init__()
+    def __init__(self, mqtt=None):
+        super(WebhookHubDevice, self).__init__(mqtt)
         self.confirmation_hash = ""
         self.poll = poll
         try:

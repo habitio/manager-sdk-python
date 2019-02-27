@@ -9,7 +9,6 @@ from base.redis_db import db
 from base.constants import get_log_table, DEFAULT_BEFORE_EXPIRES
 import requests
 import traceback
-from base.mqtt_connector import mqtt
 
 LOGGER, LOG_TABLE = get_log_table(__name__)
 
@@ -155,7 +154,7 @@ class SkeletonBase(ABC):
             data - data to be published
         """
         self.log("Will publisher to mqtt", 7)
-        mqtt.publisher(io="iw", data=data, case=case)
+        self.mqtt.publisher(io="iw", data=data, case=case)
 
     def renew_credentials(self, channel_id, sender, credentials):
         """

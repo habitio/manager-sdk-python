@@ -3,7 +3,6 @@ import logging, traceback
 
 from base.redis_db import db
 from base.settings import settings
-from base.mqtt_connector import mqtt
 from base.utils import format_str
 from .watchdog import Watchdog
 
@@ -11,9 +10,11 @@ logger = logging.getLogger(__name__)
 
 class WebhookHubBase:
 
-    def __init__(self):
+    def __init__(self, mqtt=None):
         from base.solid import implementer
         self.implementer = implementer
+        self.implementer.mqtt = mqtt
+        self.mqtt = mqtt
         self.headers = {
             "Content-Type": "application/json",
             "Authorization": "Bearer {0}".format(settings.block["access_token"])
@@ -74,7 +75,7 @@ class WebhookHubBase:
                         custom_mqtt = downstream_tuple[3]
                         custom_mqtt.publisher(io="iw", data=data, case=case)
                     except (IndexError, AttributeError):
-                        mqtt.publisher(io="iw", data=data, case=case)
+                        self.mqtt.publisher(io="iw", data=data, case=case)
             except (TypeError, KeyError):
                 logger.debug('downstream method returned {}'.format(downstream_tuple))
 
