@@ -73,7 +73,7 @@ class WebhookHubBase:
                     try:
                         custom_mqtt = downstream_tuple[3]
                         custom_mqtt.publisher(io="iw", data=data, case=case)
-                    except KeyError:
+                    except (IndexError, AttributeError):
                         mqtt.publisher(io="iw", data=data, case=case)
             except (TypeError, KeyError):
                 logger.debug('downstream method returned {}'.format(downstream_tuple))
