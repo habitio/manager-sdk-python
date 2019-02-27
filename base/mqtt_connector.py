@@ -39,8 +39,8 @@ class MqttConnector():
         self._on_connect_callback = None
         self._on_connect_callback_params = {}
 
-        self.client_id = client_id
-        self.access_token= access_token
+        self.client_id = client_id if client_id else settings.client_id
+        self.access_token = access_token if access_token else settings.block["access_token"]
 
     def on_connect(self, client, userdata, flags, rc):
         try:
@@ -261,10 +261,7 @@ class MqttConnector():
             host = parts[1].replace("//", "")
             port = int(parts[2])
 
-            client_id = self.client_id if self.client_id else settings.client_id
-            access_token = self.access_token if self.access_token else settings.block["access_token"]
-
-            self.mqtt_client.username_pw_set(username=client_id, password=access_token)
+            self.mqtt_client.username_pw_set(username=self.client_id, password=self.access_token)
 
             try:
 
