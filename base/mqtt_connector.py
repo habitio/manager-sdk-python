@@ -356,5 +356,3 @@ class MqttConnector():
             logger.error("Mqtt - Failed to de-configure connection {}".format(traceback.format_exc(limit=5)))
             exit()
 
-
-mqtt = MqttConnector()
