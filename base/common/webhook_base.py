@@ -71,7 +71,7 @@ class WebhookHubBase:
 
                 if case is not None and data is not None:
                     try:
-                        custom_mqtt = downstream_tuple[2]
+                        custom_mqtt = downstream_tuple[3]
                         custom_mqtt.publisher(io="iw", data=data, case=case)
                     except KeyError:
                         mqtt.publisher(io="iw", data=data, case=case)
