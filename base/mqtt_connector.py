@@ -24,7 +24,7 @@ RC_LIST = {
 
 class MqttConnector():
 
-    def __init__(self):
+    def __init__(self, user_id=None, access_token=None):
         logger.debug("Mqtt - Init")
         self.mqtt_client = paho.Client()
         self.mqtt_client.enable_logger()
@@ -37,6 +37,9 @@ class MqttConnector():
         self._topics = []
         self._on_connect_callback = None
         self._on_connect_callback_params = {}
+
+        self.user_id= user_id
+        self.access_token= access_token
 
     def on_connect(self, client, userdata, flags, rc):
         try:
@@ -257,8 +260,11 @@ class MqttConnector():
             host = parts[1].replace("//", "")
             port = int(parts[2])
 
+            client_id = self.user_id if self.user_id else settings.client_id
+            access_token = self.access_token if self.access_token else settings.block["access_token"]
+
             self.mqtt_client.username_pw_set(
-                username=settings.client_id, password=settings.block["access_token"])
+                username=client_id, password=access_token)
 
             try:
 
