@@ -123,8 +123,9 @@ class DBManager(Redis):
 
         return result
 
-    def get_credentials(self, client_id, owner_id, channel_id=None):
+    def get_credentials_with_key(self, client_id, owner_id, channel_id=None):
         data = None
+        credentials_key = None
 
         if channel_id:
             credentials_key = "/".join(
@@ -154,7 +155,16 @@ class DBManager(Redis):
 
         logger.debug("[DB] Credentials Found! {}".format(credentials_key))
 
+        return credentials, credentials_key
+
+    def get_credentials(self, client_id, owner_id, channel_id=None, with_key=False):
+        credentials, key = self.get_credentials_with_key(client_id, owner_id, channel_id)
+
+        if with_key:  # to include credential key used
+            return credentials, key
+
         return credentials
+
 
     def set_credentials(self, credentials, client_id, owner_id, channel_id=None):
         if not client_id or not owner_id:
