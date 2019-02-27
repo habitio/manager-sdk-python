@@ -131,30 +131,25 @@ class DBManager(Redis):
             credentials_key = "/".join(
                 ['credential-clients', client_id, 'owners', owner_id, 'channels', channel_id])
             data = db.query(credentials_key)
-            logger.debug('c-clients/client_id/owner/channel = {}'.format(data))
 
             if not data:
                 credentials_key = "/".join(
                     ['credential-owners', owner_id, 'channels', channel_id])
                 data = db.query(credentials_key)
-                logger.debug('c-owners/owner/channel = {}'.format(data))
 
         if not data:
             credentials_key = "/".join(
                 ['credential-clients', client_id, 'owners', owner_id])
             data = db.query(credentials_key)
-            logger.debug('c-clients/client_id/owner = {}'.format(data))
 
             if not data:
                 data = self.__get_credentials_old(
                     client_id, owner_id, channel_id)
-                logger.debug('old_creds = {}'.format(data))
                 if not data:
                     logger.warning("[DB] No credentials found!")
                     return None
                 else:
                     data = [data]
-                    logger.debug('data[data] = {}'.format(data))
             elif channel_id:
                 self.set_credentials(data[0], client_id, owner_id, channel_id)
 
