@@ -167,7 +167,7 @@ class TokenRefresherManager(object):
                         'credentials': new_credentials
                     }
                 else:
-                    logger.warning('[TokenRefresher] Error in refresh token request {} {}'.format(channel_id, response.text))
+                    logger.warning('[TokenRefresher] Error in refresh token request {} {}'.format(channel_id, response))
             else:
                 logger.debug("[TokenRefresher] access token hasn't expired yet {}".format(key))
         except Exception:
