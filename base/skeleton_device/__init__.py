@@ -122,7 +122,7 @@ class SkeletonDevice(SkeletonBase):
             if int(resp.status_code) == 200:
                 return resp.json()["channeltemplate_id"]
             else:
-                raise ChannelTemplateNotFound("Failed to retrieve channel_template_id")
+                raise ChannelTemplateNotFound("Failed to retrieve channel_template_id {} {}")
 
         except (OSError, ChannelTemplateNotFound) as e:
             logger.error('Error while making request to platform: {}'.format(e))
