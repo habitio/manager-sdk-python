@@ -1,7 +1,7 @@
 import os
 import sys
 
-sys.path.append(os.path.dirname(__file__) + "/sdk")
+sys.path.append(os.path.join(os.path.dirname(__file__), 'sdk'))
 from base.skeleton import Skeleton
 
 

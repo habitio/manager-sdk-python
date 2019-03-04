@@ -27,7 +27,7 @@ To integrate with SDK, you need to import the sdk python module in your current 
 
         import sys
         import os
-        sys.path.append(os.path.dirname(__file__) + "/sdk")
+        sys.path.append(os.path.join(os.path.dirname(__file__), 'sdk'))
 
 > _"sdk" was the path name we used for our submodule_
 
@@ -206,6 +206,11 @@ This method is invoked by a polling thread if enabled.
     - channel_id: device channel_id which performed the polling request.
     - credentials: manufacturer credentials used during the polling request. This also can be use if a new request needs to be done.
 
+#### **after_refresh(after_refresh)**
+Invoked when successfully refreshing a token, either by a token refresher process and ideally should be included after every token refresh call within the manager.
+
+- Receives a data dictionary with keys 'channel_id' and 'new_credentials'
+
 ---
 
 ### Common Inbuilt methods ###
@@ -278,6 +283,11 @@ Retrieves channel template data given an channeltemplate_id, returns an empty di
 
 ##### **get_latest_property_value(channel_id, component, property)**
 Return the latest value received by the platform for a given channel_id/component/property, an empty dict is returned if no data if found.
+
+##### **get_new_expiration_date**
+Given a credential dictionary including 'access_token', 'refresh_token' and 'expires_in' values will return same dictionary with an additional key **'expiration_date'** which is the current time + expire_in seconds value - before_expires_seconds
+
+_before_expires_seconds: If defined in config file a "token_refresher" block will take 'before_expires_seconds' value, otherwise 'before_expires_seconds' has a default value of **300** seconds_
 
 ---
 
