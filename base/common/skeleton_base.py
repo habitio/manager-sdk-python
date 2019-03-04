@@ -255,10 +255,18 @@ class SkeletonBase(ABC):
         return {}
 
     def get_new_expiration_date(self, credentials):
-        now = int(time.time())
-        before_expires_sec = settings.config_refresh.get('before_expires_seconds', DEFAULT_BEFORE_EXPIRES)
-        expires_in = int(credentials['expires_in']) - before_expires_sec
-        expiration_date = now + expires_in
-        credentials['expiration_date'] = expiration_date
+        try:
+            if 'access_token' and 'refresh_token' and 'expires_in' in credentials:
+                now = int(time.time())
+                before_expires_sec = settings.config_refresh.get('before_expires_seconds', DEFAULT_BEFORE_EXPIRES)
+                expires_in = int(credentials['expires_in']) - before_expires_sec
+                expiration_date = now + expires_in
+                credentials['expiration_date'] = expiration_date
+                return credentials
+        except KeyError as e:
+            self.log('Error missing {} key'.format(e), 4)
 
-        return credentials
+        self.log('Credentials are not valid: {}'.format(credentials), 4)
+
+        return None
+
