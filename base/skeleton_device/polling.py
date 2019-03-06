@@ -87,6 +87,17 @@ class PollingManager(object):
     @rate_limited(settings.config_polling.get('rate_limit', DEFAULT_RATE_LIMIT))
     def send_request(self, channel_id, method, url, params, data):
         try:
+            # validate if channel exists
+            from base.solid import implementer
+            try:
+                channel_template_id = implementer.get_channel_template(channel_id)
+            except Exception as e:
+                logger.debug('[Polling] {}'.format(e))
+                channel_template_id = None
+
+            if not channel_template_id:
+                return
+
             credentials_list = db.full_query('credential-owners/*/channels/{}'.format(channel_id))
             logger.info('[Polling] {} results found for channel_id: {}'.format(len(credentials_list), channel_id))
 
