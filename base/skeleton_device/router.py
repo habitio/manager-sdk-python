@@ -8,10 +8,14 @@ logger = logging.getLogger(__name__)
 class RouterDevice(RouterBase):
 
     def devices_list(self):
-        return self.webhook.devices_list(request)
+        response =  self.webhook.devices_list(request)
+        logger.verbose("devices_list response: {}".format(response.get_data()))
+        return response
 
     def select_device(self):
-        return self.webhook.select_device(request)
+        response = self.webhook.select_device(request)
+        logger.verbose("select_device response: {}".format(response.get_data()))
+        return response
 
     def route_setup(self, app):
         logger.debug("App {}".format(app))
