@@ -17,6 +17,7 @@ from .token_refresher import TokenRefresherManager
 
 logger = logging.getLogger(__name__)
 
+
 class WebhookHubDevice(WebhookHubBase):
 
     def __init__(self, mqtt=None):
@@ -77,6 +78,10 @@ class WebhookHubDevice(WebhookHubBase):
                     "owner_id": request.headers["X-Owner-Id"]
                 }
                 data = self.implementer.get_devices(sender=sender, credentials=credentials)
+
+                for element in data:
+                    if not "content" in element or ("content" in element and not element["content"]):
+                        element["content"] = ""
 
                 return Response(
                     response=json.dumps(data),
