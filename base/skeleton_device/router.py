@@ -22,5 +22,4 @@ class RouterDevice(RouterBase):
         app.add_url_rule("/{}/devices-list".format(settings.api_version), view_func=self.devices_list, methods=['POST'])
         app.add_url_rule("/{}/select-device".format(settings.api_version), view_func=self.select_device, methods=['POST'])
         app.add_url_rule("/{}/inbox".format(settings.api_version), view_func=self.inbox, methods=['POST'])
-        app.add_url_rule("/{}/utils/device-authenticate".format(settings.api_version), view_func=self.inbox, methods=['POST'])
         app.after_request_funcs.setdefault(app.name, []).append(self.after)
