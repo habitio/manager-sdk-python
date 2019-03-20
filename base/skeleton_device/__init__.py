@@ -122,10 +122,10 @@ class SkeletonDevice(SkeletonBase):
             if int(resp.status_code) == 200:
                 return resp.json()["channeltemplate_id"]
             else:
-                raise ChannelTemplateNotFound("Failed to retrieve channel_template_id")
+                raise ChannelTemplateNotFound("Failed to retrieve channel_template_id for {}".format(channel_id))
 
         except (OSError, ChannelTemplateNotFound) as e:
-            logger.error('Error while making request to platform: {}'.format(e))
+            logger.warning('Error while making request to platform: {}'.format(e))
         except Exception as ex:
             logger.alert("Unexpected error get_channel_template: {}".format(traceback.format_exc(limit=5)))
         return ''
@@ -163,6 +163,17 @@ class SkeletonDevice(SkeletonBase):
             method - HTTP method to use: GET / POST
         """
         raise NotImplementedError('token refresher ENABLED but conf NOT DEFINED')
+
+    def after_refresh(self, data):
+        """
+        Invoked by the manager itself when successfully refreshing a token
+
+        Receives,
+            data - A dictionary with keys 'channel_id' and 'new_credentials'
+
+        + not required +
+        """
+        pass
 
 
 SkeletonBase.register(SkeletonDevice)

@@ -87,6 +87,17 @@ class PollingManager(object):
     @rate_limited(settings.config_polling.get('rate_limit', DEFAULT_RATE_LIMIT))
     def send_request(self, channel_id, method, url, params, data):
         try:
+            # validate if channel exists
+            from base.solid import implementer
+            try:
+                channel_template_id = implementer.get_channel_template(channel_id)
+            except Exception as e:
+                logger.debug('[Polling] {}'.format(e))
+                channel_template_id = None
+
+            if not channel_template_id:
+                return
+
             credentials_list = db.full_query('credential-owners/*/channels/{}'.format(channel_id))
             logger.info('[Polling] {} results found for channel_id: {}'.format(len(credentials_list), channel_id))
 
@@ -97,7 +108,7 @@ class PollingManager(object):
                 # Validate if token is valid before the request
                 now = int(time.time())
                 token_expiration_date = credentials['expiration_date']
-                if now > token_expiration_date:
+                if now > token_expiration_date and not token_expiration_date == 0:
                     logger.debug("[Polling] access token expired {} - now:{}, expiration:{}".format(
                         cred_key, now, token_expiration_date))
                     continue
@@ -111,7 +122,7 @@ class PollingManager(object):
                         'credentials': credentials
                     }
                 else:
-                    logger.warning('[Polling] Error in polling request {} {}'.format(channel_id, response.json()))
+                    logger.warning('[Polling] Error in polling request {} {}'.format(channel_id, response))
         except Exception:
             logger.error('[Polling] Error on polling.send_request {}'.format(traceback.format_exc(limit=5)))
         logger.notice('[Polling] No valid credentials found for channel {}'.format(channel_id))

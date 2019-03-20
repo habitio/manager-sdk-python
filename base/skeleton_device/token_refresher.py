@@ -55,10 +55,12 @@ class TokenRefresherManager(object):
         return credentials_list
 
     async def make_requests(self, conf_data: dict):
+        from base.solid import implementer
         logger.info("[TokenRefresher] {} starting {}".format(threading.currentThread().getName(),  datetime.datetime.now()))
 
         url = conf_data['url']
         method = conf_data['method']
+        is_json = conf_data.get('is_json', False)
 
         loop = asyncio.get_event_loop()
 
@@ -67,12 +69,12 @@ class TokenRefresherManager(object):
                 loop.run_in_executor(
                     executor,
                     self.send_request,
-                    credentials, method, url
+                    credentials, method, url, is_json
                 )
                 for credentials in self.get_credential_list()
             ]
             for response in await asyncio.gather(*futures):
-                if response: logger.info(response)
+                if response: implementer.after_refresh(response)
 
         logger.info("[TokenRefresher] {} finishing {}".format(threading.currentThread().getName(),  datetime.datetime.now()))
 
@@ -95,16 +97,27 @@ class TokenRefresherManager(object):
             db.set_credentials(new_credentials, client_app_id, owner_id, channel_id)
 
     @rate_limited(settings.config_refresh.get('rate_limit', DEFAULT_RATE_LIMIT))
-    def send_request(self, credentials_dict, method, url):
+    def send_request(self, credentials_dict, method, url, is_json=False, **kwargs):
         try:
             key = credentials_dict['key']  # credential-owners/[owner_id]/channels/[channel_id]
-            channel_id = key.split('/')[-1]
-            owner_id = key.split('/')[1]
+            channel_id = key.split('/')[-1] if 'channel_id' not in kwargs else kwargs['channel_id']
+            owner_id = key.split('/')[1] if 'owner_id' not in kwargs else kwargs['owner_id']
             credentials = credentials_dict['value']
             try:
                 client_app_id = credentials['client_id']
             except KeyError:
                 logger.debug('[TokenRefresher] Missing client_id for {}'.format(key))
+                return
+
+            # validate if channel exists
+            from base.solid import implementer
+            try:
+                channel_template_id = implementer.get_channel_template(channel_id)
+            except Exception as e:
+                logger.debug('[TokenRefresher] {}'.format(e))
+                channel_template_id = None
+
+            if not channel_template_id:
                 return
 
             # Validate if token is valid before the request
@@ -119,8 +132,9 @@ class TokenRefresherManager(object):
                 logger.info("[TokenRefresher] Refreshing token {}".format(key))
                 try:
                     manufacturer_client_id = settings.config_manufacturer['credentials'][client_app_id].get('app_id')
+                    manufacturer_client_secret = settings.config_manufacturer['credentials'][client_app_id].get('app_secret')
                 except KeyError:
-                    logger.debug('[TokenRefresher] Credentials not found for for {}'.format(client_app_id))
+                    logger.debug('[TokenRefresher] Credentials not found for {}'.format(client_app_id))
                     return
 
                 params = {
@@ -129,23 +143,33 @@ class TokenRefresherManager(object):
                     'client_id': manufacturer_client_id
                 }
 
-                response = requests.request(method,  url, params=params)
+                if manufacturer_client_secret is not None:
+                    params['client_secret'] = manufacturer_client_secret
+
+                if is_json:
+                    response = requests.request(method,  url, json=params)
+                else:
+                    response = requests.request(method,  url, params=params)
+
                 if response.status_code == requests.codes.ok:
                     new_credentials = self.get_new_expiration_date(response.json())
+
+                    if 'refresh_token' not in new_credentials:  # we need to keep same refresh_token always
+                        new_credentials['refresh_token'] = credentials['refresh_token']
+
                     logger.debug('[TokenRefresher] new credentials {}'.format(key))
                     db.set_credentials(new_credentials, client_app_id, owner_id, channel_id)
+
                     if self.update_owners:
                         self.update_all_owners(new_credentials, owner_id, channel_id, client_app_id)
-                    return new_credentials
+                    return {
+                        'channel_id': channel_id,
+                        'credentials': new_credentials
+                    }
                 else:
-                    logger.warning('[TokenRefresher] Error in refresh token request {} {}'.format(channel_id, response.text))
+                    logger.warning('[TokenRefresher] Error in refresh token request {} {}'.format(channel_id, response))
             else:
                 logger.debug("[TokenRefresher] access token hasn't expired yet {}".format(key))
         except Exception:
 
             logger.error('[TokenRefresher] Unexpected error on send_request for refresh token, {}'.format(traceback.format_exc(limit=5)))
-
-try:
-    refresher = TokenRefresherManager()
-except Exception as e:
-    logger.error("[TokenRefresher] Failed start TokenRefresher manager, {} {}".format(e, traceback.format_exc(limit=5)))

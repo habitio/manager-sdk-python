@@ -20,16 +20,11 @@ def get_implementer():
     try:
         from base import skeleton_device, skeleton_application
         _spec = util.spec_from_file_location("implementor", settings.skeleton_path)
-
         _module = util.module_from_spec(_spec)
-        logger.trace('Module: {}'.format(_module))
-
         _spec.loader.exec_module(_module)
-        logger.trace('Spec: {}'.format(_spec))
 
         for _name, _obj in inspect.getmembers(_module):
             try:
-                logger.trace('-------------------------------')
                 logger.trace('Item: {} - {}'.format(_name, _obj))
 
                 if inspect.isclass(_obj) and issubclass(_obj, (
@@ -43,7 +38,7 @@ def get_implementer():
         raise ImplementorNotFound
 
     except Exception:
-        logger.critical("Failed to find Skeleton implementer class {}".format(traceback.format_exc(limit=5)))
+        logger.critical("Failed to find Skeleton implementer class {}, check for missing abstract methods".format(traceback.format_exc(limit=5)))
         exit()
 
 

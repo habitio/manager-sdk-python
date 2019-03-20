@@ -1,6 +1,6 @@
 from base import auth
 from base import logger
-from base.mqtt_connector import mqtt
+from base.mqtt_connector import MqttConnector
 from base.settings import settings
 from base.skeleton import Webhook, Router
 
@@ -18,9 +18,12 @@ class Views:
         logger.verbose("Starting sdk with a kickoff ...")
         auth.get_access()
         if settings.block["access_token"] != "":
-            webhook = Webhook()
+
+            mqtt = MqttConnector()
+            webhook = Webhook(mqtt=mqtt)
             router = Router(webhook)
             router.route_setup(app)
+
 
             mqtt.set_on_connect_callback(webhook.webhook_registration)
             mqtt.mqtt_config()

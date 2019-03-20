@@ -7,12 +7,13 @@ Internship project of a sdk for python integrations with Muzzley
 
 1. Add the sdk as a submodule of your main repository. By default, submodules will add the sub-project into a directory named the same as the repository. You can add a different path at the end of the command, in this case **sdk**.
 
-	    $ git submodule add https://bitbucket.org/muzzley/manager-sdk-python.git sdk
+	    $ git submodule add git@bitbucket.org:muzzley/manager-sdk-python.git sdk
 
 2. Install dependencies from sdk/requirements.txt, (Requires python 3.5.x or later version)
 
 	    $ pip install -r sdk/requirements.txt
 
+> _systemd-python only works under linux os_
 ---
 
 ## Integration with SDK ##
@@ -26,7 +27,7 @@ To integrate with SDK, you need to import the sdk python module in your current 
 
         import sys
         import os
-        sys.path.append(os.path.dirname(__file__) + "/sdk")
+        sys.path.append(os.path.join(os.path.dirname(__file__), 'sdk'))
 
 > _"sdk" was the path name we used for our submodule_
 
@@ -205,6 +206,11 @@ This method is invoked by a polling thread if enabled.
     - channel_id: device channel_id which performed the polling request.
     - credentials: manufacturer credentials used during the polling request. This also can be use if a new request needs to be done.
 
+#### **after_refresh(after_refresh)**
+Invoked when successfully refreshing a token, either by a token refresher process and ideally should be included after every token refresh call within the manager.
+
+- Receives a data dictionary with keys 'channel_id' and 'new_credentials'
+
 ---
 
 ### Common Inbuilt methods ###
@@ -272,6 +278,17 @@ Returns type of the implementor: "device" if is a Device Manager, "application" 
 ##### **format_datetime()**
 Returned a formatted datetime as timestamp string
 
+##### **get_channeltemplate_data(channeltemplate_id)**
+Retrieves channel template data given an channeltemplate_id, returns an empty dict if not data is found.
+
+##### **get_latest_property_value(channel_id, component, property)**
+Return the latest value received by the platform for a given channel_id/component/property, an empty dict is returned if no data if found.
+
+##### **get_new_expiration_date**
+Given a credential dictionary including 'access_token', 'refresh_token' and 'expires_in' values will return same dictionary with an additional key **'expiration_date'** which is the current time + expire_in seconds value - before_expires_seconds
+
+_before_expires_seconds: If defined in config file a "token_refresher" block will take 'before_expires_seconds' value, otherwise 'before_expires_seconds' has a default value of **300** seconds_
+
 ---
 
 ### Device Inbuilt methods ###
@@ -335,6 +352,8 @@ This section is optional, when polling needs to be enabled.  Http polling reques
 * interval_seconds: Is the period of time where a polling thread will perform requests to manufacturer's api. If not defined, default value is `DEFAULT_POLLING_INTERVAL` (constants.py).
 * rate_limit: Is the limited amount of request by second. Useful to follow possible restrictions on manufacturer's api. If not defined, default value is `DEFAULT_RATE_LIMIT` (constants.py)
 
+*see polling section in [sample configuration file](sample-manager-sdk-python.conf)*
+
 ##### token_refresher (optional)
 This section is optional, when an automatic token refresh process needs to be enabled. Http refresh token requests will be made by owner credentials. Credentials are found by querying all owners credentials of all their channels `credential-owners/*/channels/*`
 
@@ -344,11 +363,29 @@ This section is optional, when an automatic token refresh process needs to be en
 * before_expires_seconds: This is the time margin before an access token expires. Leaving enough space to the refresh token process to successful execute. This means, if an access_token has an expiration time of 1 hour and before_expires_seconds is defined by 300 seconds. This token will try to refresh after 5 minutes before it expires. If not defined, default value is `DEFAULT_BEFORE_EXPIRES` (constants.py).
 * update_owners: boolean value (true/false). Default False. If enabled while refreshing a Token will also try to find all owners associated to the current refreshing channel and update their credentials as well.
 
+*see token_refresher section in [sample configuration file](sample-manager-sdk-python.conf)*
+
 #### Application Manager configurations
 
 ##### services
 
 ##### usecases
+
+---
+
+### Access Values
+
+- ACCESS_NO_POWER = 'no_power'
+- ACCESS_DISCONNECTED = 'disconnected'
+- ACCESS_UNREACHABLE_VALUE = 'unreachable'
+- ACCESS_REMOTE_CONTROL_DISABLED = 'remote_control_disabled'
+- ACCESS_PERMISSION_REVOKED = 'permission_revoked'
+- ACCESS_SERVICE_ERROR_VALUE = 'service_error'  # this retry reading the property
+- ACCESS_UNAUTHORIZED_VALUE = 'unauthorized'  # this shows a blue
+- ACCESS_API_UNREACHABLE = 'api_unreachable'
+- ACCESS_NOK_VALUE = 'nok'
+- ACCESS_CONNECTED = 'connected'
+- ACCESS_OK_VALUE = 'ok'
 
 ---
 

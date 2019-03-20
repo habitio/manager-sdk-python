@@ -1,14 +1,14 @@
 import json
+import time
 from abc import ABC, abstractmethod
 from datetime import timedelta
 
-from base.exceptions import ChannelTemplateNotFound
+from base.exceptions import ChannelTemplateNotFound, PropertyHistoryNotFoundException
 from base.settings import settings
 from base.redis_db import db
-from base.constants import get_log_table
+from base.constants import get_log_table, DEFAULT_BEFORE_EXPIRES
 import requests
 import traceback
-from base.mqtt_connector import mqtt
 
 LOGGER, LOG_TABLE = get_log_table(__name__)
 
@@ -154,7 +154,7 @@ class SkeletonBase(ABC):
             data - data to be published
         """
         self.log("Will publisher to mqtt", 7)
-        mqtt.publisher(io="iw", data=data, case=case)
+        self.mqtt.publisher(io="iw", data=data, case=case)
 
     def renew_credentials(self, channel_id, sender, credentials):
         """
@@ -230,3 +230,48 @@ class SkeletonBase(ABC):
         except Exception as ex:
             self.log("Unexpected error get_channel_template: {}".format(traceback.format_exc(limit=5)), 3)
         return {}
+
+    def get_latest_property_value(self, channel_id, component, property):
+        url = "{}/channels/{channel_id}/components/{component}/properties/{property}/history".format(
+            settings.api_server_full, channel_id=channel_id, component=component, property=property
+        )
+
+        headers = {
+            "Authorization": "Bearer {0}".format(settings.block["access_token"])
+        }
+        try:
+            resp = requests.get(url, headers=headers)
+            self.log("Received response code[{}]".format(resp.status_code), 9)
+
+            if int(resp.status_code) == 200:
+                return resp.json()["elements"][0]["value"]
+            else:
+                raise PropertyHistoryNotFoundException("Failed to retrieve latest_property_value")
+
+        except (OSError, PropertyHistoryNotFoundException) as e:
+            self.log('Error while making request to platform: {}'.format(e), 3)
+        except Exception as ex:
+            self.log("Unexpected error get_latest_property_value: {}".format(traceback.format_exc(limit=5)), 3)
+        return {}
+
+    def get_new_expiration_date(self, credentials):
+        try:
+            if 'access_token' and 'refresh_token' in credentials:
+                if 'expires_in' in credentials:
+                    now = int(time.time())
+                    before_expires_sec = settings.config_refresh.get('before_expires_seconds', DEFAULT_BEFORE_EXPIRES)
+                    expires_in = int(credentials['expires_in']) - before_expires_sec
+                    expiration_date = now + expires_in
+                    credentials['expiration_date'] = expiration_date
+                else:
+                    credentials['expiration_date'] = 0
+                    credentials['expires_in'] = 0
+
+                return credentials
+        except KeyError as e:
+            self.log('Error missing {} key'.format(e), 4)
+
+        self.log('Credentials are not valid: {}'.format(credentials), 4)
+
+        return None
+

@@ -22,3 +22,9 @@ class InvalidRequestException(Exception):
 
 class ImplementorTypeNotFoundException(Exception):
     pass
+
+class ApiConnectionErrorException(Exception):
+    pass
+
+class PropertyHistoryNotFoundException(Exception):
+    pass

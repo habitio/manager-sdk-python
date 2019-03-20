@@ -123,13 +123,15 @@ class DBManager(Redis):
 
         return result
 
-    def get_credentials(self, client_id, owner_id, channel_id=None):
+    def get_credentials_with_key(self, client_id, owner_id, channel_id=None):
         data = None
+        credentials_key = None
 
         if channel_id:
             credentials_key = "/".join(
                 ['credential-clients', client_id, 'owners', owner_id, 'channels', channel_id])
             data = db.query(credentials_key)
+
             if not data:
                 credentials_key = "/".join(
                     ['credential-owners', owner_id, 'channels', channel_id])
@@ -139,6 +141,7 @@ class DBManager(Redis):
             credentials_key = "/".join(
                 ['credential-clients', client_id, 'owners', owner_id])
             data = db.query(credentials_key)
+
             if not data:
                 data = self.__get_credentials_old(
                     client_id, owner_id, channel_id)
@@ -148,14 +151,21 @@ class DBManager(Redis):
                 else:
                     data = [data]
             elif channel_id:
-                self.set_credentials(data[0], owner_id, channel_id)
+                self.set_credentials(data[0], client_id, owner_id, channel_id)
 
         credentials = data[0]
+        logger.debug("[DB] Credentials Found! {}".format(credentials_key))
 
-        logger.debug("[DB] Credentials Found!")
-        # logger.verbose("credentials={}".format(credentials) )
+        return credentials, credentials_key
+
+    def get_credentials(self, client_id, owner_id, channel_id=None, with_key=False):
+        credentials, key = self.get_credentials_with_key(client_id, owner_id, channel_id)
+
+        if with_key:  # to include credential key used
+            return credentials, key
 
         return credentials
+
 
     def set_credentials(self, credentials, client_id, owner_id, channel_id=None):
         if not client_id or not owner_id:
@@ -164,6 +174,7 @@ class DBManager(Redis):
             credentials['client_id'] = client_id
             credentials_key = "/".join(['credential-clients',
                                         client_id, 'owners', owner_id])
+
             if channel_id:
                 credentials_key = "/".join(['credential-owners',
                                             owner_id, 'channels', channel_id])

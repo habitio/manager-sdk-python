@@ -7,8 +7,7 @@ import paho.mqtt.client as paho
 from base.redis_db import db
 from base.settings import settings
 from base.utils import format_str
-from base.constants import DEFAULT_RETRY_WAIT, ACCESS_SERVICE_ERROR_VALUE, \
-    ACCESS_UNAUTHORIZED_VALUE, HEARTBEAT_PROP, ACCESS_REMOTE_CONTROL_DISABLED
+from base.constants import *
 from base.exceptions import *
 from tenacity import retry, wait_fixed
 
@@ -25,19 +24,23 @@ RC_LIST = {
 
 class MqttConnector():
 
-    def __init__(self):
+    def __init__(self, client_id=None, access_token=None, **kwargs):
         logger.debug("Mqtt - Init")
         self.mqtt_client = paho.Client()
         self.mqtt_client.enable_logger()
-        self.mqtt_client.on_connect = self.on_connect
-        self.mqtt_client.on_subscribe = self.on_subscribe
-        self.mqtt_client.on_message = self.on_message
-        self.mqtt_client.on_disconnect = self.on_disconnect
-        self.mqtt_client.on_publish = self.on_publish
+
+        self.mqtt_client.on_connect = self.on_connect if 'on_connect' not in kwargs else kwargs['on_connect']
+        self.mqtt_client.on_subscribe = self.on_subscribe if 'on_subscribe' not in kwargs else kwargs['on_subscribe']
+        self.mqtt_client.on_message = self.on_message if 'on_message' not in kwargs else kwargs['on_message']
+        self.mqtt_client.on_disconnect = self.on_disconnect if 'on_disconnect' not in kwargs else kwargs['on_disconnect']
+        self.mqtt_client.on_publish = self.on_publish if 'on_publish' not in kwargs else kwargs['on_publish']
         self.implementer = None
         self._topics = []
         self._on_connect_callback = None
         self._on_connect_callback_params = {}
+
+        self.client_id = client_id if client_id else settings.client_id
+        self.access_token = access_token if access_token else settings.block["access_token"]
 
     def on_connect(self, client, userdata, flags, rc):
         try:
@@ -116,8 +119,10 @@ class MqttConnector():
                         "owner_id": payload["on_behalf_of"]
                     }
 
-                    credentials = db.get_credentials(
-                        payload["sender"], payload["on_behalf_of"], case["channel_id"])
+                    credentials, credential_key = db.get_credentials(
+                        payload["sender"], payload["on_behalf_of"], case["channel_id"], with_key=True)
+
+                    sender["key"] = credential_key
 
                     if not credentials:
                         logger.error("Mqtt - credentials not found in database.")
@@ -134,7 +139,6 @@ class MqttConnector():
 
                             result = self.implementer.upstream(
                                 mode='r', case=case, credentials=validated_credentials, sender=sender, data=data)
-
                             if result is not None:
                                 self.publisher(io="ir", data=result, case=case)
                             else:
@@ -161,24 +165,35 @@ class MqttConnector():
 
             else:
                 return
-        except (NoAccessDeviceException, InvalidAccessCredentialsException):
+        except (NoAccessDeviceException, InvalidAccessCredentialsException) as e:
             case["property"] = settings.access_property
+            if access_failed_value is None:
+                access_failed_value = ACCESS_UNAUTHORIZED_VALUE
+            logger.error('1. Access exception raised: {}, sending value: {}'.format(e, access_failed_value))
             self.publisher(
                 io="ir", data=access_failed_value, case=case)
-        except UnauthorizedException:
+        except UnauthorizedException as e:
             case["property"] = settings.access_property
+            logger.error('2. Access exception raised: {}, sending value: {}'.format(e, ACCESS_UNAUTHORIZED_VALUE))
             self.publisher(
                 io="ir", data=ACCESS_UNAUTHORIZED_VALUE, case=case)
-        except RemoteControlDisabledException:
+        except RemoteControlDisabledException as e:
             case["property"] = settings.access_property
+            logger.error('3. Access exception raised: {}, sending value: {}'.format(e, ACCESS_REMOTE_CONTROL_DISABLED))
             self.publisher(
                 io="ir", data=ACCESS_REMOTE_CONTROL_DISABLED, case=case)
-        except PermissionRevokedException:
+        except PermissionRevokedException as e:
             case["property"] = settings.access_property
+            logger.error('4. Access exception raised: {}, sending value: {}'.format(e, ACCESS_PERMISSION_REVOKED))
             self.publisher(
                 io="ir", data=ACCESS_PERMISSION_REVOKED, case=case)
+        except ApiConnectionErrorException as e:
+            case["property"] = settings.access_property
+            logger.error('5. Access exception raised: {}, sending value: {}'.format(e, ACCESS_API_UNREACHABLE))
+            self.publisher(
+                io="ir", data=ACCESS_API_UNREACHABLE, case=case)
         except Exception as e:
-            logger.error("Mqtt - Failed to handle payload. {}".format(traceback.format_exc(limit=5)))
+            logger.error("6. Mqtt - Failed to handle payload. {}".format(traceback.format_exc(limit=5)))
 
     def on_message_application(self, client, topic, payload):
 
@@ -248,8 +263,7 @@ class MqttConnector():
             host = parts[1].replace("//", "")
             port = int(parts[2])
 
-            self.mqtt_client.username_pw_set(
-                username=settings.client_id, password=settings.block["access_token"])
+            self.mqtt_client.username_pw_set(username=self.client_id, password=self.access_token)
 
             try:
 
@@ -342,5 +356,3 @@ class MqttConnector():
             logger.error("Mqtt - Failed to de-configure connection {}".format(traceback.format_exc(limit=5)))
             exit()
 
-
-mqtt = MqttConnector()
