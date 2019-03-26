@@ -150,6 +150,8 @@ class SkeletonDevice(SkeletonBase):
 
             if int(resp.status_code) == 200:
                 return resp.json()['elements'][0]['channel']["channeltemplate_id"]
+            elif int(resp.status_code) == 204:  # No content
+                return False
             else:
                 raise ChannelTemplateNotFound("Failed to retrieve channel_template_id for {}".format(channel_id))
 
