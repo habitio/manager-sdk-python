@@ -11,7 +11,7 @@ from base.settings import settings
 from base.utils import format_str
 from base.constants import DEFAULT_RETRY_WAIT
 
-from .polling import poll
+from .polling import PollingManager
 from .token_refresher import TokenRefresherManager
 
 
@@ -23,12 +23,18 @@ class WebhookHubDevice(WebhookHubBase):
     def __init__(self, mqtt=None):
         super(WebhookHubDevice, self).__init__(mqtt)
         self.confirmation_hash = ""
-        self.poll = poll
+
         try:
             self.refresher = TokenRefresherManager()
         except Exception as e:
-            logger.error("[TokenRefresher] Failed start TokenRefresher manager, {} {}".format(e, traceback.format_exc(limit=5)))
+            logger.error("Failed start TokenRefresher manager, {} {}".format(e, traceback.format_exc(limit=5)))
             self.refresher = None
+
+        try:
+            self.poll = PollingManager()
+        except Exception as e:
+            logger.error("Failed start Polling manager, {} {}".format(e, traceback.format_exc(limit=5)))
+            self.poll = None
 
     def authorize(self, request):
         logger.debug("\n\n\n\n\n\t\t\t\t\t********************** AUTHORIZE **************************")
@@ -291,7 +297,10 @@ class WebhookHubDevice(WebhookHubBase):
 
         try:
             self.patch_endpoints()
-            self.poll.start()
+
+            if self.poll:
+                self.poll.start()
+
             if self.refresher:
                 self.refresher.start()
 
