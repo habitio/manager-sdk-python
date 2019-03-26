@@ -223,7 +223,7 @@ class SkeletonBase(ABC):
             if int(resp.status_code) == 200:
                 return resp.json()
             else:
-                raise ChannelTemplateNotFound("Failed to retrieve channel_template_id")
+                raise ChannelTemplateNotFound("Failed to retrieve channeltemplate_data {}".format(channeltemplate_id))
 
         except (OSError, ChannelTemplateNotFound) as e:
             self.log('Error while making request to platform: {}'.format(e), 3)
