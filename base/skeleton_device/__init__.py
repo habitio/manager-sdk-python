@@ -130,6 +130,35 @@ class SkeletonDevice(SkeletonBase):
             logger.alert("Unexpected error get_channel_template: {}".format(traceback.format_exc(limit=5)))
         return ''
 
+    def get_channel_by_owner(self, owner_id, channel_id):
+        """
+        Input :
+            owner_id
+            channel_id
+
+        Returns channeltemplate_id
+
+        """
+
+        url = "{}/users/{}/channels?channel_id={}".format(settings.api_server_full, owner_id, channel_id)
+        headers = {
+            "Authorization": "Bearer {0}".format(settings.block["access_token"])
+        }
+        try:
+            resp = requests.get(url, headers=headers)
+            logger.verbose("Received response code[{}]".format(resp.status_code))
+
+            if int(resp.status_code) == 200:
+                return resp.json()['elements'][0]['channel']["channeltemplate_id"]
+            else:
+                raise ChannelTemplateNotFound("Failed to retrieve channel_template_id for {}".format(channel_id))
+
+        except (OSError, ChannelTemplateNotFound) as e:
+            logger.warning('Error while making request to platform: {}'.format(e))
+        except Exception as ex:
+            logger.alert("Unexpected error get_channel_by_owner: {}".format(traceback.format_exc(limit=5)))
+        return ''
+
     def get_device_id(self, channel_id):
         """
         To retrieve device_id using channel_id

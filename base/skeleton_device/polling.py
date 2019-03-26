@@ -89,14 +89,6 @@ class PollingManager(object):
         try:
             # validate if channel exists
             from base.solid import implementer
-            try:
-                channel_template_id = implementer.get_channel_template(channel_id)
-            except Exception as e:
-                logger.debug('[Polling] {}'.format(e))
-                channel_template_id = None
-
-            if not channel_template_id:
-                return
 
             credentials_list = db.full_query('credential-owners/*/channels/{}'.format(channel_id))
             logger.info('[Polling] {} results found for channel_id: {}'.format(len(credentials_list), channel_id))
@@ -104,6 +96,11 @@ class PollingManager(object):
             for credential_dict in credentials_list:  # try until we find valid credentials
                 cred_key = credential_dict['key']
                 credentials = credential_dict['value']
+
+                is_valid = self.validate_channel(cred_key)
+                if not is_valid:
+                    logger.debug('[Polling] Invalid channel {}'.format(cred_key))
+                    continue
 
                 # Validate if token is valid before the request
                 now = int(time.time())
@@ -126,6 +123,19 @@ class PollingManager(object):
         except Exception:
             logger.error('[Polling] Error on polling.send_request {}'.format(traceback.format_exc(limit=5)))
         logger.notice('[Polling] No valid credentials found for channel {}'.format(channel_id))
+        return False
+
+
+    def validate_channel(self, credential_key):
+        from base.solid import implementer
+        try:
+            channel_id = credential_key.split('/')[-1]
+            owner_id = credential_key.split('/')[1]
+            channel_template_id = implementer.get_channel_by_owner(owner_id, channel_id)
+            return channel_template_id
+        except Exception as e:
+            logger.debug('[Polling] {}'.format(e))
+
         return False
 
 try:

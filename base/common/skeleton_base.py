@@ -228,7 +228,7 @@ class SkeletonBase(ABC):
         except (OSError, ChannelTemplateNotFound) as e:
             self.log('Error while making request to platform: {}'.format(e), 3)
         except Exception as ex:
-            self.log("Unexpected error get_channel_template: {}".format(traceback.format_exc(limit=5)), 3)
+            self.log("Unexpected error get_channeltemplate_data: {}".format(traceback.format_exc(limit=5)), 3)
         return {}
 
     def get_latest_property_value(self, channel_id, component, property):
