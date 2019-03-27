@@ -111,9 +111,10 @@ class WebhookHubDevice(WebhookHubBase):
         try:
             received_hash = request.headers.get("Authorization", "").replace("Bearer ", "")
             if received_hash == self.confirmation_hash:
+
                 if request.is_json:
                     logger.verbose(format_str(request.get_json(), is_json=True))
-                    message = request.get_json()["channels"]
+                    paired_devices = request.get_json()["channels"]
                 else:
                     return Response(status=422)
 
@@ -122,8 +123,10 @@ class WebhookHubDevice(WebhookHubBase):
                     "Authorization": "Bearer {0}".format(settings.block["access_token"])
                 }
 
+                credentials = db.get_credentials(request.headers["X-Client-Id"], request.headers["X-Owner-Id"])
                 channels = []
-                for device in message:
+
+                for device in paired_devices:
                     channel_id = db.get_channel_id(device["id"])
                     if channel_id:
                         logger.info("Channel already in database")
@@ -133,34 +136,35 @@ class WebhookHubDevice(WebhookHubBase):
 
                         # Validate if still exists on Muzzley
                         url = "{}/channels/{}".format(settings.api_server_full, channel["id"])
-
                         resp = requests.get(url, headers=headers, data=None)
                         logger.verbose("Received response code[{}]".format(resp.status_code))
+
                         if int(resp.status_code) not in (200, 201):
                             channel = self.create_channel_id(device)
                         else:
                             logger.info("Channel still valid in Muzzley")
 
-                            # Ensure persistence of manufacturer"s device id (key) to channel id (field) in redis hash
+                            # Ensure persistence of manufacturer's device id (key) to channel id (field) in redis hash
                             db.set_channel_id(device["id"], channel_id, True)
                             logger.verbose("Channel added to database")
                     else:
                         channel = self.create_channel_id(device)
 
                     # Granting permission to intervenient with id X-Client-Id
-
                     url = "{}/channels/{}/grant-access".format(settings.api_server_full, channel["id"])
+
                     try:
                         data = {
                             "client_id": request.headers["X-Client-Id"],
                             "role": "application"
                         }
+
                         logger.debug("Initiated POST - {}".format(url))
                         logger.verbose(format_str(data, is_json=True))
 
                         resp1 = requests.post(url, headers=headers, data=json.dumps(data))
-
                         logger.debug("Received response code[{}]".format(resp1.status_code))
+
                         if int(resp1.status_code) not in (201, 200):
                             logger.debug(format_str(resp1.json(), is_json=True))
                             raise Exception
@@ -183,20 +187,19 @@ class WebhookHubDevice(WebhookHubBase):
                         logger.verbose(format_str(data, is_json=True))
 
                         resp2 = requests.post(url, headers=headers, data=json.dumps(data))
-
                         logger.verbose("Received response code[{}]".format(resp2.status_code))
+
                         if int(resp2.status_code) not in (201, 200):
                             logger.debug(format_str(resp2.json(), is_json=True))
                             raise Exception
                     except:
-                        logger.error("Failed to grant access to owner {} {}".format(request.headers["X-Owner-Id"],
-                                                                                    traceback.format_exc(limit=5)))
+                        logger.error("Failed to grant access to owner {} {}".format(
+                            request.headers["X-Owner-Id"],
+                            traceback.format_exc(limit=5)))
                         return Response(status=400)
 
                     channels.append(channel)
-
-                credentials = db.get_credentials(request.headers["X-Client-Id"], request.headers["X-Owner-Id"])
-                db.set_credentials(credentials, request.headers["X-Client-Id"], request.headers["X-Owner-Id"],
+                    db.set_credentials(credentials, request.headers["X-Client-Id"], request.headers["X-Owner-Id"],
                                    channel["id"])
 
                 sender = {
@@ -204,7 +207,7 @@ class WebhookHubDevice(WebhookHubBase):
                     "client_id": request.headers["X-Client-Id"],
                     "owner_id": request.headers["X-Owner-Id"]
                 }
-                paired_devices = message
+
                 self.implementer.did_pair_devices(sender=sender, credentials=credentials, paired_devices=paired_devices)
 
                 return Response(
