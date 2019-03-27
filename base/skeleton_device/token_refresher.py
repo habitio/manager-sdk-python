@@ -164,7 +164,8 @@ class TokenRefresherManager(object):
                         self.update_all_owners(new_credentials, owner_id, channel_id, client_app_id)
                     return {
                         'channel_id': channel_id,
-                        'credentials': new_credentials
+                        'credentials': new_credentials,
+                        'old_credentials': credentials
                     }
                 else:
                     logger.warning('[TokenRefresher] Error in refresh token request {} {}'.format(channel_id, response))
