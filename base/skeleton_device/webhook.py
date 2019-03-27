@@ -40,8 +40,9 @@ class WebhookHubDevice(WebhookHubBase):
         logger.debug("\n\n\n\n\n\t\t\t\t\t********************** AUTHORIZE **************************")
         logger.debug("Received {} - {}".format(request.method, request.path))
         logger.verbose("\n" + str(request.headers))
+
         try:
-            received_hash = request.headers.get("Authorization").replace("Bearer ", "")
+            received_hash = request.headers.get("Authorization", "").replace("Bearer ", "")
             if received_hash == self.confirmation_hash:
                 sender = {
                     "channel_template_id": request.headers["X-Channeltemplate-Id"],
@@ -63,20 +64,20 @@ class WebhookHubDevice(WebhookHubBase):
         except Exception as e:
             logger.error("Couldn't complete processing request, {}".format(traceback.format_exc(limit=5)))
 
+        return Response(status=403)
+
     def devices_list(self, request):
         logger.debug("\n\n\n\n\n\t\t\t\t\t********************** LIST_DEVICES **************************")
         logger.debug("Received {} - {}".format(request.method, request.path))
         logger.verbose("headers: {}".format(request.headers))
         try:
-            received_hash = request.headers.get("Authorization").replace("Bearer ", "")
+            received_hash = request.headers.get("Authorization", "").replace("Bearer ", "")
             if received_hash == self.confirmation_hash:
                 credentials = db.get_credentials(request.headers["X-Client-Id"], request.headers["X-Owner-Id"])
 
                 if not credentials:
                     logger.error("No credentials found in database")
-                    return Response(
-                        status=404
-                    )
+                    return Response(status=404)
 
                 sender = {
                     "channel_template_id": request.headers["X-Channeltemplate-Id"],
@@ -97,26 +98,24 @@ class WebhookHubDevice(WebhookHubBase):
 
             else:
                 logger.debug("Provided invalid confirmation hash!")
-                return Response(
-                    status=403
-                )
+                return Response(status=403)
         except Exception as e:
             logger.error("Couldn't complete processing request, {}".format(traceback.format_exc(limit=5)))
 
+        return Response(status=403)
+
     def select_device(self, request):
         logger.debug("\n\n\n\n\n\t\t\t\t\t*******************SELECT_DEVICE****************************")
-        logger.debug("Received " + request.method + " - " + request.path)
+        logger.debug("Received {} - {}".format(request.method, request.path))
         logger.verbose("headers: {}".format(request.headers))
         try:
-            received_hash = request.headers.get("Authorization").replace("Bearer ", "")
+            received_hash = request.headers.get("Authorization", "").replace("Bearer ", "")
             if received_hash == self.confirmation_hash:
                 if request.is_json:
                     logger.verbose(format_str(request.get_json(), is_json=True))
                     message = request.get_json()["channels"]
                 else:
-                    return Response(
-                        status=422
-                    )
+                    return Response(status=422)
 
                 headers = {
                     "Content-Type": "application/json",
@@ -215,11 +214,11 @@ class WebhookHubDevice(WebhookHubBase):
                 )
             else:
                 logger.debug("Provided invalid confirmation hash!")
-                return Response(
-                    status=403
-                )
+                return Response(status=403)
         except Exception as e:
             logger.error("Couldn't complete processing request, {}".format(traceback.format_exc(limit=5)))
+
+        return Response(status=403)
 
     def create_channel_id(self, device):
 
