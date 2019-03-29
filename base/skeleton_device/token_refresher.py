@@ -165,12 +165,19 @@ class TokenRefresherManager(object):
                     return {
                         'channel_id': channel_id,
                         'credentials': new_credentials,
-                        'old_credentials': credentials
+                        'old_credentials': credentials,
+                        'new': True
                     }
                 else:
                     logger.warning('[TokenRefresher] Error in refresh token request {} {}'.format(channel_id, response))
             else:
                 logger.debug("[TokenRefresher] access token hasn't expired yet {}".format(key))
+                return {
+                    'channel_id': channel_id,
+                    'credentials': credentials,
+                    'old_credentials': credentials,
+                    'new': False
+                }
         except Exception:
 
             logger.error('[TokenRefresher] Unexpected error on send_request for refresh token, {}'.format(traceback.format_exc(limit=5)))
