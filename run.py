@@ -1,38 +1,19 @@
-print('[Boot]: Starting the process: OK')
-
-print('[Boot]: Settings: Importing')
-from base.settings import settings
-print('[Boot]: Settings: OK')
-
-
-print('[Boot]: Logs: Setting up')
+from base import settings
 from base import logger
-print('[Boot]: Logs: OK')
-
-print('[Boot]: Flask: Setting up')
 from flask import Flask
-print('[Boot]: Flask: OK')
-
 
 # Flask App
 logger.verbose("Creating Flask Object...")
 
 try:
     app = Flask(__name__, instance_relative_config=True)
-    print("[Boot]: Flask object successfully created!")
     logger.info("[Boot]: Flask object successfully created!")
 except Exception as ex:
-    print("[Boot]: Flask object creation failed!")
-    print(ex)
     logger.emergency("[Boot]: Flask object creation failed!")
     logger.trace(ex)
     raise
 
-print('[Boot]: Flask Config: Setting up')
 app.config.from_object("flask_config")
-print('[Boot]: Flask Config: OK')
-
-print('[Boot]: Views: Setting up')
 
 try:
     from base import views

@@ -5,9 +5,9 @@ import traceback
 from flask import Response, request
 from tenacity import retry, wait_fixed
 
+from base import settings
 from base.common.webhook_base import WebhookHubBase
-from base.redis_db import db
-from base.settings import settings
+from base.redis_db import get_redis
 from base.utils import format_str
 from base.constants import DEFAULT_RETRY_WAIT
 
@@ -20,21 +20,23 @@ logger = logging.getLogger(__name__)
 
 class WebhookHubDevice(WebhookHubBase):
 
-    def __init__(self, mqtt=None):
-        super(WebhookHubDevice, self).__init__(mqtt)
+    def __init__(self, mqtt=None, implementer=None):
+        super(WebhookHubDevice, self).__init__(mqtt, implementer)
         self.confirmation_hash = ""
 
         try:
-            self.refresher = TokenRefresherManager()
+            self.refresher = TokenRefresherManager(implementer=self.implementer)
         except Exception as e:
             logger.error("Failed start TokenRefresher manager, {} {}".format(e, traceback.format_exc(limit=5)))
             self.refresher = None
 
         try:
-            self.poll = PollingManager()
+            self.poll = PollingManager(implementer=self.implementer)
         except Exception as e:
             logger.error("Failed start Polling manager, {} {}".format(e, traceback.format_exc(limit=5)))
             self.poll = None
+
+        self.db = get_redis()
 
     def authorize(self, request):
         logger.debug("\n\n\n\n\n\t\t\t\t\t********************** AUTHORIZE **************************")
@@ -73,7 +75,7 @@ class WebhookHubDevice(WebhookHubBase):
         try:
             received_hash = request.headers.get("Authorization", "").replace("Bearer ", "")
             if received_hash == self.confirmation_hash:
-                credentials = db.get_credentials(request.headers["X-Client-Id"], request.headers["X-Owner-Id"])
+                credentials = self.db.get_credentials(request.headers["X-Client-Id"], request.headers["X-Owner-Id"])
 
                 if not credentials:
                     logger.error("No credentials found in database")
@@ -123,11 +125,11 @@ class WebhookHubDevice(WebhookHubBase):
                     "Authorization": "Bearer {0}".format(settings.block["access_token"])
                 }
 
-                credentials = db.get_credentials(request.headers["X-Client-Id"], request.headers["X-Owner-Id"])
+                credentials = self.db.get_credentials(request.headers["X-Client-Id"], request.headers["X-Owner-Id"])
                 channels = []
 
                 for device in paired_devices:
-                    channel_id = db.get_channel_id(device["id"])
+                    channel_id = self.db.get_channel_id(device["id"])
                     if channel_id:
                         logger.info("Channel already in database")
                         channel = {
@@ -145,7 +147,7 @@ class WebhookHubDevice(WebhookHubBase):
                             logger.info("Channel still valid in Muzzley")
 
                             # Ensure persistence of manufacturer's device id (key) to channel id (field) in redis hash
-                            db.set_channel_id(device["id"], channel_id, True)
+                            self.db.set_channel_id(device["id"], channel_id, True)
                             logger.verbose("Channel added to database")
                     else:
                         channel = self.create_channel_id(device)
@@ -199,7 +201,7 @@ class WebhookHubDevice(WebhookHubBase):
                         return Response(status=400)
 
                     channels.append(channel)
-                    db.set_credentials(credentials, request.headers["X-Client-Id"], request.headers["X-Owner-Id"],
+                    self.db.set_credentials(credentials, request.headers["X-Client-Id"], request.headers["X-Owner-Id"],
                                    channel["id"])
 
                 sender = {
@@ -259,7 +261,7 @@ class WebhookHubDevice(WebhookHubBase):
 
         # Ensure persistence of manufacturer"s device id (key) to channel id (field) in redis hash
         logger.verbose("Channel added to database")
-        db.set_channel_id(device["id"], resp.json()["id"], True)
+        self.db.set_channel_id(device["id"], resp.json()["id"], True)
 
         channel = resp.json()
         return channel

@@ -120,11 +120,3 @@ class Settings:
     def get_config(self):
         return self.config_data
 
-
-# An instance of Settings class
-try:
-    settings = Settings()
-except Exception as e:
-    print('Error: {}'.format(e))
-    exit()
-

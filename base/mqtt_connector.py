@@ -1,15 +1,13 @@
 import json
-import logging
 import traceback
-
 import paho.mqtt.client as paho
+from tenacity import retry, wait_fixed
 
-from base.redis_db import db
-from base.settings import settings
+from base import settings
+from base.redis_db import get_redis
 from base.utils import format_str
 from base.constants import *
 from base.exceptions import *
-from tenacity import retry, wait_fixed
 
 logger = logging.getLogger(__name__)
 
@@ -22,9 +20,9 @@ RC_LIST = {
     5: "Connection refused - not authorised"
 }
 
-class MqttConnector():
+class MqttConnector:
 
-    def __init__(self, client_id=None, access_token=None, **kwargs):
+    def __init__(self, client_id=None, access_token=None, implementer=None, **kwargs):
         logger.debug("Mqtt - Init")
         self.mqtt_client = paho.Client()
         self.mqtt_client.enable_logger()
@@ -42,14 +40,13 @@ class MqttConnector():
         self.client_id = client_id if client_id else settings.client_id
         self.access_token = access_token if access_token else settings.block["access_token"]
 
+        self.db = get_redis()
+        self.implementer = implementer
+
+
     def on_connect(self, client, userdata, flags, rc):
         try:
             if rc == 0:
-
-                from base.solid import implementer
-
-                self.implementer = implementer
-
                 logger.notice("Mqtt - Connected , result code {}".format(rc))
 
                 topic = "/{api_version}/{mqtt_topic}/{client_id}/channels/#".format(
@@ -100,7 +97,7 @@ class MqttConnector():
                     logger.debug("Mqtt - Received on_message_manager: {}\n{}".format(
                         topic, json.dumps(payload, indent=4, sort_keys=True)))
 
-                    device_id = db.get_device_id(parts[5])
+                    device_id = self.db.get_device_id(parts[5])
 
                     if not device_id:
                         if property == HEARTBEAT_PROP:
@@ -119,7 +116,7 @@ class MqttConnector():
                         "owner_id": payload["on_behalf_of"]
                     }
 
-                    credentials, credential_key = db.get_credentials(
+                    credentials, credential_key = self.db.get_credentials(
                         payload["sender"], payload["on_behalf_of"], case["channel_id"], with_key=True)
 
                     sender["key"] = credential_key
@@ -312,7 +309,7 @@ class MqttConnector():
 
             if all(key in case for key in ("device_id", "component", "property")) or all(key in case for key in ("channel_id", "component", "property")):
 
-                channel_id = case["channel_id"] if "channel_id" in case else db.get_channel_id(case["device_id"])
+                channel_id = case["channel_id"] if "channel_id" in case else self.db.get_channel_id(case["device_id"])
 
                 if channel_id is None:
                     logger.warning("Mqtt - No channel id found for this device")

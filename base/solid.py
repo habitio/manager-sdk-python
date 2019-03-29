@@ -1,5 +1,5 @@
 print('[Solid]: Settings: Setting up')
-from base.settings import settings
+from base import settings
 print('[Solid]: Settings: OK')
 
 
@@ -11,6 +11,8 @@ print('[Solid]: Inspect and Logging: Setting up')
 import inspect, logging, traceback
 print('[Solid]: Inspect and Logging: OK')
 
+from base import skeleton_device, skeleton_application
+
 logger = logging.getLogger(__name__)
 
 class ImplementorNotFound(Exception):
@@ -18,7 +20,6 @@ class ImplementorNotFound(Exception):
 
 def get_implementer():
     try:
-        from base import skeleton_device, skeleton_application
         _spec = util.spec_from_file_location("implementor", settings.skeleton_path)
         _module = util.module_from_spec(_spec)
         _spec.loader.exec_module(_module)
@@ -40,6 +41,3 @@ def get_implementer():
     except Exception:
         logger.critical("Failed to find Skeleton implementer class {}, check for missing abstract methods".format(traceback.format_exc(limit=5)))
         exit()
-
-
-implementer = get_implementer()

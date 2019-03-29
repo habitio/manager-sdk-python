@@ -1,12 +1,16 @@
 try:
-    from base import python_logging as pl
     import logging
+    from base.settings import Settings
+    from base import python_logging as pl
 
-    # Create the Logger
+    settings = Settings()
+
+    log_level = (100 + 9-int(settings.config_log["level"]))
+    pl.setup_loglevel()
+    logger_handler = pl.setup_logger_handler(settings.log_path, log_level)
+
     logger = logging.getLogger(__name__)
-
-    # Add the Handler to the Logger
-    logger.addHandler(pl.logger_handler)
+    logger.addHandler(logger_handler)
 
     logger.critical('STARTING MANAGER')
     logger.notice("\n\n\n{}\n\n\n".format("==="*45))

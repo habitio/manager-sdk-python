@@ -1,8 +1,8 @@
 from flask import Response, jsonify
 import logging, traceback
 
-from base.redis_db import db
-from base.settings import settings
+from base.redis_db import get_redis
+from base import settings
 from base.utils import format_str
 from .watchdog import Watchdog
 
@@ -10,15 +10,15 @@ logger = logging.getLogger(__name__)
 
 class WebhookHubBase:
 
-    def __init__(self, mqtt=None):
-        from base.solid import implementer
+    def __init__(self, mqtt=None, implementer=None):
         self.implementer = implementer
-        self.implementer.mqtt = mqtt
+        #self.implementer.mqtt = mqtt
         self.mqtt = mqtt
         self.headers = {
             "Content-Type": "application/json",
             "Authorization": "Bearer {0}".format(settings.block["access_token"])
         }
+        self.db = get_redis()
         try:
             self.watchdog_monitor = Watchdog()
         except Exception as e:
@@ -39,7 +39,7 @@ class WebhookHubBase:
 
                 data = self.implementer.auth_response(received_data)
                 if data != None:
-                    db.set_credentials(data, request.headers["X-Client-Id"], request.headers["X-Owner-Id"])
+                    self.db.set_credentials(data, request.headers["X-Client-Id"], request.headers["X-Owner-Id"])
                     return Response(status=200)
                 else:
                     logger.warning("No credentials to be stored!")
