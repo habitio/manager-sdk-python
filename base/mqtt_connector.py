@@ -343,7 +343,7 @@ class MqttConnector():
                     "Mqtt - Failed to publish , result code({})".format(rc))
 
         except Exception as e:
-            logger.alert("Mqtt - Failed to publish , ex {}".format(traceback.format_exc(limit=5)))
+            logger.alert("Mqtt - Failed to publish , ex {}".format(e))
 
     def mqtt_decongif(self):
         try:
