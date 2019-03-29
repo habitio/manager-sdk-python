@@ -8,6 +8,7 @@ class Watchdog:
 
     def __init__(self):
         self.interval = None
+        self.thread = None
         try:
             self.interval = int(settings.config_boot['keep_alive'])
             logger.debug('[Watchdog] interval {}'.format(self.interval))
@@ -17,8 +18,8 @@ class Watchdog:
     def start(self):
         if self.interval is not None and self.interval > 0:
             try:
-                t = threading.Thread(target=self.send_notification, name="watchdog")
-                t.start()
+                self.thread = threading.Thread(target=self.send_notification, name="watchdog")
+                self.thread.start()
             except:
                 logger.alert('[Watchdog] Unexpected exception {}'.format(traceback.format_exc(limit=5)))
         else:

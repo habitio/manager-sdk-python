@@ -301,13 +301,17 @@ class WebhookHubDevice(WebhookHubBase):
             self.patch_endpoints()
 
             if self.poll:
-                self.poll.start()
+                self.poll.start() if self.poll.thread is None else \
+                    logger.notice("Polling thread alive? : {}".format(self.poll.thread.is_alive()))
 
             if self.refresher:
-                self.refresher.start()
+                self.refresher.start() if self.refresher.thread is None else \
+                    logger.notice("Refresher thread alive? : {}".format(self.refresher.thread.is_alive()))
+
 
             if self.watchdog_monitor:
-                self.watchdog_monitor.start()
+                self.watchdog_monitor.start() if self.watchdog_monitor.thread is None else \
+                    logger.notice("Watchdog thread alive? : {}".format(self.watchdog_monitor.thread.is_alive()))
 
             self.implementer.start()
         except Exception as e:

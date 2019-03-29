@@ -19,6 +19,7 @@ class PollingManager(object):
         self.interval = settings.config_polling.get('interval_seconds', DEFAULT_POLLING_INTERVAL)  # default 60 sec.
         self.client_id = settings.client_id
         self.loop = asyncio.new_event_loop()
+        self.thread = None
 
     def start(self):
         """
@@ -28,8 +29,8 @@ class PollingManager(object):
             from base.solid import implementer
             if settings.config_polling.get('enabled') == True:
                 logger.info('[Polling] **** starting polling ****')
-                t = threading.Thread(target=self.worker, args=[implementer.get_polling_conf()], name="Polling")
-                t.start()
+                self.thread = threading.Thread(target=self.worker, args=[implementer.get_polling_conf()], name="Polling")
+                self.thread.start()
             else:
                 logger.info('[Polling] **** polling is not enabled ****')
         except NotImplementedError as e:

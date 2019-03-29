@@ -22,6 +22,8 @@ class TokenRefresherManager(object):
         self.loop = asyncio.new_event_loop()
         self.before_expires = settings.config_refresh.get('before_expires_seconds', DEFAULT_BEFORE_EXPIRES)
         self.update_owners = settings.config_refresh.get('update_owners', False)
+        self.thread = None
+
 
     def start(self):
         """
@@ -32,8 +34,8 @@ class TokenRefresherManager(object):
             from base.solid import implementer
             if settings.config_refresh.get('enabled') == True:
                 logger.info('[TokenRefresher] **** starting token refresher ****')
-                t = threading.Thread(target=self.worker, args=[implementer.get_refresh_token_conf()], name="TokenRefresh")
-                t.start()
+                self.thread = threading.Thread(target=self.worker, args=[implementer.get_refresh_token_conf()], name="TokenRefresh")
+                self.thread.start()
             else:
                 logger.info('[TokenRefresher] **** token refresher is not enabled ****')
         except NotImplementedError as e:
