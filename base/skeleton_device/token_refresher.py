@@ -178,6 +178,5 @@ class TokenRefresherManager(object):
                     'old_credentials': credentials,
                     'new': False
                 }
-        except Exception:
-
-            logger.error('[TokenRefresher] Unexpected error on send_request for refresh token, {}'.format(traceback.format_exc(limit=5)))
+        except Exception as e:
+            logger.error('[TokenRefresher] Unexpected error on send_request for refresh token, {}'.format(e))

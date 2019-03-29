@@ -10,7 +10,6 @@ import threading
 import datetime
 import logging
 import time
-import traceback
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +35,7 @@ class PollingManager(object):
         except NotImplementedError as e:
             logger.error("[Polling] NotImplementedError: {}".format(e))
         except Exception as e:
-            logger.alert("[Polling] Unexpected exception: {} {}".format(e, traceback.format_exc(limit=5)))
+            logger.alert("[Polling] Unexpected exception: {} {}".format(e))
 
     def authorization(self, credentials):
         headers = {
@@ -55,8 +54,8 @@ class PollingManager(object):
             logger.info('[Polling] new polling request {}'.format(datetime.datetime.now()))
             try:
                 loop.run_until_complete(self.make_requests(conf_data))
-            except Exception:
-                logger.error('[Polling] Error on worker loop, preventing to break thread, {}'.format(traceback.format_exc(limit=5)))
+            except Exception as e:
+                logger.error('[Polling] Error on worker loop, preventing to break thread, {}'.format(e))
             time.sleep(self.interval)
 
     async def make_requests(self, conf_data: dict):
@@ -124,8 +123,8 @@ class PollingManager(object):
             logger.error('Request Error on polling.send_request {}'.format(e))
             return False
 
-        except Exception:
-            logger.error('[Polling] Unknown error on polling.send_request {}'.format(traceback.format_exc(limit=5)))
+        except Exception as e:
+            logger.error('[Polling] Unknown error on polling.send_request {}'.format(e))
         logger.notice('[Polling] No valid credentials found for channel {}'.format(channel_id))
         return False
 
@@ -141,8 +140,3 @@ class PollingManager(object):
             logger.debug('[Polling] {}'.format(e))
 
         return False
-
-try:
-    poll = PollingManager()
-except Exception as e:
-    logger.error("[Polling] Failed start polling manager, {} {}".format(e, traceback.format_exc(limit=5)))
