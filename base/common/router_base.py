@@ -14,6 +14,7 @@ class RouterBase:
         return Response(status=200)
 
     def authorize(self):
+        logger.debug('authorize {} '.format(self.webhook.confirmation_hash))
         return self.webhook.authorize(request)
 
     def receive_token(self):

@@ -31,6 +31,7 @@ class PollingManager(object):
             if settings.config_polling.get('enabled') == True:
                 logger.info('[Polling] **** starting polling ****')
                 self.thread = threading.Thread(target=self.worker, args=[self.implementer.get_polling_conf()], name="Polling")
+                self.thread.daemon = True
                 self.thread.start()
             else:
                 logger.info('[Polling] **** polling is not enabled ****')

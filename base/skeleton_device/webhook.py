@@ -61,7 +61,7 @@ class WebhookHubDevice(WebhookHubBase):
                     mimetype="application/json"
                 )
             else:
-                logger.debug("Provided invalid confirmation hash!")
+                logger.debug("Provided invalid confirmation hash! {}".format(self.confirmation_hash))
                 return Response(status=403)
         except Exception as e:
             logger.error("Couldn't complete processing request, {}".format(traceback.format_exc(limit=5)))

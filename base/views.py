@@ -1,10 +1,13 @@
 from base import auth
-from base import logger
+import logging
 
 from base import settings
 from base.mqtt_connector import MqttConnector
 from base.skeleton import Webhook, Router
 from base.solid import get_implementer
+
+
+logger = logging.getLogger(__name__)
 
 class Views:
 
@@ -25,9 +28,9 @@ class Views:
 
             mqtt = MqttConnector(implementer=implementer)
             webhook = Webhook(mqtt=mqtt, implementer=implementer)
+            webhook.webhook_registration()
             router = Router(webhook)
             router.route_setup(app)
 
+            mqtt.start()
 
-            mqtt.set_on_connect_callback(webhook.webhook_registration)
-            mqtt.mqtt_config()
