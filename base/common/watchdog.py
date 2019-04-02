@@ -4,6 +4,7 @@ from base.settings import settings
 from base import logger
 import requests
 
+
 class Watchdog:
 
     def __init__(self):
