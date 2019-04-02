@@ -11,6 +11,8 @@ print('[Boot]: Logs: OK')
 
 print('[Boot]: Flask: Setting up')
 from flask import Flask
+from werkzeug.contrib.profiler import ProfilerMiddleware
+
 print('[Boot]: Flask: OK')
 
 
@@ -53,7 +55,10 @@ print("__name__ = {}".format(__name__))
 if __name__ == "__main__":
     try:
         print('[Boot]: Starting server...')
-        app.run(port=settings.port)
+        app.config['PROFILE'] = True
+        app.wsgi_app = ProfilerMiddleware(app.wsgi_app, restrictions=[30])
+        app.run(port=settings.port, debug=True)
+
     except Exception:
         print("********* Unknown Error! *********")
         raise
