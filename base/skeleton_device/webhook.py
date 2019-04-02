@@ -317,4 +317,4 @@ class WebhookHubDevice(WebhookHubBase):
 
         except Exception as e:
             logger.alert("Unexpected exception {}".format(traceback.format_exc(limit=5)))
-            os.kill(os.getpid(), 9)
+            os._exit(1)
