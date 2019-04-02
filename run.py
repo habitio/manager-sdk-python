@@ -11,7 +11,8 @@ print('[Boot]: Logs: OK')
 
 print('[Boot]: Flask: Setting up')
 from flask import Flask
-from werkzeug.contrib.profiler import ProfilerMiddleware
+from werkzeug.contrib.profiler import ProfilerMiddleware, MergeStream
+import sys
 
 print('[Boot]: Flask: OK')
 
@@ -56,7 +57,9 @@ if __name__ == "__main__":
     try:
         print('[Boot]: Starting server...')
         app.config['PROFILE'] = True
-        app.wsgi_app = ProfilerMiddleware(app.wsgi_app, restrictions=[30])
+        f = open('/var/log/muzzley/manager-nest-contained/profiler.log', 'w')
+        stream = MergeStream(sys.stdout, f)
+        app.wsgi_app = ProfilerMiddleware(app.wsgi_app, stream=stream, restrictions=[30])
         app.run(port=settings.port, debug=True)
 
     except Exception:
