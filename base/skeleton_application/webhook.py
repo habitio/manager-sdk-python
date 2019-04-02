@@ -98,4 +98,6 @@ class WebhookHubApplication(WebhookHubBase):
 
         except Exception as e:
             logger.alert("Unexpected exception {}".format(traceback.format_exc(limit=5)))
+            if self.watchdog_monitor:
+                self.watchdog_monitor.stop()
             exit()
