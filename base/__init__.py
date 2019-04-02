@@ -9,7 +9,7 @@ try:
     logger.addHandler(pl.logger_handler)
 
     logger.critical('STARTING MANAGER')
-    logger.notice("\n\n\n{}\n\n\n".format("==="*45))
+    logger.notice("\n\n\n{}\n\n\n".format("===" * 45))
     logger.info("Completed configuring logger!")
 except Exception as e:
     print('Error: {}'.format(e))
