@@ -95,7 +95,7 @@ class SkeletonBase(ABC):
         """
         db.set_channel_status(channel_id, status)
 
-    def get_credential_list(self):
+    def get_all_credentials(self):
         """
         Get a full list of existing credentials with corresponding key
 
