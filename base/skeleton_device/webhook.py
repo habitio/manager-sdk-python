@@ -308,11 +308,11 @@ class WebhookHubDevice(WebhookHubBase):
                 self.refresher.start() if self.refresher.thread is None else \
                     logger.notice("Refresher thread alive? : {}".format(self.refresher.thread.is_alive()))
 
-            self.implementer.start()
-
             if self.watchdog_monitor:
                 self.watchdog_monitor.start() if self.watchdog_monitor.thread is None else \
                     logger.notice("Watchdog thread alive? : {}".format(self.watchdog_monitor.thread.is_alive()))
+
+            self.implementer.start()
 
         except Exception as e:
             logger.alert("Unexpected exception {}".format(traceback.format_exc(limit=5)))
