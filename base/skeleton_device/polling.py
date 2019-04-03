@@ -38,7 +38,7 @@ class PollingManager(object):
         except NotImplementedError as e:
             logger.error("[Polling] NotImplementedError: {}".format(e))
         except Exception as e:
-            logger.alert("[Polling] Unexpected exception: {} {}".format(e))
+            logger.alert("[Polling] Unexpected exception: {}".format(e))
 
     def authorization(self, credentials):
         headers = {
