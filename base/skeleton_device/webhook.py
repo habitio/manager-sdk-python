@@ -132,12 +132,15 @@ class WebhookHubDevice(WebhookHubBase):
                 if paired_devices:
 
                     loop = asyncio.get_event_loop()
-                    response = loop.run_until_complete(
+                    responses = loop.run_until_complete(
                         asyncio.gather(self.send_channel_requests(paired_devices, credentials, client_id, owner_id, channel_template)))
                     loop.close()
 
-                for channel in response:
-                    if channel: logger.info(channel)
+                    for future in responses[0]:
+                        channel_id = future.result()
+                        channels.append({"id": channel_id})
+
+                logger.info(channels)
 
                 sender = {
                     "channel_template_id": channel_template,
@@ -178,10 +181,10 @@ class WebhookHubDevice(WebhookHubBase):
     def channels_grant(self, device, credentials, client_id, owner_id, channel_template):
 
         try:
-            channel = self.get_or_create_channel(device, channel_template)
+            channel_id = self.get_or_create_channel(device, channel_template)
 
             # Granting permission to intervenient with id X-Client-Id
-            url = "{}/channels/{}/grant-access".format(settings.api_server_full, channel["id"])
+            url = "{}/channels/{}/grant-access".format(settings.api_server_full, channel_id)
 
             try:
                 data = {
@@ -217,7 +220,7 @@ class WebhookHubDevice(WebhookHubBase):
                 logger.verbose(format_str(data, is_json=True))
 
                 resp_user = self.session.post(url, json=data)
-                resp_user.verbose("Received response code[{}]".format(resp_user.status_code))
+                logger.verbose("Received response code[{}]".format(resp_user.status_code))
 
                 if resp_user.status_code not in (201, 200):
                     logger.debug(format_str(resp_user.json(), is_json=True))
@@ -228,8 +231,8 @@ class WebhookHubDevice(WebhookHubBase):
                     traceback.format_exc(limit=5)))
                 return False
 
-            self.db.set_credentials(credentials, client_id, owner_id, channel["id"])
-            return channel
+            self.db.set_credentials(credentials, client_id, owner_id, channel_id)
+            return channel_id
 
         except Exception as e:
             logger.error('Error while requesting grant {}'.format(e))
@@ -243,9 +246,7 @@ class WebhookHubDevice(WebhookHubBase):
 
             if channel_id:
                 logger.info("Channel already in database")
-                return {
-                    "id": channel_id
-                }
+                return channel_id
 
             # Validate if still exists on Muzzley
             url = "{}/channels/{}".format(settings.api_server_full, channel_id)
@@ -260,9 +261,7 @@ class WebhookHubDevice(WebhookHubBase):
             self.db.set_channel_id(device["id"], channel_id, True)
             logger.verbose("Channel added to database {}".format(channel_id))
 
-            return {
-                "id": channel_id
-            }
+            return channel_id
 
         except Exception as e:
             logger.error('Error get_or_create_channel {}'.format(e))
