@@ -1,5 +1,6 @@
 from flask import Response, jsonify
 import logging, traceback
+import requests
 
 from base.redis_db import get_redis
 from base import settings
@@ -13,16 +14,21 @@ class WebhookHubBase:
     def __init__(self, mqtt=None, implementer=None):
         self.implementer = implementer
         self.mqtt = mqtt
-        self.headers = {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer {0}".format(settings.block["access_token"])
-        }
-        self.db = get_redis()
+
         try:
             self.watchdog_monitor = Watchdog()
         except Exception as e:
             logger.error("Failed to start Watchdog, {} {}".format(e, traceback.format_exc(limit=5)))
             self.watchdog_monitor = None
+
+        self.session = requests.Session()
+        self.session.headers.update({
+            "Content-Type": "application/json",
+            "Authorization": "Bearer {0}".format(settings.block["access_token"])
+        })
+
+        self.db = get_redis()
+
 
     def receive_token(self, request):
         logger.debug("\n\n\n\n\n\t\t\t\t\t********************** RECEIVE_TOKEN **************************")

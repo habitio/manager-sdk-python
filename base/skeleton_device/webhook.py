@@ -35,12 +35,11 @@ class WebhookHubDevice(WebhookHubBase):
             logger.error("Failed start Polling manager, {} {}".format(e, traceback.format_exc(limit=5)))
             self.poll = None
 
-        self.db = get_redis()
 
     def authorize(self, request):
         logger.debug("\n\n\n\n\n\t\t\t\t\t********************** AUTHORIZE **************************")
         logger.debug("Received {} - {}".format(request.method, request.path))
-        logger.verbose("\n" + str(request.headers))
+        logger.verbose("headers: {}".format(request.headers))
 
         try:
             received_hash = request.headers.get("Authorization", "").replace("Bearer ", "")
@@ -71,6 +70,7 @@ class WebhookHubDevice(WebhookHubBase):
         logger.debug("\n\n\n\n\n\t\t\t\t\t********************** LIST_DEVICES **************************")
         logger.debug("Received {} - {}".format(request.method, request.path))
         logger.verbose("headers: {}".format(request.headers))
+
         try:
             received_hash = request.headers.get("Authorization", "").replace("Bearer ", "")
             if received_hash == self.confirmation_hash:
@@ -109,6 +109,7 @@ class WebhookHubDevice(WebhookHubBase):
         logger.debug("\n\n\n\n\n\t\t\t\t\t*******************SELECT_DEVICE****************************")
         logger.debug("Received {} - {}".format(request.method, request.path))
         logger.verbose("headers: {}".format(request.headers))
+
         try:
             received_hash = request.headers.get("Authorization", "").replace("Bearer ", "")
             if received_hash == self.confirmation_hash:
@@ -119,10 +120,7 @@ class WebhookHubDevice(WebhookHubBase):
                 else:
                     return Response(status=422)
 
-                headers = {
-                    "Content-Type": "application/json",
-                    "Authorization": "Bearer {0}".format(settings.block["access_token"])
-                }
+
 
                 credentials = self.db.get_credentials(request.headers["X-Client-Id"], request.headers["X-Owner-Id"])
                 channels = []
@@ -137,7 +135,7 @@ class WebhookHubDevice(WebhookHubBase):
 
                         # Validate if still exists on Muzzley
                         url = "{}/channels/{}".format(settings.api_server_full, channel["id"])
-                        resp = requests.get(url, headers=headers, data=None)
+                        resp = self.session.get(url, data=None)
                         logger.verbose("Received response code[{}]".format(resp.status_code))
 
                         if int(resp.status_code) not in (200, 201):
@@ -151,6 +149,7 @@ class WebhookHubDevice(WebhookHubBase):
                     else:
                         channel = self.create_channel_id(device)
 
+
                     # Granting permission to intervenient with id X-Client-Id
                     url = "{}/channels/{}/grant-access".format(settings.api_server_full, channel["id"])
 
@@ -163,7 +162,7 @@ class WebhookHubDevice(WebhookHubBase):
                         logger.debug("Initiated POST - {}".format(url))
                         logger.verbose(format_str(data, is_json=True))
 
-                        resp1 = requests.post(url, headers=headers, data=json.dumps(data))
+                        resp1 = self.session.post(url, json=data)
                         logger.debug("Received response code[{}]".format(resp1.status_code))
 
                         if int(resp1.status_code) not in (201, 200):
@@ -187,7 +186,7 @@ class WebhookHubDevice(WebhookHubBase):
                         logger.debug("Initiated POST - {}".format(url))
                         logger.verbose(format_str(data, is_json=True))
 
-                        resp2 = requests.post(url, headers=headers, data=json.dumps(data))
+                        resp2 = self.session.post(url, json=data)
                         logger.verbose("Received response code[{}]".format(resp2.status_code))
 
                         if int(resp2.status_code) not in (201, 200):
@@ -227,11 +226,6 @@ class WebhookHubDevice(WebhookHubBase):
     def create_channel_id(self, device):
 
         # Creating a new channel for the particular device"s id
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer {0}".format(settings.block["access_token"])
-        }
-
         data = {
             "name": "Device" if not "content" in device else device["content"],
             "channeltemplate_id": request.headers["X-Channeltemplate-Id"]
@@ -239,10 +233,10 @@ class WebhookHubDevice(WebhookHubBase):
         url = settings.api_server_full
 
         try:
-            logger.debug("Initiated POST" + " - " + url)
-            logger.verbose("\n" + json.dumps(data, indent=4, sort_keys=True) + "\n")
+            logger.debug("Initiated POST - {}".format(url))
+            logger.verbose(format_str(data, is_json=True))
 
-            resp = requests.post("{}/managers/self/channels".format(url), headers=headers, data=json.dumps(data))
+            resp = self.session.post("{}/managers/self/channels".format(url), json=data)
 
             logger.debug("Received response code[{}]".format(resp.status_code))
 
@@ -254,9 +248,7 @@ class WebhookHubDevice(WebhookHubBase):
             logger.error(
                 "Failed to create channel for channel template {} {}".format(request.headers["X-Channeltemplate-Id"],
                                                                              traceback.format_exc(limit=5)))
-            return Response(
-                status=400
-            )
+            return Response(status=400)
 
         # Ensure persistence of manufacturer"s device id (key) to channel id (field) in redis hash
         logger.verbose("Channel added to database")
@@ -278,10 +270,10 @@ class WebhookHubDevice(WebhookHubBase):
 
             url = settings.webhook_url
 
-            logger.debug("Initiated PATCH - {} {}".format(url, self.headers))
+            logger.debug("Initiated PATCH - {} {}".format(url, self.session.headers))
             logger.verbose(format_str(data, is_json=True))
 
-            resp = requests.patch(url, data=json.dumps(data), headers=self.headers)
+            resp = requests.patch(url, data=json.dumps(data), headers=self.session.headers)
 
             logger.verbose("Received response code[{}]".format(resp.status_code))
             logger.verbose(format_str(resp.json(), is_json=True))
