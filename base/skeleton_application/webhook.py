@@ -1,4 +1,8 @@
-import traceback, json, sys, logging, requests
+import traceback
+import json
+import sys
+import logging
+import requests
 from tenacity import retry, wait_fixed
 from flask import Response
 
@@ -88,9 +92,10 @@ class WebhookHubApplication(WebhookHubBase):
     def webhook_registration(self):
         try:
             self.patch_endpoints()
-            self.implementer.start()
             if self.watchdog_monitor:
                 self.watchdog_monitor.start()
+            self.implementer.start()
+
         except Exception as e:
             logger.alert("Unexpected exception {}".format(traceback.format_exc(limit=5)))
             exit()

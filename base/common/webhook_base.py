@@ -12,7 +12,6 @@ class WebhookHubBase:
 
     def __init__(self, mqtt=None, implementer=None):
         self.implementer = implementer
-        #self.implementer.mqtt = mqtt
         self.mqtt = mqtt
         self.headers = {
             "Content-Type": "application/json",

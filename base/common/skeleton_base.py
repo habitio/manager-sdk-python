@@ -98,6 +98,14 @@ class SkeletonBase(ABC):
         """
         self.db.set_channel_status(channel_id, status)
 
+    def get_all_credentials(self):
+        """
+        Get a full list of existing credentials with corresponding key
+
+        """
+        credentials_list = db.full_query('credential-owners/*/channels/*')
+        return credentials_list
+
     def store(self, key, value):
         """
         To store a value to database with a unique identifier called key
@@ -277,4 +285,3 @@ class SkeletonBase(ABC):
         self.log('Credentials are not valid: {}'.format(credentials), 4)
 
         return None
-

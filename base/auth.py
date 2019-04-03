@@ -14,6 +14,7 @@ from tenacity import retry, wait_fixed
 
 logger = logging.getLogger(__name__)
 
+
 @retry(wait=wait_fixed(DEFAULT_RETRY_WAIT))
 def get_access():
     """

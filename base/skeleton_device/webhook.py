@@ -2,6 +2,7 @@ import json
 import logging
 import requests
 import traceback
+import os
 from flask import Response, request
 from tenacity import retry, wait_fixed
 
@@ -14,9 +15,7 @@ from base.constants import DEFAULT_RETRY_WAIT
 from .polling import PollingManager
 from .token_refresher import TokenRefresherManager
 
-
 logger = logging.getLogger(__name__)
-
 
 class WebhookHubDevice(WebhookHubBase):
 
@@ -310,12 +309,12 @@ class WebhookHubDevice(WebhookHubBase):
                 self.refresher.start() if self.refresher.thread is None else \
                     logger.notice("Refresher thread alive? : {}".format(self.refresher.thread.is_alive()))
 
-
             if self.watchdog_monitor:
                 self.watchdog_monitor.start() if self.watchdog_monitor.thread is None else \
                     logger.notice("Watchdog thread alive? : {}".format(self.watchdog_monitor.thread.is_alive()))
 
             self.implementer.start()
+
         except Exception as e:
             logger.alert("Unexpected exception {}".format(traceback.format_exc(limit=5)))
-            exit()
+            os._exit(1)
