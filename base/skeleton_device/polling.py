@@ -80,7 +80,7 @@ class PollingManager(object):
                         self.send_request,
                         channel_id, method, url, params, data
                     )
-                    for channel_id in db.get_channels()
+                    for channel_id in self.db.get_channels()
                 ]
                 for response in await asyncio.gather(*futures):
                     if response: implementer.polling(response)
