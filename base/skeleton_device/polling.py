@@ -63,7 +63,6 @@ class PollingManager(object):
 
     async def make_requests(self, conf_data: dict):
         try:
-            from base.solid import implementer
             logger.info("[Polling] {} starting {}".format(threading.currentThread().getName(),  datetime.datetime.now()))
 
             url = conf_data['url']
@@ -83,7 +82,7 @@ class PollingManager(object):
                     for channel_id in self.db.get_channels()
                 ]
                 for response in await asyncio.gather(*futures):
-                    if response: implementer.polling(response)
+                    if response: self.implementer.polling(response)
 
             logger.info("[Polling] {} finishing {}".format(threading.currentThread().getName(),  datetime.datetime.now()))
         except Exception as e:
