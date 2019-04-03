@@ -58,32 +58,36 @@ class PollingManager(object):
             try:
                 loop.run_until_complete(self.make_requests(conf_data))
             except Exception as e:
-                logger.error('[Polling] Error on worker loop, preventing to break thread, {}'.format(e))
+                logger.error('[Polling] Error on worker loop, {}'.format(e))
             time.sleep(self.interval)
 
     async def make_requests(self, conf_data: dict):
-        logger.info("[Polling] {} starting {}".format(threading.currentThread().getName(),  datetime.datetime.now()))
+        try:
+            from base.solid import implementer
+            logger.info("[Polling] {} starting {}".format(threading.currentThread().getName(),  datetime.datetime.now()))
 
-        url = conf_data['url']
-        method = conf_data['method']
-        data = conf_data.get('data')
-        params = conf_data.get('params')
+            url = conf_data['url']
+            method = conf_data['method']
+            data = conf_data.get('data')
+            params = conf_data.get('params')
 
-        loop = asyncio.get_event_loop()
+            loop = asyncio.get_event_loop()
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=DEFAULT_THREAD_MAX_WORKERS) as executor:
-            futures = [
-                loop.run_in_executor(
-                    executor,
-                    self.send_request,
-                    channel_id, method, url, params, data
-                )
-                for channel_id in self.db.get_channels()
-            ]
-            for response in await asyncio.gather(*futures):
-                if response: self.implementer.polling(response)
+            with concurrent.futures.ThreadPoolExecutor(max_workers=DEFAULT_THREAD_MAX_WORKERS) as executor:
+                futures = [
+                    loop.run_in_executor(
+                        executor,
+                        self.send_request,
+                        channel_id, method, url, params, data
+                    )
+                    for channel_id in db.get_channels()
+                ]
+                for response in await asyncio.gather(*futures):
+                    if response: implementer.polling(response)
 
-        logger.info("[Polling] {} finishing {}".format(threading.currentThread().getName(),  datetime.datetime.now()))
+            logger.info("[Polling] {} finishing {}".format(threading.currentThread().getName(),  datetime.datetime.now()))
+        except Exception as e:
+            logger.error("[Polling] {} Error on make_requests {}".format(e))
 
     @rate_limited(settings.config_polling.get('rate_limit', DEFAULT_RATE_LIMIT))
     def send_request(self, channel_id, method, url, params, data):

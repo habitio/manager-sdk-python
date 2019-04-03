@@ -59,27 +59,31 @@ class TokenRefresherManager(object):
         return credentials_list
 
     async def make_requests(self, conf_data: dict):
-        logger.info("[TokenRefresher] {} starting {}".format(threading.currentThread().getName(),  datetime.datetime.now()))
+        try:
+            from base.solid import implementer
+            logger.info("[TokenRefresher] {} starting {}".format(threading.currentThread().getName(),  datetime.datetime.now()))
 
-        url = conf_data['url']
-        method = conf_data['method']
-        is_json = conf_data.get('is_json', False)
+            url = conf_data['url']
+            method = conf_data['method']
+            is_json = conf_data.get('is_json', False)
 
-        loop = asyncio.get_event_loop()
+            loop = asyncio.get_event_loop()
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=DEFAULT_THREAD_MAX_WORKERS) as executor:
-            futures = [
-                loop.run_in_executor(
-                    executor,
-                    self.send_request,
-                    credentials, method, url, is_json
-                )
-                for credentials in self.get_credential_list()
-            ]
-            for response in await asyncio.gather(*futures):
-                if response: self.implementer.after_refresh(response)
+            with concurrent.futures.ThreadPoolExecutor(max_workers=DEFAULT_THREAD_MAX_WORKERS) as executor:
+                futures = [
+                    loop.run_in_executor(
+                        executor,
+                        self.send_request,
+                        credentials, method, url, is_json
+                    )
+                    for credentials in self.get_credential_list()
+                ]
+                for response in await asyncio.gather(*futures):
+                    if response: implementer.after_refresh(response)
 
-        logger.info("[TokenRefresher] {} finishing {}".format(threading.currentThread().getName(),  datetime.datetime.now()))
+            logger.info("[TokenRefresher] {} finishing {}".format(threading.currentThread().getName(),  datetime.datetime.now()))
+        except Exception as e:
+            logger.error("[TokenRefresher] {} Error on make_requests {}".format(e))
 
     def get_new_expiration_date(self, credentials):
         now = int(time.time())
