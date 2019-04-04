@@ -4,8 +4,7 @@ import logging
 import traceback
 
 from redis import Redis
-
-from base.settings import settings
+from base import settings
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +48,7 @@ class DBManager(Redis):
             else:
                 logger.warning("[DB] Key {} not found in database.".format(key))
         except Exception as e:
-            logger.error("[DB] get_key error, {}".format(traceback.format_exc(limit=5)))
+            logger.error("[DB] get_key error, {}".format(e))
 
     def query(self, regex):
         logger.debug("[DB] query regex={}".format(regex))
@@ -108,15 +107,15 @@ class DBManager(Redis):
             logger.error("[DB] Failed to shutdown redis database, {}".format(traceback.format_exc(limit=5)))
 
     def __get_credentials_old(self, client_id, owner_id, channel_id):
-        '''
+        """
             Due to legacy code, this method retrieves credentials stored just by uuid
-        '''
+        """
 
         logger.info("[DB] No credentials found w/ new format! Search w/ old format")
 
-        result = db.get_key(owner_id)
+        result = self.get_key(owner_id)
         if not result:
-            result = db.get_key("/".join([client_id, owner_id]))
+            result = self.get_key("/".join([client_id, owner_id]))
 
         if result:
             self.set_credentials(result, client_id, owner_id, channel_id)
@@ -130,17 +129,17 @@ class DBManager(Redis):
         if channel_id:
             credentials_key = "/".join(
                 ['credential-clients', client_id, 'owners', owner_id, 'channels', channel_id])
-            data = db.query(credentials_key)
+            data = self.query(credentials_key)
 
             if not data:
                 credentials_key = "/".join(
                     ['credential-owners', owner_id, 'channels', channel_id])
-                data = db.query(credentials_key)
+                data = self.query(credentials_key)
 
         if not data:
             credentials_key = "/".join(
                 ['credential-clients', client_id, 'owners', owner_id])
-            data = db.query(credentials_key)
+            data = self.query(credentials_key)
 
             if not data:
                 data = self.__get_credentials_old(
@@ -166,7 +165,6 @@ class DBManager(Redis):
 
         return credentials
 
-
     def set_credentials(self, credentials, client_id, owner_id, channel_id=None):
         if not client_id or not owner_id:
             raise Exception("[DB] Not enough keys (client or owner missing)")
@@ -179,16 +177,16 @@ class DBManager(Redis):
                 credentials_key = "/".join(['credential-owners',
                                             owner_id, 'channels', channel_id])
 
-            db.set_key(credentials_key, credentials)
+            self.set_key(credentials_key, credentials)
 
     def get_device_id(self, channel_id):
         key = "/".join(['device-channels', channel_id])
-        data = db.query(key)
+        data = self.query(key)
 
         if not data:
             logger.info("[DB] No device found w/ new format! Search w/ old format")
             key = channel_id
-            result = db.get_key(key)
+            result = self.get_key(key)
 
             if not result:
                 logger.warning("[DB] No device found for channel {}".format(key))
@@ -202,19 +200,19 @@ class DBManager(Redis):
 
     def set_device_id(self, channel_id, device_id, add_reverse=False):
         key = "/".join(['device-channels', channel_id])
-        db.set_key(key, device_id)
+        self.set_key(key, device_id)
 
         if add_reverse:
             self.set_channel_id(device_id, channel_id)
 
     def get_channel_id(self, device_id):
         key = "/".join(['channel-devices', device_id])
-        data = db.query(key)
+        data = self.query(key)
 
         if not data:
             logger.info("[DB] No channel found w/ new format! Search w/ old format")
             key = device_id
-            result = db.get_key(key)
+            result = self.get_key(key)
 
             if not result:
                 logger.warning("[DB] No channel found for device {}".format(key))
@@ -228,7 +226,7 @@ class DBManager(Redis):
 
     def set_channel_id(self, device_id, channel_id, add_reverse=False):
         key = "/".join(['channel-devices', device_id])
-        db.set_key(key, channel_id)
+        self.set_key(key, channel_id)
 
         if add_reverse:
             self.set_device_id(channel_id, device_id)
@@ -236,7 +234,7 @@ class DBManager(Redis):
     def get_channel_status(self, channel_id):
         key = "/".join(['status-channels', channel_id])
 
-        data = db.query(key)
+        data = self.query(key)
 
         if not data:
             logger.warning("[DB] No status found for channel {}".format(key))
@@ -246,22 +244,24 @@ class DBManager(Redis):
 
     def set_channel_status(self, channel_id, status):
         key = "/".join(['status-channels', channel_id])
-        db.set_key(key, status)
+        self.set_key(key, status)
 
     def expire(self, key, time):
         logger.warning("[DB] To be implemented!")
 
     def get_channels(self, device_id=None):
         if not device_id : device_id = '*'
-        return list(set(db.query('channel-devices/{}'.format(device_id))))    
+        return list(set(self.query('channel-devices/{}'.format(device_id))))
 
-try:
-    db = DBManager(
-        host=settings.redis_host,
-        port=settings.redis_port,
-        decode_responses=True
-    )
 
-    logger.info("[DB] Successfully connected Redis-client to Redis-server")
-except Exception as e:
-    logger.error("[DB] Failed to connect Redis-client to Redis server, {}".format(traceback.format_exc(limit=5)))
+def get_redis():
+    try:
+        return DBManager(
+            host=settings.redis_host,
+            port=settings.redis_port,
+            decode_responses=True
+        )
+    except Exception as e:
+        logger.error("[DB] Failed to connect Redis-client to Redis server, {}".format(e))
+
+    return None

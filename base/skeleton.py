@@ -1,4 +1,4 @@
-from base.settings import settings
+from base import settings
 
 if settings.implementor_type == 'device':
     from base import skeleton_device

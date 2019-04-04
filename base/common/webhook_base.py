@@ -1,8 +1,9 @@
 from flask import Response, jsonify
 import logging, traceback
+import requests
 
-from base.redis_db import db
-from base.settings import settings
+from base.redis_db import get_redis
+from base import settings
 from base.utils import format_str
 from .watchdog import Watchdog
 
@@ -10,20 +11,24 @@ logger = logging.getLogger(__name__)
 
 class WebhookHubBase:
 
-    def __init__(self, mqtt=None):
-        from base.solid import implementer
+    def __init__(self, mqtt=None, implementer=None):
         self.implementer = implementer
-        self.implementer.mqtt = mqtt
         self.mqtt = mqtt
-        self.headers = {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer {0}".format(settings.block["access_token"])
-        }
+
         try:
             self.watchdog_monitor = Watchdog()
         except Exception as e:
             logger.error("Failed to start Watchdog, {} {}".format(e, traceback.format_exc(limit=5)))
             self.watchdog_monitor = None
+
+        self.session = requests.Session()
+        self.session.headers.update({
+            "Content-Type": "application/json",
+            "Authorization": "Bearer {0}".format(settings.block["access_token"])
+        })
+
+        self.db = get_redis()
+
 
     def receive_token(self, request):
         logger.debug("\n\n\n\n\n\t\t\t\t\t********************** RECEIVE_TOKEN **************************")
@@ -39,7 +44,7 @@ class WebhookHubBase:
 
                 data = self.implementer.auth_response(received_data)
                 if data != None:
-                    db.set_credentials(data, request.headers["X-Client-Id"], request.headers["X-Owner-Id"])
+                    self.db.set_credentials(data, request.headers["X-Client-Id"], request.headers["X-Owner-Id"])
                     return Response(status=200)
                 else:
                     logger.warning("No credentials to be stored!")

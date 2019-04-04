@@ -1,3 +1,4 @@
+from base import settings
 from base.common.skeleton_base import SkeletonBase
 from base.constants import DEFAULT_BEFORE_EXPIRES
 from base.exceptions import ChannelTemplateNotFound
@@ -166,14 +167,14 @@ class SkeletonDevice(SkeletonBase):
         To retrieve device_id using channel_id
 
         """
-        return db.get_device_id(channel_id)
+        return self.db.get_device_id(channel_id)
 
     def get_channel_id(self, device_id):
         """
         To retrieve channel_id using device_id
 
         """
-        return db.get_channel_id(device_id)
+        return self.db.get_channel_id(device_id)
 
     def get_polling_conf(self):
         """

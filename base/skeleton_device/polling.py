@@ -1,7 +1,7 @@
 import concurrent
 
-from base.redis_db import db
-from base.settings import settings
+from base import settings
+from base.redis_db import get_redis
 from base.utils import rate_limited
 from base.constants import DEFAULT_POLLING_INTERVAL, DEFAULT_RATE_LIMIT, DEFAULT_THREAD_MAX_WORKERS
 import asyncio
@@ -15,28 +15,30 @@ logger = logging.getLogger(__name__)
 
 class PollingManager(object):
 
-    def __init__(self):
+    def __init__(self, implementer=None):
         self.interval = settings.config_polling.get('interval_seconds', DEFAULT_POLLING_INTERVAL)  # default 60 sec.
         self.client_id = settings.client_id
         self.loop = asyncio.new_event_loop()
         self.thread = None
+        self.db = get_redis()
+        self.implementer = implementer
 
     def start(self):
         """
         If polling is enabled in config file, retrieves conf for polling in implementor
         """
         try:
-            from base.solid import implementer
             if settings.config_polling.get('enabled') == True:
                 logger.info('[Polling] **** starting polling ****')
-                self.thread = threading.Thread(target=self.worker, args=[implementer.get_polling_conf()], name="Polling")
+                self.thread = threading.Thread(target=self.worker, args=[self.implementer.get_polling_conf()], name="Polling")
+                self.thread.daemon = True
                 self.thread.start()
             else:
                 logger.info('[Polling] **** polling is not enabled ****')
         except NotImplementedError as e:
             logger.error("[Polling] NotImplementedError: {}".format(e))
         except Exception as e:
-            logger.alert("[Polling] Unexpected exception: {} {}".format(e))
+            logger.alert("[Polling] Unexpected exception: {}".format(e))
 
     def authorization(self, credentials):
         headers = {
@@ -61,7 +63,6 @@ class PollingManager(object):
 
     async def make_requests(self, conf_data: dict):
         try:
-            from base.solid import implementer
             logger.info("[Polling] {} starting {}".format(threading.currentThread().getName(),  datetime.datetime.now()))
 
             url = conf_data['url']
@@ -78,10 +79,10 @@ class PollingManager(object):
                         self.send_request,
                         channel_id, method, url, params, data
                     )
-                    for channel_id in db.get_channels()
+                    for channel_id in self.db.get_channels()
                 ]
                 for response in await asyncio.gather(*futures):
-                    if response: implementer.polling(response)
+                    if response: self.implementer.polling(response)
 
             logger.info("[Polling] {} finishing {}".format(threading.currentThread().getName(),  datetime.datetime.now()))
         except Exception as e:
@@ -91,9 +92,7 @@ class PollingManager(object):
     def send_request(self, channel_id, method, url, params, data):
         try:
             # validate if channel exists
-            from base.solid import implementer
-
-            credentials_list = db.full_query('credential-owners/*/channels/{}'.format(channel_id))
+            credentials_list = self.db.full_query('credential-owners/*/channels/{}'.format(channel_id))
             logger.info('[Polling] {} results found for channel_id: {}'.format(len(credentials_list), channel_id))
 
             for credential_dict in credentials_list:  # try until we find valid credentials
@@ -134,11 +133,10 @@ class PollingManager(object):
 
 
     def validate_channel(self, credential_key):
-        from base.solid import implementer
         try:
             channel_id = credential_key.split('/')[-1]
             owner_id = credential_key.split('/')[1]
-            channel_template_id = implementer.get_channel_by_owner(owner_id, channel_id)
+            channel_template_id = self.implementer.get_channel_by_owner(owner_id, channel_id)
             return channel_template_id
         except Exception as e:
             logger.debug('[Polling] {}'.format(e))

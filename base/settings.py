@@ -21,8 +21,10 @@ class Settings:
         else:
             raise IOError("Configuration file is missing!")
 
+
         self.config_boot = self.config_data["boot"][0]
         self.config_log = self.config_data["$log"]
+        self.mqtt = self.config_boot.get("only_mqtt", False)
         self.config_cred = self.config_boot["rest"]["credentials"]
         self.config_http = self.config_boot["http"]
         self.config_redis = self.config_boot["redis"]["managers"]
@@ -99,7 +101,7 @@ class Settings:
             self.mqtt_topic = 'applications'
         else:
             raise ImplementorTypeNotFoundException('Error to find the implementor type in credentials, not device or application implementor!')
-            exit()
+            os._exit(1)
 
         # Application specific conf
         self.services = self.config_boot.get('services', [])
@@ -119,12 +121,4 @@ class Settings:
 
     def get_config(self):
         return self.config_data
-
-
-# An instance of Settings class
-try:
-    settings = Settings()
-except Exception as e:
-    print('Error: {}'.format(e))
-    exit()
 

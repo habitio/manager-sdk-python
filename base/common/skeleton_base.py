@@ -3,9 +3,9 @@ import time
 from abc import ABC, abstractmethod
 from datetime import timedelta
 
+from base import settings
+from base.redis_db import get_redis
 from base.exceptions import ChannelTemplateNotFound, PropertyHistoryNotFoundException
-from base.settings import settings
-from base.redis_db import db
 from base.constants import get_log_table, DEFAULT_BEFORE_EXPIRES
 import requests
 import traceback
@@ -13,11 +13,14 @@ import traceback
 LOGGER, LOG_TABLE = get_log_table(__name__)
 
 
+
+
 class SkeletonBase(ABC):
 
     def __init__(self):
         super(SkeletonBase, self).__init__()
         self._type = settings.implementor_type
+        self.db = get_redis()
 
     @abstractmethod
     def start(self):
@@ -86,14 +89,14 @@ class SkeletonBase(ABC):
         To retrieve channel status using channel_id
 
         """
-        return db.get_channel_status(channel_id)
+        return self.db.get_channel_status(channel_id)
 
     def store_channel_status(self, channel_id, status):
         """
         To store a value to database with a unique identifier called key
 
         """
-        db.set_channel_status(channel_id, status)
+        self.db.set_channel_status(channel_id, status)
 
     def get_all_credentials(self):
         """
@@ -108,21 +111,21 @@ class SkeletonBase(ABC):
         To store a value to database with a unique identifier called key
 
         """
-        db.set_key(key, value)
+        self.db.set_key(key, value)
 
     def retrieve(self, key):
         """
         To retireve a value from database with its unique identifier, key.
 
         """
-        return db.get_key(key)
+        return self.db.get_key(key)
 
     def exists(self, key):
         """
         To check if a key is already present in database.
 
         """
-        return db.has_key(key)
+        return self.db.has_key(key)
 
     def log(self, message, level):
         """
@@ -173,7 +176,7 @@ class SkeletonBase(ABC):
                         'client_id'.
         """
         try:
-            db.set_credentials(
+            self.db.set_credentials(
                 credentials, sender["client_id"], sender["owner_id"], channel_id)
             self.log("Credentials successfully renewed !", 6)
         except Exception as ex:

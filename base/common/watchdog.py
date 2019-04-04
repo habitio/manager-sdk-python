@@ -1,8 +1,11 @@
 import threading
 import traceback
-from base.settings import settings
-from base import logger
+import logging
 import requests
+
+from base import settings
+
+logger = logging.getLogger(__name__)
 
 
 class Watchdog:
@@ -20,6 +23,7 @@ class Watchdog:
         if self.interval is not None and self.interval > 0:
             try:
                 self.thread = threading.Thread(target=self.send_notification, name="watchdog")
+                self.thread.daemon = True
                 self.thread.start()
             except:
                 logger.alert('[Watchdog] Unexpected exception {}'.format(traceback.format_exc(limit=5)))

@@ -1,7 +1,5 @@
 import logging.handlers
 
-from base.settings import settings
-
 log_levels = {
     "EMERGENCY": ["\x1B[4;31m emergency \x1B[0m ", 109],
     "ALERT": ["\x1B[4;31m   alert   \x1B[0m ", 108],
@@ -15,19 +13,11 @@ log_levels = {
     "VERBOSE": ["\x1B[4;32m  verbose  \x1B[0m ", 100]
 }
 
-for lvl in log_levels.keys():
-    logging.addLevelName(log_levels[lvl][0], log_levels[lvl][1])
-
-
 def verbose(self, message, *args, **kws):
     # Yes, logger takes its "*args" as "args".
 
     if self.isEnabledFor(log_levels["VERBOSE"][1]):
         self._log(log_levels["VERBOSE"][1], message, args, **kws)
-
-
-logging.Logger.verbose = verbose
-
 
 def trace(self, message, *args, **kws):
     # Yes, logger takes its "*args" as "args".
@@ -36,19 +26,11 @@ def trace(self, message, *args, **kws):
         kws["exc_info"] = True
         self._log(log_levels["TRACE"][1], message, args, **kws)
 
-
-logging.Logger.trace = trace
-
-
 def debug(self, message, *args, **kws):
     # Yes, logger takes its "*args" as "args".
 
     if self.isEnabledFor(log_levels["DEBUG"][1]):
         self._log(log_levels["DEBUG"][1], message, args, **kws)
-
-
-logging.Logger.debug = debug
-
 
 def info(self, message, *args, **kws):
     # Yes, logger takes its "*args" as "args".
@@ -56,19 +38,11 @@ def info(self, message, *args, **kws):
     if self.isEnabledFor(log_levels["INFO"][1]):
         self._log(log_levels["INFO"][1], message, args, **kws)
 
-
-logging.Logger.info = info
-
-
 def notice(self, message, *args, **kws):
     # Yes, logger takes its "*args" as "args".
 
     if self.isEnabledFor(log_levels["NOTICE"][1]):
         self._log(log_levels["NOTICE"][1], message, args, **kws)
-
-
-logging.Logger.notice = notice
-
 
 def warning(self, message, *args, **kws):
     # Yes, logger takes its "*args" as "args".
@@ -76,19 +50,11 @@ def warning(self, message, *args, **kws):
     if self.isEnabledFor(log_levels["WARNING"][1]):
         self._log(log_levels["WARNING"][1], message, args, **kws)
 
-
-logging.Logger.warning = warning
-
-
 def error(self, message, *args, **kws):
     # Yes, logger takes its "*args" as "args".
 
     if self.isEnabledFor(log_levels["ERROR"][1]):
         self._log(log_levels["ERROR"][1], message, args, **kws)
-
-
-logging.Logger.error = error
-
 
 def critical(self, message, *args, **kws):
     # Yes, logger takes its "*args" as "args".
@@ -96,19 +62,11 @@ def critical(self, message, *args, **kws):
     if self.isEnabledFor(log_levels["CRITICAL"][1]):
         self._log(log_levels["CRITICAL"][1], message, args, **kws)
 
-
-logging.Logger.critical = critical
-
-
 def alert(self, message, *args, **kws):
     # Yes, logger takes its "*args" as "args".
 
     if self.isEnabledFor(log_levels["ALERT"][1]):
         self._log(log_levels["ALERT"][1], message, args, **kws)
-
-
-logging.Logger.alert = alert
-
 
 def emergency(self, message, *args, **kws):
     # Yes, logger takes its "*args" as "args".
@@ -116,27 +74,38 @@ def emergency(self, message, *args, **kws):
     if self.isEnabledFor(log_levels["EMERGENCY"][1]):
         self._log(log_levels["EMERGENCY"][1], message, args, **kws)
 
+def setup_logger_handler(log_path, log_level):
+    # Create the Handler for logging data to a file
+    if log_path == "/var/log/syslog":
+        logger_handler = logging.handlers.SysLogHandler(address="/dev/log")
+    else:
+        logger_handler = logging.FileHandler(log_path)
 
-logging.Logger.emergency = emergency
+    # Create a Formatter for formatting the log messages
+    logger_formatter = logging.Formatter("%(levelname)s | \x1B[1;37m%(asctime)s\x1B[0m | %(message)s | %(processName)s:%(process)d %(filename)s:%(lineno)d ",
+                                         datefmt="%Y-%m-%d %H:%M:%S")
 
-# Configuring Logger for Manager
-log_path = settings.log_path
+    # Adding Formatter to the Handler
+    logger_handler.setFormatter(logger_formatter)
 
-# Transform level value to make it compatible with python"s standard logging package
-log_level = (100 + 9-int(settings.config_log["level"]))
+    # Setting Level to the handler
+    logger_handler.setLevel(log_level)
 
-# Create the Handler for logging data to a file
-if log_path == "/var/log/syslog":
-    logger_handler = logging.handlers.SysLogHandler(address="/dev/log")
-else:
-    logger_handler = logging.FileHandler(log_path)
+    return logger_handler
 
-# Create a Formatter for formatting the log messages
-logger_formatter = logging.Formatter("%(levelname)s | \x1B[1;37m%(asctime)s\x1B[0m | %(message)s | %(processName)s:%(process)d %(filename)s:%(lineno)d ",
-                                     datefmt="%Y-%m-%d %H:%M:%S")
+def setup_loglevel():
+    for lvl in log_levels.keys():
+        logging.addLevelName(log_levels[lvl][0], log_levels[lvl][1])
 
-# Adding Formatter to the Handler
-logger_handler.setFormatter(logger_formatter)
+    logging.Logger.verbose = verbose
+    logging.Logger.trace = trace
+    logging.Logger.debug = debug
+    logging.Logger.info = info
+    logging.Logger.notice = notice
+    logging.Logger.warning = warning
+    logging.Logger.error = error
+    logging.Logger.critical = critical
+    logging.Logger.alert = alert
+    logging.Logger.emergency = emergency
 
-# Setting Level to the handler
-logger_handler.setLevel(log_level)
+
