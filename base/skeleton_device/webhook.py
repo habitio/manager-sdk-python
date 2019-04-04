@@ -160,7 +160,7 @@ class WebhookHubDevice(WebhookHubBase):
     async def send_channel_requests(self, devices, credentials, client_id, owner_id, channel_template):
         loop = asyncio.get_event_loop()
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=DEFAULT_THREAD_MAX_WORKERS) as executor:
+        with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = [
                 loop.run_in_executor(
                     executor,
@@ -170,7 +170,7 @@ class WebhookHubDevice(WebhookHubBase):
                 for device in devices
             ]
 
-            return asyncio.gather(*futures)
+            return await asyncio.gather(*futures)
 
     def channels_grant(self, device, credentials, client_id, owner_id, channel_template):
 
