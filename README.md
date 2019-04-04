@@ -99,6 +99,7 @@ To find the requests involved in performing authorization with a manufacturer.
 **client_id** should be used to get manufacturer private credentials from config file.
 
 ```
+from base import settings
 credentials = settings.config_manufacturer['credentials'][sender['client_id']]
 ```
 

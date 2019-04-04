@@ -11,7 +11,7 @@ import asyncio
 from base import settings
 from base.common.webhook_base import WebhookHubBase
 from base.utils import format_str
-from base.constants import DEFAULT_RETRY_WAIT, DEFAULT_THREAD_MAX_WORKERS
+from base.constants import DEFAULT_RETRY_WAIT
 
 from .polling import PollingManager
 from .token_refresher import TokenRefresherManager

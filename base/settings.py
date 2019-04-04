@@ -21,8 +21,10 @@ class Settings:
         else:
             raise IOError("Configuration file is missing!")
 
+
         self.config_boot = self.config_data["boot"][0]
         self.config_log = self.config_data["$log"]
+        self.mqtt = self.config_boot.get("only_mqtt", False)
         self.config_cred = self.config_boot["rest"]["credentials"]
         self.config_http = self.config_boot["http"]
         self.config_redis = self.config_boot["redis"]["managers"]

@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 class Views:
 
-    def __init__(self, _app):
+    def __init__(self, _app=None):
         self.kickoff(_app)
 
     def kickoff(self, app):
@@ -27,10 +27,12 @@ class Views:
             implementer = get_implementer()
 
             mqtt = MqttConnector(implementer=implementer)
-            webhook = Webhook(mqtt=mqtt, implementer=implementer)
-            webhook.webhook_registration()
-            router = Router(webhook)
-            router.route_setup(app)
 
-            mqtt.start()
-
+            if not settings.mqtt:  # means also have to run webserver
+                webhook = Webhook(mqtt=mqtt, implementer=implementer)
+                webhook.webhook_registration()
+                router = Router(webhook)
+                router.route_setup(app)
+                mqtt.start()
+            else:
+                mqtt.mqtt_config()
