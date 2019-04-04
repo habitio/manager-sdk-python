@@ -3,7 +3,7 @@ import logging
 import requests
 import traceback
 import os
-from flask import Response, request
+from flask import Response
 from tenacity import retry, wait_fixed
 import concurrent
 import asyncio
@@ -132,13 +132,15 @@ class WebhookHubDevice(WebhookHubBase):
                 if paired_devices:
 
                     loop = asyncio.get_event_loop()
-                    responses = loop.run_until_complete(
-                        asyncio.gather(self.send_channel_requests(paired_devices, credentials, client_id, owner_id, channel_template)))
-                    loop.close()
+                    responses = loop.run_until_complete(self.send_channel_requests(paired_devices, credentials, client_id, owner_id, channel_template))
 
-                    for future in responses[0]:
-                        channel_id = future.result()
-                        channels.append({"id": channel_id})
+                    logger.info(responses)
+
+                    # for future in responses[0]:
+                    #     channel_id = future.result()
+                    #     channels.append({"id": channel_id})
+
+                    loop.close()
 
                 logger.info(channels)
 
@@ -176,7 +178,7 @@ class WebhookHubDevice(WebhookHubBase):
                 for device in devices
             ]
 
-            return futures
+            return asyncio.gather(*futures)
 
     def channels_grant(self, device, credentials, client_id, owner_id, channel_template):
 
@@ -244,22 +246,17 @@ class WebhookHubDevice(WebhookHubBase):
         try:
             channel_id = self.db.get_channel_id(device["id"])
 
-            if channel_id:
-                logger.info("Channel already in database")
-                return channel_id
-
             # Validate if still exists on Muzzley
             url = "{}/channels/{}".format(settings.api_server_full, channel_id)
             resp = self.session.get(url, data=None)
-
             logger.verbose("/v3/channels/{} response code {}".format(channel_id, resp.status_code))
 
             if resp.status_code not in (200, 201):
                 channel_id = self.create_channel_id(device, channel_template)
 
-            # Ensure persistence of manufacturer's device id (key) to channel id (field) in redis hash
-            self.db.set_channel_id(device["id"], channel_id, True)
-            logger.verbose("Channel added to database {}".format(channel_id))
+                # Ensure persistence of manufacturer's device id (key) to channel id (field) in redis hash
+                self.db.set_channel_id(device["id"], channel_id, True)
+                logger.verbose("Channel added to database {}".format(channel_id))
 
             return channel_id
 
