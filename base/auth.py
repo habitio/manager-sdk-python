@@ -1,3 +1,4 @@
+import os
 import logging
 import threading
 import traceback
@@ -69,7 +70,7 @@ def renew_token():
             raise Exception(error_msg)
     except Exception as e:
         logger.alert("Unexpected error during token renewal: {}".format(traceback.format_exc(limit=5)))
-        exit()
+        os._exit(1)
 
 
 def store_info(resp):
@@ -118,4 +119,4 @@ def start_refresher():
         timer.start()
     except Exception as e:
         logger.critical("Token expiry check - thread failed {}".format(traceback.format_exc(limit=5)))
-        exit()
+        os._exit(1)

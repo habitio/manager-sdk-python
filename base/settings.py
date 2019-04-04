@@ -99,7 +99,7 @@ class Settings:
             self.mqtt_topic = 'applications'
         else:
             raise ImplementorTypeNotFoundException('Error to find the implementor type in credentials, not device or application implementor!')
-            exit()
+            os._exit(1)
 
         # Application specific conf
         self.services = self.config_boot.get('services', [])

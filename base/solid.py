@@ -1,3 +1,4 @@
+import os
 print('[Solid]: Settings: Setting up')
 from base import settings
 print('[Solid]: Settings: OK')
@@ -40,4 +41,4 @@ def get_implementer():
 
     except Exception:
         logger.critical("Failed to find Skeleton implementer class {}, check for missing abstract methods".format(traceback.format_exc(limit=5)))
-        exit()
+        os._exit(1)

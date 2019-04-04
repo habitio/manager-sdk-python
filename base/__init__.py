@@ -1,5 +1,5 @@
 try:
-    import logging
+    import logging, os
     from base.settings import Settings
     from base import python_logging as pl
 
@@ -17,4 +17,4 @@ try:
     logger.info("Completed configuring logger!")
 except Exception as e:
     print('Error: {}'.format(e))
-    exit()
+    os._exit(1)

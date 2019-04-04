@@ -1,6 +1,6 @@
 import traceback
 import json
-import sys
+import os
 import logging
 import requests
 from tenacity import retry, wait_fixed
@@ -83,7 +83,7 @@ class WebhookHubApplication(WebhookHubBase):
                 except Exception as ex:
 
                     logger.alert("Failed to set service!\n{}".format(ex))
-                    exit()
+                    os._exit(1)
 
         except Exception as e:
             logger.alert("Failed at patch endpoints! {}".format(traceback.format_exc(limit=5)))
@@ -101,4 +101,4 @@ class WebhookHubApplication(WebhookHubBase):
 
         except Exception as e:
             logger.alert("Unexpected exception {}".format(traceback.format_exc(limit=5)))
-            exit()
+            os._exit(1)

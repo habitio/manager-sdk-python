@@ -1,3 +1,4 @@
+import os
 from base import settings
 from base import logger
 from flask import Flask
@@ -19,13 +20,13 @@ try:
     from base import views
 except Exception as ex:
     print('Error: {}'.format(ex))
-    exit()
+    os._exit(1)
 
 try:
     views = views.Views(app)
 except Exception as ex:
     print('Error: {}'.format(ex))
-    exit()
+    os._exit(1)
 
 print('[Boot]: Views: OK')
 

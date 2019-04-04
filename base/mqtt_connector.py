@@ -1,3 +1,4 @@
+import os
 import json
 import traceback
 import paho.mqtt.client as paho
@@ -8,7 +9,6 @@ from base.redis_db import get_redis
 from base.utils import format_str
 from base.constants import *
 from base.exceptions import *
-import threading
 import multiprocessing as mp
 
 logger = logging.getLogger(__name__)
@@ -67,7 +67,7 @@ class MqttConnector:
                 raise Exception(RC_LIST[rc])
         except Exception as e:
             logger.error("Mqtt Exception- {}".format(traceback.format_exc(limit=5)))
-            exit()
+            os._exit(1)
 
     def on_subscribe(self, client, userdata, mid, granted_qos):
         logger.info("Mqtt - Subscribed , mid({mid}) qos({granted_qos})".format(mid=mid, granted_qos=granted_qos))
@@ -134,19 +134,17 @@ class MqttConnector:
 
                         logger.debug("inside the access check")
 
-                        if payload["io"] == "r":
+                        result = self.implementer.upstream(
+                            mode=mode, case=case, credentials=validated_credentials, sender=sender, data=data)
 
-                            result = self.implementer.upstream(
-                                mode='r', case=case, credentials=validated_credentials, sender=sender, data=data)
-                            if result is not None:
+                        if mode == "r":
+
+                            if result is not None :
                                 self.publisher(io="ir", data=result, case=case)
                             else:
                                 return
 
                         elif payload["io"] == "w":
-
-                            result = self.implementer.upstream(
-                                mode='w', case=case, credentials=validated_credentials, sender=sender, data=data)
 
                             if result == True:
                                 self.publisher(io="iw", data=data, case=case)
@@ -353,7 +351,7 @@ class MqttConnector:
             self.mqtt_client.disable_logger()
         except Exception as e:
             logger.error("Mqtt - Failed to de-configure connection {}".format(traceback.format_exc(limit=5)))
-            exit()
+            os._exit(1)
 
 
     def start(self):
