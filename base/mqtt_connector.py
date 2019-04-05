@@ -92,6 +92,8 @@ class MqttConnector:
 
             if "io" in payload and payload["io"] in ("r", "w"):
 
+                mode = payload["io"]
+
                 if all(k in payload for k in ("on_behalf_of", "sender")):
 
                     logger.debug(

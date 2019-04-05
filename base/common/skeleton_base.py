@@ -13,8 +13,6 @@ import traceback
 LOGGER, LOG_TABLE = get_log_table(__name__)
 
 
-
-
 class SkeletonBase(ABC):
 
     def __init__(self):
@@ -103,7 +101,7 @@ class SkeletonBase(ABC):
         Get a full list of existing credentials with corresponding key
 
         """
-        credentials_list = db.full_query('credential-owners/*/channels/*')
+        credentials_list = self.db.full_query('credential-owners/*/channels/*')
         return credentials_list
 
     def store(self, key, value):
