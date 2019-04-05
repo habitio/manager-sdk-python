@@ -15,10 +15,11 @@ LOGGER, LOG_TABLE = get_log_table(__name__)
 
 class SkeletonBase(ABC):
 
-    def __init__(self):
+    def __init__(self, mqtt=None):
         super(SkeletonBase, self).__init__()
         self._type = settings.implementor_type
         self.db = get_redis()
+        self.mqtt = mqtt
 
     @abstractmethod
     def start(self):

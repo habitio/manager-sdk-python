@@ -44,20 +44,20 @@ class MqttConnector:
         self.connected.set()
 
     def on_publish(self, client, userdata, mid):
-        print("Mqtt - Publish acknowledged by broker, mid({}) userdata={}.".format(mid, userdata))
+        logger.info("Mqtt - Publish acknowledged by broker, mid({}) userdata={}.".format(mid, userdata))
 
     def on_disconnect(self, client, userdata, rc):
         if rc != 0:
             self.disconnected.set()
-            print("Mqtt - Unexpected disconnection: {}".format(RC_LIST.get(rc)))
+            logger.info("Mqtt - Unexpected disconnection: {}".format(RC_LIST.get(rc)))
         else:
-            print("Mqtt - Expected disconnection.")
+            logger.info("Mqtt - Expected disconnection.")
 
     def on_log(self, userdata, level, buf):
-        print("Mqtt - Paho log: {}".format(buf))
+        logger.info("Mqtt - Paho log: {}".format(buf))
 
     async def start_connection(self):
-        print("Setting up Mqtt connection")
+        logger.info("Setting up Mqtt connection")
         try:
             parts = settings.block["mqtt_ep"].split(":")
             schema_mqtt = parts[0]
@@ -82,10 +82,10 @@ class MqttConnector:
             await self.mqtt_client.connect(host, port=port)
             await self.connected.wait()
 
-            print( "Mqtt - Did start connect w/ host:{} and port:{}".format(host, port))
+            logger.info( "Mqtt - Did start connect w/ host:{} and port:{}".format(host, port))
 
         except Exception as e:
-            print("Unexpected error: {}".format(e, traceback.format_exc(limit=5)))
+            logger.info("Unexpected error: {}".format(e, traceback.format_exc(limit=5)))
             raise
 
     def publisher(self, io, data, case=None):
@@ -103,7 +103,7 @@ class MqttConnector:
             if data != None:
                 payload["data"] = data
 
-            print(
+            logger.info(
                 "Mqtt - Case {} and settings.api_version={}".format(case, "v3"))
 
             if all(key in case for key in ("device_id", "component", "property")) or all(key in case for key in ("channel_id", "component", "property")):
@@ -111,7 +111,7 @@ class MqttConnector:
                 channel_id = case["channel_id"] if "channel_id" in case else self.db.get_channel_id(case["device_id"])
 
                 if channel_id is None:
-                    print("Mqtt - No channel id found for this device")
+                    logger.info("Mqtt - No channel id found for this device")
                     return
 
                 topic = "/{api_version}/channels/{channel_id}/components/{component}/properties/{property}/value".format(
@@ -122,7 +122,7 @@ class MqttConnector:
                 )
             else:
 
-                print("Mqtt - Invalid arguments provided to publisher.")
+                logger.info("Mqtt - Invalid arguments provided to publisher.")
                 raise Exception
 
             return self.mqtt_client.publish(
@@ -130,4 +130,4 @@ class MqttConnector:
 
 
         except Exception as e:
-            print("Mqtt - Failed to publish , ex {}".format(e))
+            logger.info("Mqtt - Failed to publish , ex {}".format(e))

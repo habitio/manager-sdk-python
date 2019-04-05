@@ -9,8 +9,8 @@ from .webhook import *
 
 class SkeletonDevice(SkeletonBase):
 
-    def __init__(self):
-        super(SkeletonDevice, self).__init__()
+    def __init__(self, mqtt=None):
+        super(SkeletonDevice, self).__init__(mqtt)
         self.DEFAULT_BEFORE_EXPIRES = DEFAULT_BEFORE_EXPIRES
 
     def auth_requests(self, sender):

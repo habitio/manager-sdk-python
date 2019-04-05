@@ -3,11 +3,13 @@ import logging
 
 from base import settings
 from base.mqtt_connector import MqttConnector
+from base.mqtt_aclient import MqttConnector as MqttAConnector
 from base.skeleton import Webhook, Router
 from base.solid import get_implementer
-
+import asyncio
 
 logger = logging.getLogger(__name__)
+loop = asyncio.get_event_loop()
 
 class Views:
 
@@ -24,7 +26,12 @@ class Views:
         auth.get_access()
 
         if settings.block["access_token"] != "":
+            mqtta = MqttAConnector()
+
+            loop.run_until_complete(mqtta.start_connection())
+            
             implementer = get_implementer()
+            implementer.mqtt = mqtta
 
             mqtt = MqttConnector(implementer=implementer)
 
