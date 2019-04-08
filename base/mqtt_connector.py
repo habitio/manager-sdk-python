@@ -305,7 +305,7 @@ class MqttConnector:
             logger.emergency("Unexpected error: {}".format(e, traceback.format_exc(limit=5)))
             raise
 
-    async def publisher(self, io, data, case=None):
+    def publisher(self, io, data, case=None):
         """
         Receives 3 inputs,
             io    - mode of operation ('ir','iw'). By default, io takes value 'iw'.

@@ -14,6 +14,8 @@ import multiprocessing as mp
 logger = logging.getLogger(__name__)
 loop = asyncio.get_event_loop()
 
+max_tasks = 5
+
 class Views:
 
     def __init__(self, _app=None):
@@ -64,11 +66,12 @@ class Views:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         mqtt.mqtt_config()
+
         tasks = []
         last = int(time.time())
         
         while True:
-            if len(tasks) > 5 or last - int(time.time()) >=2 and len(tasks) > 0:
+            if len(tasks) > max_tasks or last - int(time.time()) >=2 and len(tasks) > 0:
                 loop.run_until_complete(self.send_callback(tasks))
                 tasks = []    
             try:
@@ -76,9 +79,28 @@ class Views:
                 implementor_type = item['type']
 
                 if implementor_type == 'device':
-                    tasks.append((mqtt.on_message_manager, item))
+                    tasks.append((mqtt.on_message_manager, (item['topic'], item['payload'])))
                 else:
-                    tasks.append((mqtt.on_message_application, item))
+                    tasks.append((mqtt.on_message_application, (item['topic'], item['payload'])))
+            except:
+                pass
+
+    def worker_pub(self, queue, mqtt):
+        logger.notice('New Queue Pub {} {} {}'.format(mqtt.mqtt_client._username, mqtt.mqtt_client._password, mqtt.mqtt_client._ssl))
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        mqtt.mqtt_config()
+
+        tasks = []
+        last = int(time.time())
+
+        while True:
+            if len(tasks) > max_tasks or last - int(time.time()) >=2 and len(tasks) > 0:
+                loop.run_until_complete(self.send_callback(tasks))
+                tasks = []
+            try:
+                item = queue.get_nowait()
+                tasks.append((mqtt.publisher, (item['io'], item['data'], item['case'])))
             except:
                 pass
 
@@ -89,22 +111,11 @@ class Views:
                 loop.run_in_executor(
                     executor,
                     callback,
-                    item["topic"], item["payload"]
-                ) for callback, item in tasks
+                    *args
+                ) for callback, args in tasks
             ]
 
             for response in await asyncio.gather(**futures):
                 if response: logger.info(response)
 
-    def worker_pub(self, queue, mqtt):
-        logger.notice('New Queue Pub {} {} {}'.format(mqtt.mqtt_client._username, mqtt.mqtt_client._password, mqtt.mqtt_client._ssl))
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        mqtt.mqtt_config()
 
-        while True:
-            try:
-                item = queue.get_nowait()
-                loop.run_until_complete(mqtt.publisher(item['io'], item['data'], item['case']))
-            except:
-                pass
