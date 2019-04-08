@@ -20,8 +20,8 @@ logger = logging.getLogger(__name__)
 
 class WebhookHubDevice(WebhookHubBase):
 
-    def __init__(self, mqtt=None, implementer=None):
-        super(WebhookHubDevice, self).__init__(mqtt, implementer)
+    def __init__(self, queue=None, implementer=None):
+        super(WebhookHubDevice, self).__init__(queue, implementer)
         self.confirmation_hash = ""
 
         try:

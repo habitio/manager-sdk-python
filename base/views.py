@@ -5,7 +5,6 @@ import time
 
 from base import settings
 from base.mqtt_connector import MqttConnector
-from base.mqtt_aclient import MqttConnector as MqttAConnector
 from base.skeleton import Webhook, Router
 from base.solid import get_implementer
 import asyncio
@@ -31,20 +30,16 @@ class Views:
         auth.get_access()
 
         if settings.block["access_token"] != "":
-            mqtta = MqttAConnector()
-
-            loop.run_until_complete(mqtta.start_connection())
-            
-            implementer = get_implementer()
-            implementer.mqtt = mqtta
-
             queue = mp.Queue()
             queue_pub = mp.Queue()
+            
+            implementer = get_implementer()
+            implementer.queue = queue_pub
 
             mqtt = MqttConnector(implementer=implementer, queue=queue, queue_pub=queue_pub)
 
             if not settings.mqtt:  # means also have to run webserver
-                webhook = Webhook(mqtt=mqtt, implementer=implementer)
+                webhook = Webhook(queue=queue_pub, implementer=implementer)
                 webhook.webhook_registration()
                 router = Router(webhook)
                 router.route_setup(app)
@@ -82,6 +77,7 @@ class Views:
                     tasks.append((mqtt.on_message_application, (item['topic'], item['payload'])))
 
                 if len(tasks) > max_tasks or (time_diff >=2 and len(tasks) > 0):
+                    # send tasks if there's more than 2 seconds waiting
                     loop.run_until_complete(self.send_callback(tasks))
                     tasks = []    
                     last = int(time.time())
@@ -104,6 +100,7 @@ class Views:
                 tasks.append((mqtt.publisher, (item['io'], item['data'], item['case'])))
 
                 if len(tasks) > max_tasks or (time_diff >=2 and len(tasks) > 0):
+                    # send tasks if there's more than 2 seconds waiting
                     loop.run_until_complete(self.send_callback(tasks))
                     tasks = []    
                     last = int(time.time())
@@ -120,8 +117,3 @@ class Views:
                     *args
                 ) for callback, args in tasks
             ]
-
-            #for response in await asyncio.gather(**futures):
-            #    if response: logger.info(response)
-
-

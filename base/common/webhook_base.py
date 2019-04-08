@@ -11,9 +11,9 @@ logger = logging.getLogger(__name__)
 
 class WebhookHubBase:
 
-    def __init__(self, mqtt=None, implementer=None):
+    def __init__(self, queue=None, implementer=None):
         self.implementer = implementer
-        self.mqtt = mqtt
+        self.queue = queue
 
         try:
             self.watchdog_monitor = Watchdog()
@@ -80,7 +80,11 @@ class WebhookHubBase:
                         custom_mqtt = downstream_tuple[3]
                         custom_mqtt.publisher(io="iw", data=data, case=case)
                     except (IndexError, AttributeError):
-                        self.mqtt.publisher(io="iw", data=data, case=case)
+                        self.queue.put_nowait({
+                            "io": "iw",
+                            "data": data,
+                            "case": case
+                        })
             except (TypeError, KeyError):
                 logger.debug('downstream method returned {}'.format(downstream_tuple))
 
