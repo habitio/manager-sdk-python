@@ -108,7 +108,7 @@ class Views:
                 pass
 
     async def send_callback(self, tasks):
-        logger.info('Running {}'.format(tasks))
+        logger.info('Running {} tasks'.format(len(tasks)))
         with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = [
                 loop.run_in_executor(
