@@ -77,7 +77,7 @@ class MqttConnector:
         self._on_connect_callback = _func
         self._on_connect_callback_params = kwargs
 
-    async def on_message_manager(self, topic, payload):
+    def on_message_manager(self, topic, payload):
         try:
             parts = str(topic).split('/')
             channel_id = parts[5]
@@ -202,7 +202,7 @@ class MqttConnector:
         except Exception as e:
             logger.error("6. Mqtt - Failed to handle payload. {}".format(traceback.format_exc(limit=5)))
 
-    async def on_message_application(self, topic, payload):
+    def on_message_application(self, topic, payload):
 
         if "io" in payload and payload["io"] in ("r", "w"):
 

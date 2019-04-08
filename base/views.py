@@ -1,5 +1,7 @@
 from base import auth
 import logging
+import concurrent
+import time
 
 from base import settings
 from base.mqtt_connector import MqttConnector
@@ -62,18 +64,37 @@ class Views:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         mqtt.mqtt_config()
-
+        tasks = []
+        last = int(time.time())
+        
         while True:
+            if len(tasks) > 5 or last - int(time.time()) >=2 and len(tasks) > 0:
+                loop.run_until_complete(self.send_callback(tasks))
+                tasks = []    
             try:
                 item = queue.get_nowait()
                 implementor_type = item['type']
 
                 if implementor_type == 'device':
-                    loop.run_until_complete(mqtt.on_message_manager(item["topic"], item["payload"]))
+                    tasks.append((mqtt.on_message_manager, item))
                 else:
-                    loop.run_until_complete(mqtt.on_message_application(item["topic"], item["payload"]))
+                    tasks.append((mqtt.on_message_application, item))
             except:
                 pass
+
+    async def send_callback(self, tasks):
+        logger.info('Running {}'.format(tasks))
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            futures = [
+                loop.run_in_executor(
+                    executor,
+                    callback,
+                    item["topic"], item["payload"]
+                ) for callback, item in tasks
+            ]
+
+            for response in await asyncio.gather(**futures):
+                if response: logger.info(response)
 
     def worker_pub(self, queue, mqtt):
         logger.notice('New Queue Pub {} {} {}'.format(mqtt.mqtt_client._username, mqtt.mqtt_client._password, mqtt.mqtt_client._ssl))
