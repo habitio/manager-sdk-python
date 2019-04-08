@@ -313,9 +313,6 @@ class MqttConnector:
 
             logger.debug(
                 "Mqtt - Case {} and settings.api_version={} payload={}".format(case, settings.api_version, payload))
-
-            logger.debug(
-                "Mqtt - username {} and password={} ssl={}".format(self.mqtt_client._username, self.mqtt_client._password, self.mqtt_client._ssl))
             
             if all(key in case for key in ("device_id", "component", "property")) or all(key in case for key in ("channel_id", "component", "property")):
 
