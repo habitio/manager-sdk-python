@@ -15,11 +15,11 @@ LOGGER, LOG_TABLE = get_log_table(__name__)
 
 class SkeletonBase(ABC):
 
-    def __init__(self, mqtt=None):
+    def __init__(self, queue=None):
         super(SkeletonBase, self).__init__()
         self._type = settings.implementor_type
         self.db = get_redis()
-        self.mqtt = mqtt
+        self.queue = queue
 
     @abstractmethod
     def start(self):
@@ -164,7 +164,11 @@ class SkeletonBase(ABC):
             data - data to be published
         """
         self.log("Will publisher to mqtt", 7)
-        self.mqtt.publisher(io="iw", data=data, case=case)
+        self.queue.put_nowait({
+            "io": "iw",
+            "data": data,
+            "case": case
+        })
 
     def renew_credentials(self, channel_id, sender, credentials):
         """

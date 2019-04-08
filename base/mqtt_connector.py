@@ -24,7 +24,7 @@ RC_LIST = {
 
 class MqttConnector:
 
-    def __init__(self, client_id=None, access_token=None, implementer=None, **kwargs):
+    def __init__(self, client_id=None, access_token=None, implementer=None, queue=None, queue_pub=None, **kwargs):
         logger.debug("Mqtt - Init")
         self.mqtt_client = paho.Client()
         self.mqtt_client.enable_logger()
@@ -34,7 +34,6 @@ class MqttConnector:
         self.mqtt_client.on_message = self.on_message if 'on_message' not in kwargs else kwargs['on_message']
         self.mqtt_client.on_disconnect = self.on_disconnect if 'on_disconnect' not in kwargs else kwargs['on_disconnect']
         self.mqtt_client.on_publish = self.on_publish if 'on_publish' not in kwargs else kwargs['on_publish']
-        self.implementer = None
         self._topics = []
         self._on_connect_callback = None
         self._on_connect_callback_params = {}
@@ -44,6 +43,8 @@ class MqttConnector:
 
         self.db = get_redis()
         self.implementer = implementer
+        self.queue = queue
+        self.queue_pub = queue_pub
 
 
     def on_connect(self, client, userdata, flags, rc):
@@ -76,7 +77,7 @@ class MqttConnector:
         self._on_connect_callback = _func
         self._on_connect_callback_params = kwargs
 
-    def on_message_manager(self, client, topic, payload):
+    def on_message_manager(self, topic, payload):
         try:
             parts = str(topic).split('/')
             channel_id = parts[5]
@@ -142,14 +143,14 @@ class MqttConnector:
                         if mode == "r":
 
                             if result is not None :
-                                self.publisher(io="ir", data=result, case=case)
+                                self.queue_pub.put_nowait({"io": "ir", "data": result, "case": case})
                             else:
                                 return
 
                         elif payload["io"] == "w":
 
                             if result == True:
-                                self.publisher(io="iw", data=data, case=case)
+                                self.queue_pub.put_nowait({"io": "iw", "data": data, "case": case})
                             elif result == False:
                                 return
 
@@ -169,32 +170,32 @@ class MqttConnector:
             if access_failed_value is None:
                 access_failed_value = ACCESS_UNAUTHORIZED_VALUE
             logger.error('1. Access exception raised: {}, sending value: {}'.format(e, access_failed_value))
-            self.publisher(
-                io="ir", data=access_failed_value, case=case)
+
+            self.queue_pub.put_nowait({"io": "ir", "data": access_failed_value, "case": case})
         except UnauthorizedException as e:
             case["property"] = settings.access_property
             logger.error('2. Access exception raised: {}, sending value: {}'.format(e, ACCESS_UNAUTHORIZED_VALUE))
-            self.publisher(
-                io="ir", data=ACCESS_UNAUTHORIZED_VALUE, case=case)
+
+            self.queue_pub.put_nowait({"io": "ir", "data": ACCESS_UNAUTHORIZED_VALUE, "case": case})
         except RemoteControlDisabledException as e:
             case["property"] = settings.access_property
             logger.error('3. Access exception raised: {}, sending value: {}'.format(e, ACCESS_REMOTE_CONTROL_DISABLED))
-            self.publisher(
-                io="ir", data=ACCESS_REMOTE_CONTROL_DISABLED, case=case)
+
+            self.queue_pub.put_nowait({"io": "ir", "data": ACCESS_REMOTE_CONTROL_DISABLED, "case": case})
         except PermissionRevokedException as e:
             case["property"] = settings.access_property
             logger.error('4. Access exception raised: {}, sending value: {}'.format(e, ACCESS_PERMISSION_REVOKED))
-            self.publisher(
-                io="ir", data=ACCESS_PERMISSION_REVOKED, case=case)
+
+            self.queue_pub.put_nowait({"io": "ir", "data": ACCESS_PERMISSION_REVOKED, "case": case})
         except ApiConnectionErrorException as e:
             case["property"] = settings.access_property
             logger.error('5. Access exception raised: {}, sending value: {}'.format(e, ACCESS_API_UNREACHABLE))
-            self.publisher(
-                io="ir", data=ACCESS_API_UNREACHABLE, case=case)
+
+            self.queue_pub.put_nowait({"io": "ir", "data": ACCESS_API_UNREACHABLE, "case": case})
         except Exception as e:
             logger.error("6. Mqtt - Failed to handle payload. {}".format(traceback.format_exc(limit=5)))
 
-    def on_message_application(self, client, topic, payload):
+    def on_message_application(self, topic, payload):
 
         if "io" in payload and payload["io"] in ("r", "w"):
 
@@ -231,10 +232,14 @@ class MqttConnector:
             logger.debug("Mqtt - Received on_message {topic} {payload}".format(
                 topic=topic, payload=format_str(payload, is_json=True)))
 
-            if settings.implementor_type == 'device':
-                self.on_message_manager(client, topic, payload)
-            elif settings.implementor_type == 'application':
-                self.on_message_application(client, topic, payload)
+            data = {
+                "type": settings.implementor_type,
+                "topic": topic,
+                "payload": payload
+            }
+            if "io" in payload and payload["io"] in ("r", "w"):
+                self.queue.put_nowait(data)
+
 
         except Exception as e:
             logger.error("Mqtt - Failed to handle payload. {}".format(traceback.format_exc(limit=5)))
@@ -281,7 +286,7 @@ class MqttConnector:
             try:
 
                 logger.debug("Mqtt - Will start the loop")
-                self.mqtt_client.loop_forever()
+                #self.mqtt_client.loop_forever()
 
             except Exception as e:
                 logger.alert("Mqtt - Failed to listen through loop, {} ".format(traceback.format_exc(limit=5)))
@@ -307,8 +312,8 @@ class MqttConnector:
                 payload["data"] = data
 
             logger.debug(
-                "Mqtt - Case {} and settings.api_version={}".format(case, settings.api_version))
-
+                "Mqtt - Case {} and settings.api_version={} payload={}".format(case, settings.api_version, payload))
+            
             if all(key in case for key in ("device_id", "component", "property")) or all(key in case for key in ("channel_id", "component", "property")):
 
                 channel_id = case["channel_id"] if "channel_id" in case else self.db.get_channel_id(case["device_id"])
@@ -358,7 +363,7 @@ class MqttConnector:
 
     def start(self):
         try:
-            proc = mp.Process(target=self.mqtt_config)
+            proc = mp.Process(target=self.mqtt_client.loop_forever)
             proc.start()
         except Exception as e:
             logger.alert("Mqtt Unexpected exception: {} {}".format(e))
