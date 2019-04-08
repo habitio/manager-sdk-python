@@ -71,9 +71,7 @@ class Views:
         last = int(time.time())
         
         while True:
-            if len(tasks) > max_tasks or last - int(time.time()) >=2 and len(tasks) > 0:
-                loop.run_until_complete(self.send_callback(tasks))
-                tasks = []    
+            time_diff = int(time.time()) - last
             try:
                 item = queue.get_nowait()
                 implementor_type = item['type']
@@ -82,6 +80,11 @@ class Views:
                     tasks.append((mqtt.on_message_manager, (item['topic'], item['payload'])))
                 else:
                     tasks.append((mqtt.on_message_application, (item['topic'], item['payload'])))
+
+                if len(tasks) > max_tasks or (time_diff >=2 and len(tasks) > 0):
+                    loop.run_until_complete(self.send_callback(tasks))
+                    tasks = []    
+                    last = int(time.time())
             except:
                 pass
 
@@ -95,12 +98,15 @@ class Views:
         last = int(time.time())
 
         while True:
-            if len(tasks) > max_tasks or last - int(time.time()) >=2 and len(tasks) > 0:
-                loop.run_until_complete(self.send_callback(tasks))
-                tasks = []
+            time_diff = int(time.time()) - last
             try:
                 item = queue.get_nowait()
                 tasks.append((mqtt.publisher, (item['io'], item['data'], item['case'])))
+
+                if len(tasks) > max_tasks or (time_diff >=2 and len(tasks) > 0):
+                    loop.run_until_complete(self.send_callback(tasks))
+                    tasks = []    
+                    last = int(time.time())
             except:
                 pass
 
@@ -115,7 +121,7 @@ class Views:
                 ) for callback, args in tasks
             ]
 
-            for response in await asyncio.gather(**futures):
-                if response: logger.info(response)
+            #for response in await asyncio.gather(**futures):
+            #    if response: logger.info(response)
 
 

@@ -244,7 +244,8 @@ class MqttConnector:
                 "topic": topic,
                 "payload": payload
             }
-            self.queue.put_nowait(data)
+            if "io" in payload and payload["io"] in ("r", "w"):
+                self.queue.put_nowait(data)
             #if settings.implementor_type == 'device':
             #    self.on_message_manager(client, topic, payload)
             #elif settings.implementor_type == 'application':
