@@ -46,11 +46,9 @@ class Views:
                 mqtt.mqtt_config()
 
                 proc = mp.Process(target=self.worker_sub, args=[queue, mqtt], name="onMessage")
-                proc.daemon = True
                 proc.start()
                 
                 proc2 = mp.Process(target=self.worker_pub, args=[queue_pub, mqtt], name="Publish")
-                proc.daemon = True
                 proc2.start()
                 
                 mqtt.start()
@@ -59,7 +57,7 @@ class Views:
                 mqtt.mqtt_config()
 
     def worker_sub(self, queue, mqtt):
-        logger.notice('New Queue Sub {} {} {}'.format(mqtt.mqtt_client._username, mqtt.mqtt_client._password, mqtt.mqtt_client._ssl))
+        logger.notice('New Queue Sub')
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         mqtt.mqtt_config()
@@ -87,7 +85,7 @@ class Views:
                 pass
 
     def worker_pub(self, queue, mqtt):
-        logger.notice('New Queue Pub {} {} {}'.format(mqtt.mqtt_client._username, mqtt.mqtt_client._password, mqtt.mqtt_client._ssl))
+        logger.notice('New Queue Pub')
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         mqtt.mqtt_config()
