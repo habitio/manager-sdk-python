@@ -45,13 +45,15 @@ class Views:
                 router.route_setup(app)
                 mqtt.mqtt_config()
 
-                proc = mp.Process(target=self.worker_sub, args=[queue, mqtt], name="onMessage") 
+                proc = mp.Process(target=self.worker_sub, args=[queue, mqtt], name="onMessage")
+                proc.daemon = True
                 proc.start()
                 
-                proc2 = mp.Process(target=self.worker_pub, args=[queue_pub, mqtt], name="Publish") 
+                proc2 = mp.Process(target=self.worker_pub, args=[queue_pub, mqtt], name="Publish")
+                proc.daemon = True
                 proc2.start()
                 
-                mqtt.mqtt_client.loop_forever()
+                mqtt.start()
 
             else:
                 mqtt.mqtt_config()
