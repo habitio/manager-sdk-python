@@ -7,6 +7,7 @@ from base.mqtt_aclient import MqttConnector as MqttAConnector
 from base.skeleton import Webhook, Router
 from base.solid import get_implementer
 import asyncio
+import multiprocessing as mp
 
 logger = logging.getLogger(__name__)
 loop = asyncio.get_event_loop()
@@ -33,13 +34,56 @@ class Views:
             implementer = get_implementer()
             implementer.mqtt = mqtta
 
-            mqtt = MqttConnector(implementer=implementer)
+            queue = mp.Queue()
+            queue_pub = mp.Queue()
+
+            mqtt = MqttConnector(implementer=implementer, queue=queue, queue_pub=queue_pub)
 
             if not settings.mqtt:  # means also have to run webserver
                 webhook = Webhook(mqtt=mqtt, implementer=implementer)
                 webhook.webhook_registration()
                 router = Router(webhook)
                 router.route_setup(app)
-                mqtt.start()
+                mqtt.mqtt_config()
+
+                proc = mp.Process(target=self.worker_sub, args=[queue, mqtt], name="onMessage") 
+                proc.start()
+                
+                proc2 = mp.Process(target=self.worker_pub, args=[queue_pub, mqtt], name="Publish") 
+                proc2.start()
+                
+                mqtt.mqtt_client.loop_forever()
+
             else:
                 mqtt.mqtt_config()
+
+    def worker_sub(self, queue, mqtt):
+        logger.notice('New Queue Sub {} {} {}'.format(mqtt.mqtt_client._username, mqtt.mqtt_client._password, mqtt.mqtt_client._ssl))
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        mqtt.mqtt_config()
+
+        while True:
+            try:
+                item = queue.get_nowait()
+                implementor_type = item['type']
+
+                if implementor_type == 'device':
+                    loop.run_until_complete(mqtt.on_message_manager(item["topic"], item["payload"]))
+                else:
+                    loop.run_until_complete(mqtt.on_message_application(item["topic"], item["payload"]))
+            except:
+                pass
+
+    def worker_pub(self, queue, mqtt):
+        logger.notice('New Queue Pub {} {} {}'.format(mqtt.mqtt_client._username, mqtt.mqtt_client._password, mqtt.mqtt_client._ssl))
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        mqtt.mqtt_config()
+
+        while True:
+            try:
+                item = queue.get_nowait()
+                loop.run_until_complete(mqtt.publisher(item['io'], item['data'], item['case']))
+            except:
+                pass
