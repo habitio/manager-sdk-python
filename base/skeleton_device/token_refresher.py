@@ -60,7 +60,6 @@ class TokenRefresherManager(object):
 
     async def make_requests(self, conf_data: dict):
         try:
-            from base.solid import implementer
             logger.info("[TokenRefresher] {} starting {}".format(threading.currentThread().getName(),  datetime.datetime.now()))
 
             url = conf_data['url']
@@ -79,7 +78,7 @@ class TokenRefresherManager(object):
                     for credentials in self.get_credential_list()
                 ]
                 for response in await asyncio.gather(*futures):
-                    if response: implementer.after_refresh(response)
+                    if response: self.implementer.after_refresh(response)
 
             logger.info("[TokenRefresher] {} finishing {}".format(threading.currentThread().getName(),  datetime.datetime.now()))
         except Exception as e:
