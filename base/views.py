@@ -38,23 +38,19 @@ class Views:
 
             mqtt = MqttConnector(implementer=implementer, queue=queue, queue_pub=queue_pub)
 
-            if not settings.mqtt:  # means also have to run webserver
-                webhook = Webhook(queue=queue_pub, implementer=implementer)
-                webhook.webhook_registration()
-                router = Router(webhook)
-                router.route_setup(app)
-                mqtt.mqtt_config()
+            webhook = Webhook(queue=queue_pub, implementer=implementer)
+            webhook.webhook_registration()
+            router = Router(webhook)
+            router.route_setup(app)
+            mqtt.mqtt_config()
 
-                proc = mp.Process(target=self.worker_sub, args=[queue, mqtt], name="onMessage")
-                proc.start()
-                
-                proc2 = mp.Process(target=self.worker_pub, args=[queue_pub, mqtt], name="Publish")
-                proc2.start()
-                
-                mqtt.start()
+            proc = mp.Process(target=self.worker_sub, args=[queue, mqtt], name="onMessage")
+            proc.start()
 
-            else:
-                mqtt.mqtt_config()
+            proc2 = mp.Process(target=self.worker_pub, args=[queue_pub, mqtt], name="Publish")
+            proc2.start()
+
+            mqtt.start()
 
     def worker_sub(self, queue, mqtt):
         logger.notice('New Queue Sub')
@@ -62,25 +58,16 @@ class Views:
         asyncio.set_event_loop(loop)
         mqtt.mqtt_config()
 
-        tasks = []
-        last = int(time.time())
-        
         while True:
-            time_diff = int(time.time()) - last
             try:
                 item = queue.get_nowait()
                 implementor_type = item['type']
 
                 if implementor_type == 'device':
-                    tasks.append((mqtt.on_message_manager, (item['topic'], item['payload'])))
+                    loop.run_until_complete(self.send_task( (mqtt.on_message_manager, (item['topic'], item['payload']) ) ))
                 else:
-                    tasks.append((mqtt.on_message_application, (item['topic'], item['payload'])))
+                    loop.run_until_complete(self.send_task( (mqtt.on_message_manager, (item['topic'], item['payload']) ) ))
 
-                if len(tasks) > max_tasks or (time_diff >=2 and len(tasks) > 0):
-                    # send tasks if there's more than 2 seconds waiting
-                    loop.run_until_complete(self.send_callback(tasks))
-                    tasks = []    
-                    last = int(time.time())
             except:
                 pass
 
@@ -90,30 +77,14 @@ class Views:
         asyncio.set_event_loop(loop)
         mqtt.mqtt_config()
 
-        tasks = []
-        last = int(time.time())
-
         while True:
-            time_diff = int(time.time()) - last
             try:
                 item = queue.get_nowait()
-                tasks.append((mqtt.publisher, (item['io'], item['data'], item['case'])))
-
-                if len(tasks) > max_tasks or (time_diff >=2 and len(tasks) > 0):
-                    # send tasks if there's more than 2 seconds waiting
-                    loop.run_until_complete(self.send_callback(tasks))
-                    tasks = []    
-                    last = int(time.time())
+                loop.run_until_complete(self.send_task( (mqtt.publisher, (item['io'], item['data'], item['case']) ) ))
             except:
                 pass
 
-    async def send_callback(self, tasks):
-        logger.info('Running {} tasks'.format(len(tasks)))
+    async def send_task(self, task):
+        logger.info('Running task')
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            futures = [
-                loop.run_in_executor(
-                    executor,
-                    callback,
-                    *args
-                ) for callback, args in tasks
-            ]
+            await loop.run_in_executor(executor, task[0], *task[1])

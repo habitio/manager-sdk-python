@@ -251,6 +251,7 @@ class MqttConnector:
     def on_disconnect(self, client, userdata, rc):
         if rc != 0:
             logger.error("Mqtt - Unexpected disconnection: {}".format(RC_LIST.get(rc)))
+            self.mqtt_config()
         else:
             logger.error("Mqtt - Expected disconnection.")
 
