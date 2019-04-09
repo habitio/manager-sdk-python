@@ -143,14 +143,14 @@ class MqttConnector:
                         if mode == "r":
 
                             if result is not None :
-                                self.queue_pub.put_nowait({"io": "ir", "data": result, "case": case})
+                                self.queue_pub.put({"io": "ir", "data": result, "case": case})
                             else:
                                 return
 
                         elif payload["io"] == "w":
 
                             if result == True:
-                                self.queue_pub.put_nowait({"io": "iw", "data": data, "case": case})
+                                self.queue_pub.put({"io": "iw", "data": data, "case": case})
                             elif result == False:
                                 return
 
@@ -171,27 +171,27 @@ class MqttConnector:
                 access_failed_value = ACCESS_UNAUTHORIZED_VALUE
             logger.error('1. Access exception raised: {}, sending value: {}'.format(e, access_failed_value))
 
-            self.queue_pub.put_nowait({"io": "ir", "data": access_failed_value, "case": case})
+            self.queue_pub.put({"io": "ir", "data": access_failed_value, "case": case})
         except UnauthorizedException as e:
             case["property"] = settings.access_property
             logger.error('2. Access exception raised: {}, sending value: {}'.format(e, ACCESS_UNAUTHORIZED_VALUE))
 
-            self.queue_pub.put_nowait({"io": "ir", "data": ACCESS_UNAUTHORIZED_VALUE, "case": case})
+            self.queue_pub.put({"io": "ir", "data": ACCESS_UNAUTHORIZED_VALUE, "case": case})
         except RemoteControlDisabledException as e:
             case["property"] = settings.access_property
             logger.error('3. Access exception raised: {}, sending value: {}'.format(e, ACCESS_REMOTE_CONTROL_DISABLED))
 
-            self.queue_pub.put_nowait({"io": "ir", "data": ACCESS_REMOTE_CONTROL_DISABLED, "case": case})
+            self.queue_pub.put({"io": "ir", "data": ACCESS_REMOTE_CONTROL_DISABLED, "case": case})
         except PermissionRevokedException as e:
             case["property"] = settings.access_property
             logger.error('4. Access exception raised: {}, sending value: {}'.format(e, ACCESS_PERMISSION_REVOKED))
 
-            self.queue_pub.put_nowait({"io": "ir", "data": ACCESS_PERMISSION_REVOKED, "case": case})
+            self.queue_pub.put({"io": "ir", "data": ACCESS_PERMISSION_REVOKED, "case": case})
         except ApiConnectionErrorException as e:
             case["property"] = settings.access_property
             logger.error('5. Access exception raised: {}, sending value: {}'.format(e, ACCESS_API_UNREACHABLE))
 
-            self.queue_pub.put_nowait({"io": "ir", "data": ACCESS_API_UNREACHABLE, "case": case})
+            self.queue_pub.put({"io": "ir", "data": ACCESS_API_UNREACHABLE, "case": case})
         except Exception as e:
             logger.error("6. Mqtt - Failed to handle payload. {}".format(traceback.format_exc(limit=5)))
 
@@ -238,7 +238,7 @@ class MqttConnector:
                 "payload": payload
             }
             if "io" in payload and payload["io"] in ("r", "w"):
-                self.queue.put_nowait(data)
+                self.queue.put(data)
 
 
         except Exception as e:

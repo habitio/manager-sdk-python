@@ -164,7 +164,7 @@ class SkeletonBase(ABC):
             data - data to be published
         """
         self.log("Will publisher to mqtt", 7)
-        self.queue.put_nowait({
+        self.queue.put({
             "io": "iw",
             "data": data,
             "case": case

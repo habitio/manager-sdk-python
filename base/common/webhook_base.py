@@ -80,7 +80,7 @@ class WebhookHubBase:
                         custom_mqtt = downstream_tuple[3]
                         custom_mqtt.publisher(io="iw", data=data, case=case)
                     except (IndexError, AttributeError):
-                        self.queue.put_nowait({
+                        self.queue.put({
                             "io": "iw",
                             "data": data,
                             "case": case
