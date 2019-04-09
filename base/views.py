@@ -45,22 +45,22 @@ class Views:
             mqtt.mqtt_config()
             mqtt.set_on_connect_callback(webhook.webhook_registration)
 
-            proc = mp.Process(target=self.worker_sub, args=[queue_sub, mqtt], name="onMessage")
+            proc = mp.Process(target=self.worker_sub, args=[mqtt], name="onMessage")
             proc.start()
 
-            proc2 = mp.Process(target=self.worker_pub, args=[queue_pub, mqtt], name="Publish")
+            proc2 = mp.Process(target=self.worker_pub, args=[mqtt], name="Publish")
             proc2.start()
 
             mqtt.mqtt_client.loop_start()
 
-    def worker_sub(self, queue, mqtt):
+    def worker_sub(self, mqtt):
         logger.notice('New Queue Sub')
         asyncio.set_event_loop(loop)
         mqtt.mqtt_config()
 
         while True:
             try:
-                item = queue.get()
+                item = queue_sub.get()
                 if item:
                     logger.info('New on_message')
                     implementor_type = item['type']
@@ -72,14 +72,14 @@ class Views:
             except:
                 pass
 
-    def worker_pub(self, queue, mqtt):
+    def worker_pub(self, mqtt):
         logger.notice('New Queue Pub')
         asyncio.set_event_loop(loop)
         mqtt.mqtt_config()
 
         while True:
             try:
-                item = queue.get()
+                item = queue_pub.get()
                 if item:
                     logger.info('New publisher')
                     loop.run_until_complete(self.send_task( (mqtt.publisher, (item['io'], item['data'], item['case']) ) ))
