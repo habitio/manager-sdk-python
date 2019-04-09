@@ -1,7 +1,6 @@
 from base import auth
 import logging
 import concurrent
-import time
 
 from base import settings
 from base.mqtt_connector import MqttConnector
@@ -13,7 +12,8 @@ import multiprocessing as mp
 logger = logging.getLogger(__name__)
 
 loop = asyncio.get_event_loop()
-queue = mp.Queue()
+
+queue_sub = mp.Queue()
 queue_pub = mp.Queue()
 
 
@@ -36,7 +36,7 @@ class Views:
             implementer = get_implementer()
             implementer.queue = queue_pub
 
-            mqtt = MqttConnector(implementer=implementer, queue=queue, queue_pub=queue_pub)
+            mqtt = MqttConnector(implementer=implementer, queue=queue_sub, queue_pub=queue_pub)
 
             webhook = Webhook(queue=queue_pub, implementer=implementer)
             router = Router(webhook)
@@ -45,7 +45,7 @@ class Views:
             mqtt.mqtt_config()
             mqtt.set_on_connect_callback(webhook.webhook_registration)
 
-            proc = mp.Process(target=self.worker_sub, args=[queue, mqtt], name="onMessage")
+            proc = mp.Process(target=self.worker_sub, args=[queue_sub, mqtt], name="onMessage")
             proc.start()
 
             proc2 = mp.Process(target=self.worker_pub, args=[queue_pub, mqtt], name="Publish")
@@ -68,8 +68,7 @@ class Views:
                     if implementor_type == 'device':
                         loop.run_until_complete(self.send_task( (mqtt.on_message_manager, (item['topic'], item['payload']) ) ))
                     else:
-                        loop.run_until_complete(self.send_task( (mqtt.on_message_manager, (item['topic'], item['payload']) ) ))
-
+                        loop.run_until_complete(self.send_task( (mqtt.on_message_application, (item['topic'], item['payload']) ) ))
             except:
                 pass
 
