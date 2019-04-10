@@ -26,6 +26,7 @@ class Views:
     def __init__(self, _app=None):
         self.kickoff(_app)
 
+
     def kickoff(self, app):
 
         '''
@@ -36,31 +37,29 @@ class Views:
         auth.get_access()
 
         if settings.block["access_token"] != "":
-            
-            implementer = get_implementer()
-            implementer.queue = queue_pub
+            self.implementer = get_implementer()
+            self.implementer.queue = queue_pub
 
-            mqtt = MqttConnector(implementer=implementer, queue=queue_sub, queue_pub=queue_pub)
+            webhook = Webhook(queue=queue_pub, implementer=self.implementer)
 
-            webhook = Webhook(queue=queue_pub, implementer=implementer)
+            self.mqtt = MqttConnector(implementer=self.implementer, queue=queue_sub, queue_pub=queue_pub)
+            self.mqtt.mqtt_config()
+            self.mqtt.set_on_connect_callback(webhook.webhook_registration)
+
             router = Router(webhook)
             router.route_setup(app)
 
-            mqtt.mqtt_config()
-            mqtt.set_on_connect_callback(webhook.webhook_registration)
-
-            proc = mp.Process(target=self.worker_sub, args=[mqtt], name="onMessage")
+            proc = mp.Process(target=self.worker_sub, name="onMessage")
             proc.start()
 
-            proc2 = mp.Process(target=self.worker_pub, args=[mqtt], name="Publish")
+            proc2 = mp.Process(target=self.worker_pub, name="Publish")
             proc2.start()
 
-            mqtt.mqtt_client.loop_start()
+            self.mqtt.mqtt_client.loop_start()
 
-    def worker_sub(self, mqtt):
+    def worker_sub(self):
         logger.notice('New Queue Sub')
         asyncio.set_event_loop(loop)
-        mqtt.mqtt_config()
 
         tasks = []
         last = int(time.time())
@@ -82,24 +81,23 @@ class Views:
                     implementor_type = item['type']
 
                     if implementor_type == 'device':
-                        tasks.append((mqtt.on_message_manager, (item['topic'], item['payload'])))
+                        tasks.append((self.mqtt.on_message_manager, (item['topic'], item['payload'])))
                     else:
-                        tasks.append((mqtt.on_message_application, (item['topic'], item['payload'])))
+                        tasks.append((self.mqtt.on_message_application, (item['topic'], item['payload'])))
 
             except:
                 pass
 
-    def worker_pub(self, mqtt):
+    def worker_pub(self):
         logger.notice('New Queue Pub')
         asyncio.set_event_loop(loop)
-        mqtt.mqtt_config()
 
         while True:
             try:
                 item = queue_pub.get()
                 if item:
                     logger.info('New publisher')
-                    loop.run_until_complete(self.send_task( (mqtt.publisher, (item['io'], item['data'], item['case']) ) ))
+                    loop.run_until_complete(self.send_task( (self.mqtt.publisher, (item['io'], item['data'], item['case']) ) ))
             except:
                 pass
 
