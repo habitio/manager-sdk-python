@@ -82,7 +82,7 @@ class Views:
                     tasks = []
                     last = int(time.time())
 
-                item = queue_sub.get()
+                item = queue_sub.get(timeout=10)
 
                 if item:
                     logger.info('New on_message')
@@ -105,7 +105,7 @@ class Views:
 
         while True:
             try:
-                item = queue_pub.get()
+                item = queue_pub.get(timeout=10)
                 if item:
                     logger.info('New publisher')
                     loop.run_until_complete(self.send_task( (mqtt.publisher, (item['io'], item['data'], item['case']) ) ))
