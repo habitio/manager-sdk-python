@@ -24,7 +24,7 @@ RC_LIST = {
 
 class MqttConnector:
 
-    def __init__(self, client_id=None, access_token=None, implementer=None, queue=None, queue_pub=None, **kwargs):
+    def __init__(self, client_id=None, access_token=None, implementer=None, queue=None, queue_pub=None, subscribe=True, **kwargs):
         logger.debug("Mqtt - Init")
         self.mqtt_client = paho.Client()
         self.mqtt_client.enable_logger()
@@ -45,6 +45,7 @@ class MqttConnector:
         self.implementer = implementer
         self.queue = queue
         self.queue_pub = queue_pub
+        self.subscribe = subscribe
 
 
     def on_connect(self, client, userdata, flags, rc):
@@ -58,11 +59,13 @@ class MqttConnector:
                     client_id=settings.client_id
                 )
 
-                logger.notice("Mqtt - Will subscribe to {}".format(topic))
-                self.mqtt_client.subscribe(topic, qos=0)
+                if self.subscribe:
 
-                if self._on_connect_callback:
-                    self._on_connect_callback.__call__(**self._on_connect_callback_params)
+                    logger.notice("Mqtt - Will subscribe to {}".format(topic))
+                    self.mqtt_client.subscribe(topic, qos=0)
+
+                    if self._on_connect_callback:
+                        self._on_connect_callback.__call__(**self._on_connect_callback_params)
 
             elif 0 < rc < 6:
                 raise Exception(RC_LIST[rc])
