@@ -1,6 +1,7 @@
 from base import auth
 import logging
 import concurrent
+import time
 
 from base import settings
 from base.mqtt_connector import MqttConnector
@@ -15,6 +16,8 @@ loop = asyncio.get_event_loop()
 
 queue_sub = mp.Queue()
 queue_pub = mp.Queue()
+
+max_tasks = 5
 
 
 class Views:
@@ -58,17 +61,32 @@ class Views:
         asyncio.set_event_loop(loop)
         mqtt.mqtt_config()
 
+        tasks = []
+        last = int(time.time())
+
         while True:
+            time_diff = int(time.time()) - last
+
             try:
                 item = queue_sub.get()
                 if item:
                     logger.info('New on_message')
+
+
                     implementor_type = item['type']
 
                     if implementor_type == 'device':
-                        loop.run_until_complete(self.send_task( (mqtt.on_message_manager, (item['topic'], item['payload']) ) ))
+                        # loop.run_until_complete(self.send_task( (mqtt.on_message_manager, (item['topic'], item['payload']) ) ))
+                        tasks.append((mqtt.on_message_manager, (item['topic'], item['payload'])))
                     else:
-                        loop.run_until_complete(self.send_task( (mqtt.on_message_application, (item['topic'], item['payload']) ) ))
+                        # loop.run_until_complete(self.send_task( (mqtt.on_message_application, (item['topic'], item['payload']) ) ))
+                        tasks.append((mqtt.on_message_application, (item['topic'], item['payload'])))
+
+                    if len(tasks) > max_tasks or (time_diff >=2 and len(tasks) > 0):
+                        # send tasks if there's more than 2 seconds waiting
+                        loop.run_until_complete(self.send_callback(tasks))
+                        tasks = []
+                        last = int(time.time())
             except:
                 pass
 
@@ -90,3 +108,15 @@ class Views:
         logger.info('Running task')
         with concurrent.futures.ThreadPoolExecutor() as executor:
             await loop.run_in_executor(executor, task[0], *task[1])
+
+
+    async def send_callback(self, tasks):
+        logger.info('Running {} tasks'.format(len(tasks)))
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            futures = [
+                loop.run_in_executor(
+                    executor,
+                    callback,
+                    *args
+                ) for callback, args in tasks
+            ]
