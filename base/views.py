@@ -69,25 +69,23 @@ class Views:
             time_diff = int(time.time()) - last
 
             try:
-                item = queue_sub.get()
-                if item:
-                    logger.info('New on_message')
-
-
-                    implementor_type = item['type']
-
-                    if implementor_type == 'device':
-                        # loop.run_until_complete(self.send_task( (mqtt.on_message_manager, (item['topic'], item['payload']) ) ))
-                        tasks.append((mqtt.on_message_manager, (item['topic'], item['payload'])))
-                    else:
-                        # loop.run_until_complete(self.send_task( (mqtt.on_message_application, (item['topic'], item['payload']) ) ))
-                        tasks.append((mqtt.on_message_application, (item['topic'], item['payload'])))
-
                 if len(tasks) > max_tasks or (time_diff >= min_wait_secs and len(tasks) > 0):
                     # send tasks if there's more than 2 seconds waiting
                     loop.run_until_complete(self.send_callback(tasks))
                     tasks = []
                     last = int(time.time())
+
+                item = queue_sub.get()
+
+                if item:
+                    logger.info('New on_message')
+                    implementor_type = item['type']
+
+                    if implementor_type == 'device':
+                        tasks.append((mqtt.on_message_manager, (item['topic'], item['payload'])))
+                    else:
+                        tasks.append((mqtt.on_message_application, (item['topic'], item['payload'])))
+
             except:
                 pass
 
