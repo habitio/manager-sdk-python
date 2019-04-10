@@ -27,7 +27,6 @@ class Views:
     def __init__(self, _app=None):
         self.kickoff(_app)
 
-
     def kickoff(self, app):
 
         '''
@@ -54,10 +53,10 @@ class Views:
             proc = mp.Process(target=self.worker_sub, name="onMessage")
             proc.start()
 
-            proc2 = mp.Process(target=self.worker_pub, name="Publish")
+            proc2 = threading.Thread(target=self.worker_pub, name='Publish', daemon=True)
             proc2.start()
 
-            monitor = threading.Thread(target=self.monitor_queues, args=(proc, proc2), name='monitor', daemon=True)
+            monitor = threading.Thread(target=self.monitor_queues, args=(proc,), name='monitor', daemon=True)
             monitor.start()
 
             mqtt.mqtt_client.loop_start()
@@ -129,21 +128,16 @@ class Views:
                 ) for callback, args in tasks
             ]
 
-    def monitor_queues(self, proc, proc2):
+    def monitor_queues(self, proc):
         while True:
-            if proc.is_alive() and proc2.is_alive():
-                pass
+            if proc.is_alive(): #and proc2.is_alive():
+                logger.notice('Proc alive: Sub:{}'.format(proc.is_alive()))
             else:
-                logger.warning('Sub:{} Pub:{}'.format(proc.is_alive(), proc2.is_alive()))
+                logger.warning('Sub:{} '.format(proc.is_alive()))
                 if not proc.is_alive():
                     logger.notic('killing proc {}'.format(proc.pid))
                     os.kill(proc.pid, signal.SIGKILL)
                     proc = mp.Process(target=self.worker_sub, name="onMessage")
                     proc.start()
-                if not proc2.is_alive():
-                    logger.notic('killing proc {}'.format(proc2.pid))
-                    os.kill(proc2.pid, signal.SIGKILL)
-                    proc2 = mp.Process(target=self.worker_pub, name="Publish")
-                    proc2.start()
 
             time.sleep(60)
