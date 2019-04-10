@@ -82,11 +82,11 @@ class Views:
                         # loop.run_until_complete(self.send_task( (mqtt.on_message_application, (item['topic'], item['payload']) ) ))
                         tasks.append((mqtt.on_message_application, (item['topic'], item['payload'])))
 
-                    if len(tasks) > max_tasks or (time_diff >=2 and len(tasks) > 0):
-                        # send tasks if there's more than 2 seconds waiting
-                        loop.run_until_complete(self.send_callback(tasks))
-                        tasks = []
-                        last = int(time.time())
+                if len(tasks) > max_tasks or (time_diff >=2 and len(tasks) > 0):
+                    # send tasks if there's more than 2 seconds waiting
+                    loop.run_until_complete(self.send_callback(tasks))
+                    tasks = []
+                    last = int(time.time())
             except:
                 pass
 
