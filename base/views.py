@@ -18,6 +18,7 @@ queue_sub = mp.Queue()
 queue_pub = mp.Queue()
 
 max_tasks = 5
+min_wait_secs = 1
 
 
 class Views:
@@ -82,7 +83,7 @@ class Views:
                         # loop.run_until_complete(self.send_task( (mqtt.on_message_application, (item['topic'], item['payload']) ) ))
                         tasks.append((mqtt.on_message_application, (item['topic'], item['payload'])))
 
-                if len(tasks) > max_tasks or (time_diff >=2 and len(tasks) > 0):
+                if len(tasks) > max_tasks or (time_diff >= min_wait_secs and len(tasks) > 0):
                     # send tasks if there's more than 2 seconds waiting
                     loop.run_until_complete(self.send_callback(tasks))
                     tasks = []
