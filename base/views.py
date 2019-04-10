@@ -1,8 +1,9 @@
+import os
 from base import auth
 import logging
 import concurrent
 import time
-
+import threading
 from base import settings
 from base.mqtt_connector import MqttConnector
 from base.skeleton import Webhook, Router
@@ -55,6 +56,9 @@ class Views:
 
             proc2 = mp.Process(target=self.worker_pub, name="Publish")
             proc2.start()
+
+            monitor = threading.Thread(target=self.monitor_queues, args=(proc, proc2), name='monitor', daemon=True)
+            monitor.start()
 
             mqtt.mqtt_client.loop_start()
 
@@ -124,3 +128,22 @@ class Views:
                     *args
                 ) for callback, args in tasks
             ]
+
+    def monitor_queues(self, proc, proc2):
+        while True:
+            if proc.is_alive() and proc2.is_alive():
+                pass
+            else:
+                logger.warning('Sub:{} Pub:{}'.format(proc.is_alive(), proc2.is_alive()))
+                if not proc.is_alive():
+                    logger.notic('killing proc {}'.format(proc.pid))
+                    os.kill(proc.pid, signal.SIGKILL)
+                    proc = mp.Process(target=self.worker_sub, name="onMessage")
+                    proc.start()
+                if not proc2.is_alive():
+                    logger.notic('killing proc {}'.format(proc2.pid))
+                    os.kill(proc2.pid, signal.SIGKILL)
+                    proc2 = mp.Process(target=self.worker_pub, name="Publish")
+                    proc2.start()
+
+            time.sleep(60)
