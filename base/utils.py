@@ -70,3 +70,17 @@ def rate_limited(max_per_second: int):
 
 def mask_token(token):
     return '{}...{}'.format(token[:8], token[-5:])
+
+
+def synchronized(lock):
+    """ Synchronization decorator. """
+
+    def wrap(f):
+        def newFunction(*args, **kw):
+            lock.acquire()
+            try:
+                return f(*args, **kw)
+            finally:
+                lock.release()
+        return newFunction
+    return wrap
