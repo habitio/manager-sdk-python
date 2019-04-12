@@ -130,7 +130,7 @@ class Views:
 
     def monitor_queues(self, proc):
         while True:
-            if proc.is_alive(): #and proc2.is_alive():
+            if proc.is_alive():
                 logger.notice('Proc alive: Sub:{}'.format(proc.is_alive()))
             else:
                 logger.warning('Sub:{} '.format(proc.is_alive()))
