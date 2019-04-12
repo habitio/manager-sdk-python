@@ -261,6 +261,13 @@ class MqttConnector:
     def on_log(self, userdata, level, buf):
         logger.debug("Mqtt - Paho log: {}".format(buf))
 
+    def reconfig(self):
+        try:
+            self.mqtt_client.username_pw_set(username=self.client_id, password=self.access_token)
+        except Exception as e:
+            logger.error("Unexpected error reconfig: {}".format(e))
+            raise
+
     @retry(wait=wait_fixed(DEFAULT_RETRY_WAIT))
     def mqtt_config(self):
         logger.info("Setting up Mqtt connection")
@@ -309,6 +316,8 @@ class MqttConnector:
                     keys 'device_id' or 'channel_id', 'component' and 'property'
         """
         try:
+            self.reconfig()
+
             payload = dict()
             payload["io"] = io
 
