@@ -46,7 +46,7 @@ class DBManager(Redis):
                     evaluated_value = value
                 return evaluated_value
             else:
-                logger.warning("[DB] Key {} not found in database.".format(key))
+                logger.info("[DB] Key {} not found in database.".format(key))
         except Exception as e:
             logger.error("[DB] get_key error, {}".format(e))
 

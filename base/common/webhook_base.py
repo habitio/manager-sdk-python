@@ -58,13 +58,13 @@ class WebhookHubBase:
     def inbox(self, request):
 
         logger.debug("\n\n\n\n\n\t\t\t\t\t*******************INBOX****************************")
-        logger.debug("Received {} - {}".format(request.method, request.path))
-        logger.verbose("\n{}".format(request.headers))
+        logger.info("Received {} - {}".format(request.method, request.path))
+        logger.info("\n{}".format(request.headers))
 
         if request.is_json:
-            logger.verbose(format_str(request.get_json(), is_json=True))
+            logger.info(format_str(request.get_json(), is_json=True))
         else:
-            logger.verbose("\n{}".format(request.get_data(as_text=True)))
+            logger.info("\n{}".format(request.get_data(as_text=True)))
 
         downstream_result = self.implementer.downstream(request)
         downstream_list = downstream_result if type(downstream_result) == list else [downstream_result]

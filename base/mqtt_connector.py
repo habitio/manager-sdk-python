@@ -51,7 +51,7 @@ class MqttConnector:
     def on_connect(self, client, userdata, flags, rc):
         try:
             if rc == 0:
-                logger.notice("Mqtt - Connected , result code {}".format(rc))
+                logger.debug("Mqtt - Connected , result code {}".format(rc))
 
                 topic = "/{api_version}/{mqtt_topic}/{client_id}/channels/#".format(
                     mqtt_topic=settings.mqtt_topic,
@@ -350,7 +350,7 @@ class MqttConnector:
                 topic=topic, payload=json.dumps(payload))
 
             if rc == 0:
-                logger.debug(
+                logger.info(
                     "Mqtt - Published successfully, result code({}) and mid({}) to topic: {} with payload:{}".format(
                         rc, mid, topic, format_str(payload, is_json=True)))
 
