@@ -9,7 +9,6 @@ from base.redis_db import get_redis
 from base.utils import format_str
 from base.constants import *
 from base.exceptions import *
-import multiprocessing as mp
 
 logger = logging.getLogger(__name__)
 
@@ -294,14 +293,6 @@ class MqttConnector:
 
             self.mqtt_client.connect(host, port)
             logger.debug( "Mqtt - Did start connect w/ host:{} and port:{}".format(host, port))
-            try:
-
-                logger.debug("Mqtt - Will start the loop")
-                #self.mqtt_client.loop_forever()
-
-            except Exception as e:
-                logger.alert("Mqtt - Failed to listen through loop, {} ".format(traceback.format_exc(limit=5)))
-                raise
 
         except Exception as e:
             logger.emergency("Unexpected error: {}".format(e, traceback.format_exc(limit=5)))
@@ -372,11 +363,3 @@ class MqttConnector:
         except Exception as e:
             logger.error("Mqtt - Failed to de-configure connection {}".format(traceback.format_exc(limit=5)))
             os._exit(1)
-
-
-    def start(self):
-        try:
-            proc = mp.Process(target=self.mqtt_client.loop_forever)
-            proc.start()
-        except Exception as e:
-            logger.alert("Mqtt Unexpected exception: {}".format(e))
