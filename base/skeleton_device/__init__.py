@@ -1,10 +1,12 @@
-from base import settings
+import time
+
 from base.common.skeleton_base import SkeletonBase
 from base.constants import DEFAULT_BEFORE_EXPIRES
 from base.exceptions import ChannelTemplateNotFound
 
 from .router import *
 from .webhook import *
+from .token_refresher import TokenRefresherManager
 
 
 class SkeletonDevice(SkeletonBase):
@@ -77,7 +79,7 @@ class SkeletonDevice(SkeletonBase):
     def access_check(self, mode, case, credentials, sender):
         """
         *** MANDATORY ***
-        Checks for access to manufacture for a component
+        Checks for access to manufacture for a component, replace if requires a different process
 
         Receives,
             mode        - 'r' or 'w'
@@ -90,7 +92,34 @@ class SkeletonDevice(SkeletonBase):
 
         Returns updated valid credentials or current one  or None if no access
         """
-        return NotImplemented
+
+        try:
+            now = int(time.time())
+            expiration_date = credentials['expiration_date']
+
+            if 'key' in sender:
+                if now >= expiration_date:  # we should refresh the token
+                    self.log('token is expired trying to refresh {}'.format(sender['key']), 7)
+
+                    credentials_dict = {
+                        'key': sender['key'],
+                        'value': credentials
+                    }
+                    kwargs = {
+                        'owner_id': sender['owner_id'],
+                        'channel_id': case['channel_id'] }
+                    credentials = self.refresh_token(credentials_dict, **kwargs)
+
+            return credentials
+
+        except KeyError as e:
+            self.log('Error: missing {} key'.format(e), 4)
+        except Exception:
+            self.log('Unexpected error {}'.format(traceback.format_exc(limit=5)), 3)
+
+        self.log('Missing info in access_check: \nsender: {} \ncase:{} \ncredentials:{}'.format(sender, case, credentials), 4)
+
+        return None
 
     def polling(self, data):
         """
@@ -187,6 +216,10 @@ class SkeletonDevice(SkeletonBase):
         """
         raise NotImplementedError('polling ENABLED but conf NOT DEFINED')
 
+    # -------------
+    # TOKEN REFRESH
+    # -------------
+
     def get_refresh_token_conf(self):
         """
         Required configuration if token refresher is enabled
@@ -195,6 +228,19 @@ class SkeletonDevice(SkeletonBase):
             method - HTTP method to use: GET / POST
         """
         raise NotImplementedError('token refresher ENABLED but conf NOT DEFINED')
+
+    def refresh_token(self, credentials_dict, **kwargs):
+        refresher = TokenRefresherManager(implementer=self)
+        conf = self.get_refresh_token_conf()
+
+        response = refresher.send_request(credentials_dict,
+                                          conf['method'], conf['url'], conf.get('is_json', False), **kwargs)
+        self.log('refresh_token response {}'.format(response), 7)
+
+        if type(response) is dict and 'credentials' in response:
+            self.after_refresh(response)
+            return response['credentials']
+        return None
 
     def after_refresh(self, data):
         """
@@ -206,6 +252,7 @@ class SkeletonDevice(SkeletonBase):
         + not required +
         """
         pass
+
 
 
 SkeletonBase.register(SkeletonDevice)

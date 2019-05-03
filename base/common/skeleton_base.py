@@ -268,6 +268,10 @@ class SkeletonBase(ABC):
             self.log("Unexpected error get_latest_property_value: {}".format(traceback.format_exc(limit=5)), 3)
         return {}
 
+    # -------------
+    # TOKEN REFRESH
+    # -------------
+
     def get_new_expiration_date(self, credentials):
         try:
             if 'access_token' and 'refresh_token' in credentials:
