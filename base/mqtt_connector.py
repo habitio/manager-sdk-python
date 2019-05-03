@@ -379,4 +379,4 @@ class MqttConnector:
             proc = mp.Process(target=self.mqtt_client.loop_forever)
             proc.start()
         except Exception as e:
-            logger.alert("Mqtt Unexpected exception: {} {}".format(e))
+            logger.alert("Mqtt Unexpected exception: {}".format(e))
