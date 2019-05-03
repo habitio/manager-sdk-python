@@ -28,7 +28,6 @@ class Views:
         self.kickoff(_app)
 
     def kickoff(self, app):
-
         '''
         Setting up manager before it starts serving
 
@@ -50,21 +49,15 @@ class Views:
             router = Router(webhook)
             router.route_setup(app)
 
-            proc = mp.Process(target=self.worker_sub, name="onMessage")
-            proc.start()
+            worker_process = mp.Process(target=self.worker_sub, args=(mqtt,), name="onMessage")
+            worker_process.start()
 
-            proc2 = threading.Thread(target=self.worker_pub, name='Publish', daemon=True)
-            proc2.start()
-
-            monitor = threading.Thread(target=self.monitor_queues, args=(proc,), name='monitor', daemon=True)
-            monitor.start()
+            publisher_thread = threading.Thread(target=self.worker_pub, args=(mqtt,), name='Publish', daemon=True)
+            publisher_thread.start()
 
             mqtt.mqtt_client.loop_start()
 
-    def worker_sub(self):
-        mqtt = MqttConnector(implementer=self.implementer, queue=queue_sub, queue_pub=queue_pub, subscribe=False)
-        mqtt.mqtt_config()
-
+    def worker_sub(self, mqtt_instance):
         logger.notice('New Queue Sub')
         asyncio.set_event_loop(loop)
 
@@ -88,17 +81,14 @@ class Views:
                     implementor_type = item['type']
 
                     if implementor_type == 'device':
-                        tasks.append((mqtt.on_message_manager, (item['topic'], item['payload'])))
+                        tasks.append((mqtt_instance.on_message_manager, (item['topic'], item['payload'])))
                     else:
-                        tasks.append((mqtt.on_message_application, (item['topic'], item['payload'])))
+                        tasks.append((mqtt_instance.on_message_application, (item['topic'], item['payload'])))
 
             except:
                 pass
 
-    def worker_pub(self):
-        mqtt = MqttConnector(implementer=self.implementer, queue=queue_sub, queue_pub=queue_pub, subscribe=False)
-        mqtt.mqtt_config()
-
+    def worker_pub(self, mqtt_instance):
         logger.notice('New Queue Pub')
         asyncio.set_event_loop(loop)
 
@@ -107,7 +97,7 @@ class Views:
                 item = queue_pub.get(timeout=10)
                 if item:
                     logger.info('New publisher')
-                    loop.run_until_complete(self.send_task( (mqtt.publisher, (item['io'], item['data'], item['case']) ) ))
+                    loop.run_until_complete(self.send_task( (mqtt_instance.publisher, (item['io'], item['data'], item['case']) ) ))
             except:
                 pass
 
@@ -127,17 +117,3 @@ class Views:
                     *args
                 ) for callback, args in tasks
             ]
-
-    def monitor_queues(self, proc):
-        while True:
-            if proc.is_alive():
-                logger.notice('Proc alive: Sub:{}'.format(proc.is_alive()))
-            else:
-                logger.warning('Sub:{} '.format(proc.is_alive()))
-                if not proc.is_alive():
-                    logger.notic('killing proc {}'.format(proc.pid))
-                    os.kill(proc.pid, signal.SIGKILL)
-                    proc = mp.Process(target=self.worker_sub, name="onMessage")
-                    proc.start()
-
-            time.sleep(60)

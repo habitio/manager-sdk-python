@@ -27,8 +27,6 @@ def get_implementer():
 
         for _name, _obj in inspect.getmembers(_module):
             try:
-                logger.trace('Item: {} - {}'.format(_name, _obj))
-
                 if inspect.isclass(_obj) and issubclass(_obj, (
                         skeleton_device.SkeletonDevice,
                         skeleton_application.SkeletonApplication)):
