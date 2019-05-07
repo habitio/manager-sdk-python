@@ -19,7 +19,7 @@ queue_sub = mp.Queue()
 queue_pub = mp.Queue()
 
 max_tasks = 5
-min_wait_secs = 1
+min_wait_secs = 0.5
 
 
 class Views:
@@ -62,17 +62,17 @@ class Views:
         asyncio.set_event_loop(loop)
 
         tasks = []
-        last = int(time.time())
+        last = time.time()
 
         while True:
-            time_diff = int(time.time()) - last
+            time_diff = time.time() - last
 
             try:
                 if len(tasks) > max_tasks or (time_diff >= min_wait_secs and len(tasks) > 0):
                     # send tasks if there's more than 2 seconds waiting
                     loop.run_until_complete(self.send_callback(tasks))
                     tasks = []
-                    last = int(time.time())
+                    last = time.time()
 
                 item = queue_sub.get(timeout=10)
 
