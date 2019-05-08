@@ -33,6 +33,7 @@ class Settings:
         self.config_manufacturer = self.config_boot.get("manufacturer", {})
         self.config_polling = self.config_boot.get("polling", {})
         self.config_refresh = self.config_boot.get("token_refresher", {})
+        self.config_mqtt = self.config_boot.get("mqtt", {})
 
         self.client_id = self.config_cred["client_id"]
         self.client_secret = self.config_cred["client_secret"]

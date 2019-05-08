@@ -1,10 +1,10 @@
-import os
 from base import auth
 import logging
 import concurrent
 import time
 import threading
 from base import settings
+from base.constants import DEFAULT_MIN_WAIT_SECS, DEFAULT_MAX_MQTT_TASKS
 from base.mqtt_connector import MqttConnector
 from base.skeleton import Webhook, Router
 from base.solid import get_implementer
@@ -18,9 +18,8 @@ loop = asyncio.get_event_loop()
 queue_sub = mp.Queue()
 queue_pub = mp.Queue()
 
-max_tasks = 5
-min_wait_secs = 0.5
-
+max_tasks = settings.config_mqtt.get("max_tasks", DEFAULT_MAX_MQTT_TASKS)
+min_wait_secs = settings.config_mqtt.get("min_wait_secs", DEFAULT_MIN_WAIT_SECS)
 
 class Views:
 
