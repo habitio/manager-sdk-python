@@ -137,7 +137,7 @@ class WebhookHubDevice(WebhookHubBase):
                                                                                    owner_id,
                                                                                    channel_template))
                     channels = [{"id": channel_id} for channel_id in responses]
-                    channels = self.implementer.pre_processing_devices(channels)
+                    channels = self.implementer.post_processing(channels)
 
                 logger.info(channels)
 
