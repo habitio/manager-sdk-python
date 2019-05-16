@@ -292,3 +292,27 @@ class SkeletonBase(ABC):
         self.log('Credentials are not valid: {}'.format(credentials), 4)
 
         return None
+
+    # -------------
+    # SELECT DEVICES
+    # -------------
+
+    def pre_processing_devices(self, devices):
+        """
+        This method intends to pre-processing the device list and return te result to select_devices webhook
+        This is optional, and if its not implemented, it will return the same devices as received
+        :param devices:
+        :return: devices
+        """
+
+        return devices
+
+    def post_processing_devices(self, devices):
+        """
+        This method intends to post-processing the device list and return te result to select_devices webhook
+        This is optional, and if its not implemented, it will return the same devices as received
+        :param devices:
+        :return: devices
+        """
+
+        return devices

@@ -18,6 +18,7 @@ from .token_refresher import TokenRefresherManager
 
 logger = logging.getLogger(__name__)
 
+
 class WebhookHubDevice(WebhookHubBase):
 
     def __init__(self, queue=None, implementer=None):
@@ -35,7 +36,6 @@ class WebhookHubDevice(WebhookHubBase):
         except Exception as e:
             logger.error("Failed start Polling manager, {} {}".format(e, traceback.format_exc(limit=5)))
             self.poll = None
-
 
     def authorize(self, request):
         logger.debug("\n\n\n\n\n\t\t\t\t\t********************** AUTHORIZE **************************")
@@ -89,7 +89,7 @@ class WebhookHubDevice(WebhookHubBase):
                 data = self.implementer.get_devices(sender=sender, credentials=credentials)
 
                 for element in data:
-                    if not "content" in element or ("content" in element and not element["content"]):
+                    if "content" not in element or ("content" in element and not element["content"]):
                         element["content"] = ""
 
                 return Response(
@@ -129,10 +129,15 @@ class WebhookHubDevice(WebhookHubBase):
                 channels = []
 
                 if paired_devices:
-
+                    paired_devices = self.implementer.pre_processing_devices(paired_devices)
                     loop = asyncio.get_event_loop()
-                    responses = loop.run_until_complete(self.send_channel_requests(paired_devices, credentials, client_id, owner_id, channel_template))
+                    responses = loop.run_until_complete(self.send_channel_requests(paired_devices,
+                                                                                   credentials,
+                                                                                   client_id,
+                                                                                   owner_id,
+                                                                                   channel_template))
                     channels = [{"id": channel_id} for channel_id in responses]
+                    channels = self.implementer.pre_processing_devices(channels)
 
                 logger.info(channels)
 
@@ -195,7 +200,7 @@ class WebhookHubDevice(WebhookHubBase):
                 if resp_app.status_code not in (201, 200):
                     logger.debug(format_str(resp_app.json(), is_json=True))
                     return False
-            except:
+            except Exception:
                 logger.error("Failed to grant access to client {} {}".format(
                     client_id,
                     traceback.format_exc(limit=5))
@@ -219,7 +224,7 @@ class WebhookHubDevice(WebhookHubBase):
                 if resp_user.status_code not in (201, 200):
                     logger.debug(format_str(resp_user.json(), is_json=True))
                     return False
-            except:
+            except Exception:
                 logger.error("Failed to grant access to owner {} {}".format(
                     channel_template,
                     traceback.format_exc(limit=5)))
@@ -232,7 +237,6 @@ class WebhookHubDevice(WebhookHubBase):
             logger.error('Error while requesting grant {}'.format(e))
 
         return None
-
 
     def get_or_create_channel(self, device, channel_template):
         try:
@@ -261,7 +265,7 @@ class WebhookHubDevice(WebhookHubBase):
 
         # Creating a new channel for the particular device"s id
         data = {
-            "name": "Device" if not "content" in device else device["content"],
+            "name": "Device" if "content" not in device else device["content"],
             "channeltemplate_id": channel_template
         }
 
@@ -277,7 +281,7 @@ class WebhookHubDevice(WebhookHubBase):
                 logger.debug(format_str(resp.json(), is_json=True))
                 raise Exception
 
-        except Exception as ex:
+        except Exception as e:
             logger.error(
                 "Failed to create channel for channel template {} {}".format(channel_template,
                                                                              traceback.format_exc(limit=5)))
