@@ -129,7 +129,7 @@ class WebhookHubDevice(WebhookHubBase):
                 channels = []
 
                 if paired_devices:
-                    paired_devices = self.implementer.pre_processing_devices(paired_devices)
+
                     loop = asyncio.get_event_loop()
                     responses = loop.run_until_complete(self.send_channel_requests(paired_devices,
                                                                                    credentials,
@@ -137,7 +137,6 @@ class WebhookHubDevice(WebhookHubBase):
                                                                                    owner_id,
                                                                                    channel_template))
                     channels = [{"id": channel_id} for channel_id in responses]
-                    channels = self.implementer.post_processing_devices(channels)
 
                 logger.info(channels)
 

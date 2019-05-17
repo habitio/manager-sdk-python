@@ -9,7 +9,6 @@ from .exceptions import ImplementorTypeNotFoundException
 
 class Settings:
 
-
     def __init__(self):
 
         # Loading and Reading from Config file
@@ -20,7 +19,6 @@ class Settings:
                 self.config_data = json.load(json_data_file)
         else:
             raise IOError("Configuration file is missing!")
-
 
         self.config_boot = self.config_data["boot"][0]
         self.config_log = self.config_data["$log"]
@@ -34,6 +32,7 @@ class Settings:
         self.config_polling = self.config_boot.get("polling", {})
         self.config_refresh = self.config_boot.get("token_refresher", {})
         self.config_mqtt = self.config_boot.get("mqtt", {})
+        self.config_channel_templates = self.config_boot.get("channel_templates", {})
 
         self.client_id = self.config_cred["client_id"]
         self.client_secret = self.config_cred["client_secret"]
@@ -62,7 +61,6 @@ class Settings:
         # All urls
         self.auth_url = "{}{}".format(self.api_server_full, "/auth/authorize")
         self.renew_url = "{}{}".format(self.api_server_full, "/auth/exchange")
-
 
         # Logging file path
         if "file" in self.config_log and self.config_log["file"] == "{log_path}":
@@ -101,7 +99,8 @@ class Settings:
             self.webhook_url = None
             self.mqtt_topic = 'applications'
         else:
-            raise ImplementorTypeNotFoundException('Error to find the implementor type in credentials, not device or application implementor!')
+            raise ImplementorTypeNotFoundException('Error to find the implementor type in credentials, not device or '
+                                                   'application implementor!')
             os._exit(1)
 
         # Application specific conf
