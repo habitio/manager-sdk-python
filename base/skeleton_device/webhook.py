@@ -179,7 +179,7 @@ class WebhookHubDevice(WebhookHubBase):
     def channels_grant(self, device, credentials, client_id, owner_id, channel_template):
 
         try:
-            channel_template = self.implementer.get_channel_template_by_device_id(device['id']) or channel_template
+            channel_template = self.implementer.update_channel_template(device['id']) or channel_template
             channel_id = self.get_or_create_channel(device, channel_template)
 
             # Granting permission to intervenient with id X-Client-Id
@@ -254,6 +254,7 @@ class WebhookHubDevice(WebhookHubBase):
                 self.db.set_channel_id(device["id"], channel_id, True)
                 logger.verbose("Channel added to database {}".format(channel_id))
 
+
             return channel_id
 
         except Exception as e:
@@ -265,7 +266,7 @@ class WebhookHubDevice(WebhookHubBase):
 
         # Creating a new channel for the particular device"s id
         data = {
-            "name": "Device" if "content" not in device else device["content"],
+            "name": device.get("content", "Device"),
             "channeltemplate_id": channel_template
         }
 

@@ -63,6 +63,14 @@ class SkeletonDevice(SkeletonBase):
         """
         return NotImplemented
 
+    def update_channel_template(self, device_id):
+        """
+        This method is used to return a channel_template other than the one sent in request on select_devices
+        :param device_id: Dict of device characteristcs
+        :return: new_channel_id or None
+        """
+        return None
+
     def did_pair_devices(self, credentials, sender, paired_devices):
         """
         *** MANDATORY ***
