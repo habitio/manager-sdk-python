@@ -292,3 +292,15 @@ class SkeletonBase(ABC):
         self.log('Credentials are not valid: {}'.format(credentials), 4)
 
         return None
+
+    # -------------
+    # CHANNEL TEMPLATE
+    # -------------
+
+    def get_channel_template_by_device_id(self, device_id):
+        """
+        This method is used to return a channel_template other than the one sent in request on select_devices
+        :param device_id: Dict of device characteristcs
+        :return: new_channel_id or None
+        """
+        return None
