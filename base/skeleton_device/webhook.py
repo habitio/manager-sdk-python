@@ -179,7 +179,7 @@ class WebhookHubDevice(WebhookHubBase):
     def channels_grant(self, device, credentials, client_id, owner_id, channel_template):
 
         try:
-            channel_template = self.implementer.get_channel_template_by_device_id(device) or channel_template
+            channel_template = self.implementer.get_channel_template_by_device_id(device['id']) or channel_template
             channel_id = self.get_or_create_channel(device, channel_template)
 
             # Granting permission to intervenient with id X-Client-Id
