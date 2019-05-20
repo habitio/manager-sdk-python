@@ -143,8 +143,11 @@ class DBManager(Redis):
         for key in key_list:
             result = self.get_key(key['key'])
             if result:
+                return_value = result
                 return_key = key['return']
-                return_value = result if not return_key else result.get(return_key)
+                if return_key:
+                    result = json.loads(result)
+                    return_value = result.get('data', {}).get(return_key)
                 break
 
         return return_value
