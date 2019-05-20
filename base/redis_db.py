@@ -113,10 +113,16 @@ class DBManager(Redis):
 
         logger.info("[DB] No credentials found w/ new format! Search w/ old format")
 
-        result = self.get_key(owner_id)
-        if not result:
-            result = self.get_key("/".join([client_id, owner_id]))
-
+        key_list = [
+            owner_id,
+            "/".join([client_id, owner_id]),
+            "/".join(["/v3", "managers", settings.client_id, client_id, owner_id]),
+        ]
+        result = None
+        for key in key_list:
+            result = self.get_key(key)
+            if result:
+                break
         if result:
             self.set_credentials(result, client_id, owner_id, channel_id)
 
