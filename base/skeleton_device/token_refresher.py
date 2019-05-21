@@ -3,7 +3,8 @@ import concurrent
 from base import settings
 from base.redis_db import get_redis
 from base.utils import rate_limited
-from base.constants import DEFAULT_REFRESH_INTERVAL, DEFAULT_RATE_LIMIT, DEFAULT_THREAD_MAX_WORKERS, DEFAULT_BEFORE_EXPIRES
+from base.constants import DEFAULT_REFRESH_INTERVAL, DEFAULT_RATE_LIMIT, DEFAULT_THREAD_MAX_WORKERS, \
+    DEFAULT_BEFORE_EXPIRES, DEFAULT_EXPIRES_IN_KEY
 import asyncio
 import requests
 import threading
@@ -62,7 +63,8 @@ class TokenRefresherManager(object):
 
     async def make_requests(self, conf_data: dict):
         try:
-            logger.info("[TokenRefresher] {} starting {}".format(threading.currentThread().getName(),  datetime.datetime.now()))
+            logger.info("[TokenRefresher] {} starting {}".format(threading.currentThread().getName(),
+                                                                 datetime.datetime.now()))
 
             url = conf_data['url']
             method = conf_data['method']
@@ -84,7 +86,8 @@ class TokenRefresherManager(object):
                     if response:
                         self.implementer.after_refresh(response)
 
-            logger.info("[TokenRefresher] {} finishing {}".format(threading.currentThread().getName(),  datetime.datetime.now()))
+            logger.info("[TokenRefresher] {} finishing {}".format(threading.currentThread().getName(),
+                                                                  datetime.datetime.now()))
         except Exception as e:
             logger.error("[TokenRefresher] {} Error on make_requests {}".format(e))
 
@@ -146,7 +149,7 @@ class TokenRefresherManager(object):
                 response = requests.request(method, url, data=params, headers=headers)
 
                 if response.status_code == requests.codes.ok:
-                    new_credentials = self.get_new_expiration_date(response.json())
+                    new_credentials = self.implementer.auth_response(response.json())
 
                     if 'refresh_token' not in new_credentials:  # we need to keep same refresh_token always
                         new_credentials['refresh_token'] = credentials['refresh_token']

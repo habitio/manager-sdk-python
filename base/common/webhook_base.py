@@ -9,6 +9,7 @@ from .watchdog import Watchdog
 
 logger = logging.getLogger(__name__)
 
+
 class WebhookHubBase:
 
     def __init__(self, queue=None, implementer=None):
@@ -28,7 +29,6 @@ class WebhookHubBase:
         })
 
         self.db = get_redis()
-
 
     def receive_token(self, request):
         logger.debug("\n\n\n\n\n\t\t\t\t\t********************** RECEIVE_TOKEN **************************")
