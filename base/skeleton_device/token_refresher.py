@@ -139,26 +139,11 @@ class TokenRefresherManager(object):
 
             if now >= (token_expiration_date - self.before_expires):
                 logger.info("[TokenRefresher] Refreshing token {}".format(key))
-                try:
-                    manufacturer_client_id = settings.config_manufacturer['credentials'][client_app_id].get('app_id')
-                    manufacturer_client_secret = settings.config_manufacturer['credentials'][client_app_id].get('app_secret')
-                except KeyError:
-                    logger.debug('[TokenRefresher] Credentials not found for {}'.format(client_app_id))
-                    return
+                url, params = self.implementer.get_params(url, credentials)
 
-                params = {
-                    'grant_type': 'refresh_token',
-                    'refresh_token': credentials['refresh_token'],
-                    'client_id': manufacturer_client_id
-                }
+                headers = self.implementer.get_headers(credentials, **kwargs)
 
-                if manufacturer_client_secret is not None:
-                    params['client_secret'] = manufacturer_client_secret
-
-                if is_json:
-                    response = requests.request(method,  url, json=params)
-                else:
-                    response = requests.request(method,  url, params=params)
+                response = requests.request(method,  url, params=params, headers=headers)
 
                 if response.status_code == requests.codes.ok:
                     new_credentials = self.get_new_expiration_date(response.json())

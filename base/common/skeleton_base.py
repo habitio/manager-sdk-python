@@ -300,3 +300,39 @@ class SkeletonBase(ABC):
         :return: credentials_list
         """
         return credentials_list
+
+    def get_params(self, url, credentials):
+        """
+        Create params dict to be sent in token_refresher request
+        :param url:
+        :param credentials:
+        :return: url (string), params (dict)
+        """
+        try:
+            client_app_id = credentials['client_id']
+            manufacturer_client_id = settings.config_manufacturer['credentials'][client_app_id].get('app_id')
+            manufacturer_client_secret = settings.config_manufacturer['credentials'][client_app_id].get('app_secret')
+        except KeyError:
+            self.log('[TokenRefresher] Credentials not found for {}'.format(client_app_id), 7)
+            return
+
+        params = {
+            'grant_type': 'refresh_token',
+            'refresh_token': credentials['refresh_token'],
+            'client_id': manufacturer_client_id
+        }
+
+        if manufacturer_client_secret is not None:
+            params['client_secret'] = manufacturer_client_secret
+
+        return url.split('?')[0], params
+
+    def get_headers(self, credentials, **kwargs):
+        """
+        Create headers to send with token_refresher request
+        :param credentials:
+        :param kwargs:
+        :return: headers
+        """
+        headers = kwargs.get('headers', {})
+        return headers
