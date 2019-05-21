@@ -14,6 +14,7 @@ import traceback
 
 logger = logging.getLogger(__name__)
 
+
 class TokenRefresherManager(object):
 
     def __init__(self, implementer=None):
@@ -26,7 +27,6 @@ class TokenRefresherManager(object):
         self.db = get_redis()
         self.implementer = implementer
 
-
     def start(self):
         """
         If refreshing token is enabled in config file, retrieves conf for refresh in implementor
@@ -35,7 +35,9 @@ class TokenRefresherManager(object):
         try:
             if settings.config_refresh.get('enabled') == True:
                 logger.info('[TokenRefresher] **** starting token refresher ****')
-                self.thread = threading.Thread(target=self.worker, args=[self.implementer.get_refresh_token_conf()], name="TokenRefresh")
+                self.thread = threading.Thread(target=self.worker,
+                                               args=[self.implementer.get_refresh_token_conf(self.client_id)],
+                                               name="TokenRefresh")
                 self.thread.daemon = True
                 self.thread.start()
             else:
@@ -56,7 +58,7 @@ class TokenRefresherManager(object):
 
     def get_credential_list(self):
         credentials_list = self.db.full_query('credential-owners/*/channels/*')
-        return credentials_list
+        return self.implementer.update_credentials(credentials_list)
 
     async def make_requests(self, conf_data: dict):
         try:
@@ -64,6 +66,7 @@ class TokenRefresherManager(object):
 
             url = conf_data['url']
             method = conf_data['method']
+
             is_json = conf_data.get('is_json', False)
 
             loop = asyncio.get_event_loop()
@@ -73,12 +76,13 @@ class TokenRefresherManager(object):
                     loop.run_in_executor(
                         executor,
                         self.send_request,
-                        credentials, method, url, is_json
+                        credentials, method, url, is_json, conf_data
                     )
                     for credentials in self.get_credential_list()
                 ]
                 for response in await asyncio.gather(*futures):
-                    if response: self.implementer.after_refresh(response)
+                    if response:
+                        self.implementer.after_refresh(response)
 
             logger.info("[TokenRefresher] {} finishing {}".format(threading.currentThread().getName(),  datetime.datetime.now()))
         except Exception as e:

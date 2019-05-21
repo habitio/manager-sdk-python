@@ -289,6 +289,14 @@ class SkeletonBase(ABC):
         except KeyError as e:
             self.log('Error missing {} key'.format(e), 4)
 
-        self.log('Credentials are not valid: {}'.format(credentials), 4)
+        self.log('Credentials are not valid: {}'.format(credentials), 1)
 
         return None
+
+    def update_credentials(self, credentials_list):
+        """
+        Method for update credentials received in old formats.
+        :param credentials_list: list of dicts retrived from Redis
+        :return: credentials_list
+        """
+        return credentials_list
