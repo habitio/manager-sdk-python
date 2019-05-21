@@ -152,6 +152,7 @@ class TokenRefresherManager(object):
 
                 if response.status_code == requests.codes.ok:
                     new_credentials = self.implementer.auth_response(response.json())
+                    new_credentials = self.implementer.get_new_expiration_date(new_credentials)
 
                     if 'refresh_token' not in new_credentials:  # we need to keep same refresh_token always
                         new_credentials['refresh_token'] = credentials['refresh_token']
