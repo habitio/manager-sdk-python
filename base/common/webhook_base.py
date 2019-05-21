@@ -30,6 +30,13 @@ class WebhookHubBase:
 
         self.db = get_redis()
 
+    @staticmethod
+    def _create_expiration_date(credentials):
+        credentials['expiration_date'] = credentials.get('expiration_date', 0)
+        credentials['expires_in'] = credentials.get('expires_in', 0)
+
+        return credentials
+
     def receive_token(self, request):
         logger.debug("\n\n\n\n\n\t\t\t\t\t********************** RECEIVE_TOKEN **************************")
         logger.debug("Received {} - {}".format(request.method, request.path))
@@ -43,7 +50,9 @@ class WebhookHubBase:
                     return Response(status=422)
 
                 data = self.implementer.auth_response(received_data)
-                if data != None:
+                data = self._create_expiration_date(data)
+
+                if data:
                     self.db.set_credentials(data, request.headers["X-Client-Id"], request.headers["X-Owner-Id"])
                     return Response(status=200)
                 else:

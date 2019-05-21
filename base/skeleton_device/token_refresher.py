@@ -91,7 +91,7 @@ class TokenRefresherManager(object):
         except Exception as e:
             logger.error("[TokenRefresher] {} Error on make_requests {}".format(e))
 
-    def get_new_expiration_date(self, credentials):
+    def update_expiration_date(self, credentials):
         now = int(time.time())
         expires_in = int(credentials['expires_in']) - self.before_expires
         expiration_date = now + expires_in
@@ -99,13 +99,25 @@ class TokenRefresherManager(object):
 
         return credentials
 
-    def update_all_owners(self, new_credentials, orig_owner_id, channel_id, client_app_id):
+    def update_all_owners(self, old_credentials, new_credentials, orig_owner_id, channel_id, client_app_id):
         all_owners_credentials = self.db.full_query('credential-owners/*/channels/{}'.format(channel_id))
+        old_refresh_token = old_credentials['refresh_token']
         logger.info('[TokenRefresher] update_all_owners: {} keys found'.format(len(all_owners_credentials)))
         for cred_dict in all_owners_credentials:
             key = cred_dict['key']
             owner_id = key.split('/')[1]
-            if owner_id == orig_owner_id:
+            if owner_id == orig_owner_id or cred_dict['refresh_token'] != old_refresh_token:
+                continue  # ignoring original owner
+            self.db.set_credentials(new_credentials, client_app_id, owner_id, channel_id)
+
+    def update_all_channels(self, old_credentials, new_credentials, owner_id, orig_channel_id, client_app_id):
+        all_channels_credentials = self.db.full_query('credential-owners/{}/channels/*'.format(owner_id))
+        old_refresh_token = old_credentials['refresh_token']
+        logger.info('[TokenRefresher] update_all_channels: {} keys found'.format(len(all_channels_credentials)))
+        for cred_dict in all_channels_credentials:
+            key = cred_dict['key']
+            channel_id = key.split('/')[-1]
+            if channel_id == orig_channel_id or cred_dict['refresh_token'] != old_refresh_token:
                 continue  # ignoring original owner
             self.db.set_credentials(new_credentials, client_app_id, owner_id, channel_id)
 
@@ -141,6 +153,7 @@ class TokenRefresherManager(object):
                 except KeyError:
                     if attempt < 1:
                         credentials = self.implementer.auth_response(credentials)
+                        self.db.set_credentials(credentials, client_app_id, owner_id, channel_id)
                     else:
                         logger.debug('[TokenRefresher] Missing expiration_date for {}'.format(key))
                         return
@@ -155,6 +168,7 @@ class TokenRefresherManager(object):
 
                 if response.status_code == requests.codes.ok:
                     new_credentials = self.implementer.auth_response(response.json())
+                    new_credentials = self.update_expiration_date(new_credentials)
 
                     if 'refresh_token' not in new_credentials:  # we need to keep same refresh_token always
                         new_credentials['refresh_token'] = credentials['refresh_token']
@@ -163,7 +177,8 @@ class TokenRefresherManager(object):
                     self.db.set_credentials(new_credentials, client_app_id, owner_id, channel_id)
 
                     if self.update_owners:
-                        self.update_all_owners(new_credentials, owner_id, channel_id, client_app_id)
+                        self.update_all_owners(credentials, new_credentials, owner_id, channel_id, client_app_id)
+                        self.update_all_channels(credentials, new_credentials, owner_id, channel_id, client_app_id)
                     return {
                         'channel_id': channel_id,
                         'credentials': new_credentials,
