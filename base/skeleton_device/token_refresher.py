@@ -36,7 +36,7 @@ class TokenRefresherManager(object):
             if settings.config_refresh.get('enabled') == True:
                 logger.info('[TokenRefresher] **** starting token refresher ****')
                 self.thread = threading.Thread(target=self.worker,
-                                               args=[self.implementer.get_refresh_token_conf(self.client_id)],
+                                               args=[self.implementer.get_refresh_token_conf()],
                                                name="TokenRefresh")
                 self.thread.daemon = True
                 self.thread.start()

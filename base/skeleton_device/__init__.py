@@ -228,7 +228,7 @@ class SkeletonDevice(SkeletonBase):
     # TOKEN REFRESH
     # -------------
 
-    def get_refresh_token_conf(self, client_id):
+    def get_refresh_token_conf(self):
         """
         Required configuration if token refresher is enabled
         Returns a dictionary
