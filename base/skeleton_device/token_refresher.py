@@ -134,7 +134,7 @@ class TokenRefresherManager(object):
 
             # Validate if token is valid before the request
             now = int(time.time())
-            for attempt in range(1):
+            for attempt in range(2):
                 try:
                     token_expiration_date = credentials['expiration_date']
                     expires_in = credentials['expires_in']
