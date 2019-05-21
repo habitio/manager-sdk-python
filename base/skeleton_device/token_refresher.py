@@ -106,7 +106,7 @@ class TokenRefresherManager(object):
         for cred_dict in all_owners_credentials:
             key = cred_dict['key']
             owner_id = key.split('/')[1]
-            if owner_id == orig_owner_id or cred_dict['refresh_token'] != old_refresh_token:
+            if owner_id == orig_owner_id or cred_dict['value']['refresh_token'] != old_refresh_token:
                 continue  # ignoring original owner
             self.db.set_credentials(new_credentials, client_app_id, owner_id, channel_id)
 
@@ -117,7 +117,7 @@ class TokenRefresherManager(object):
         for cred_dict in all_channels_credentials:
             key = cred_dict['key']
             channel_id = key.split('/')[-1]
-            if channel_id == orig_channel_id or cred_dict['refresh_token'] != old_refresh_token:
+            if channel_id == orig_channel_id or cred_dict['value']['refresh_token'] != old_refresh_token:
                 continue  # ignoring original owner
             self.db.set_credentials(new_credentials, client_app_id, owner_id, channel_id)
 
