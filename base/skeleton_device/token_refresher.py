@@ -59,7 +59,9 @@ class TokenRefresherManager(object):
 
     def get_credential_list(self):
         credentials_list = self.db.full_query('credential-owners/*/channels/*')
-        return self.implementer.update_credentials(credentials_list)
+        for credential in credentials_list:
+            credential['value'] = self.implementer.auth_response(credential['value'])
+        return credentials_list
 
     async def make_requests(self, conf_data: dict):
         try:

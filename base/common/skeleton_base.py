@@ -293,14 +293,6 @@ class SkeletonBase(ABC):
 
         return None
 
-    def update_credentials(self, credentials_list):
-        """
-        Method for update credentials received in old formats.
-        :param credentials_list: list of dicts retrived from Redis
-        :return: credentials_list
-        """
-        return credentials_list
-
     def get_params(self, url, credentials):
         """
         Create params dict to be sent in token_refresher request
