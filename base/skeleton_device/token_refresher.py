@@ -143,7 +143,7 @@ class TokenRefresherManager(object):
 
                 headers = self.implementer.get_headers(credentials, headers)
 
-                response = requests.request(method,  url, params=params, headers=headers)
+                response = requests.request(method, url, data=params, headers=headers)
 
                 if response.status_code == requests.codes.ok:
                     new_credentials = self.get_new_expiration_date(response.json())
