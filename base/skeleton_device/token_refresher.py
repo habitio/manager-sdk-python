@@ -67,7 +67,7 @@ class TokenRefresherManager(object):
             url = conf_data['url']
             method = conf_data['method']
 
-            is_json = conf_data.get('is_json', False)
+            headers = conf_data.get('headers', {})
 
             loop = asyncio.get_event_loop()
 
@@ -76,7 +76,7 @@ class TokenRefresherManager(object):
                     loop.run_in_executor(
                         executor,
                         self.send_request,
-                        credentials, method, url, is_json, conf_data
+                        credentials, method, url, headers
                     )
                     for credentials in self.get_credential_list()
                 ]
@@ -107,7 +107,7 @@ class TokenRefresherManager(object):
             self.db.set_credentials(new_credentials, client_app_id, owner_id, channel_id)
 
     @rate_limited(settings.config_refresh.get('rate_limit', DEFAULT_RATE_LIMIT))
-    def send_request(self, credentials_dict, method, url, is_json=False, **kwargs):
+    def send_request(self, credentials_dict, method, url, headers, **kwargs):
         try:
             key = credentials_dict['key']  # credential-owners/[owner_id]/channels/[channel_id]
             channel_id = key.split('/')[-1] if 'channel_id' not in kwargs else kwargs['channel_id']
@@ -141,7 +141,7 @@ class TokenRefresherManager(object):
                 logger.info("[TokenRefresher] Refreshing token {}".format(key))
                 url, params = self.implementer.get_params(url, credentials)
 
-                headers = self.implementer.get_headers(credentials, **kwargs)
+                headers = self.implementer.get_headers(credentials, headers)
 
                 response = requests.request(method,  url, params=params, headers=headers)
 

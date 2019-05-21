@@ -327,12 +327,11 @@ class SkeletonBase(ABC):
 
         return url.split('?')[0], params
 
-    def get_headers(self, credentials, **kwargs):
+    def get_headers(self, credentials, headers):
         """
         Create headers to send with token_refresher request
         :param credentials:
-        :param kwargs:
+        :param headers:
         :return: headers
         """
-        headers = kwargs.get('headers', {})
         return headers
