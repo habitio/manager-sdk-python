@@ -4,7 +4,7 @@ from base import settings
 from base.redis_db import get_redis
 from base.utils import rate_limited
 from base.constants import DEFAULT_REFRESH_INTERVAL, DEFAULT_RATE_LIMIT, DEFAULT_THREAD_MAX_WORKERS, \
-    DEFAULT_BEFORE_EXPIRES, DEFAULT_EXPIRES_IN_KEY
+    DEFAULT_BEFORE_EXPIRES
 import asyncio
 import requests
 import threading
