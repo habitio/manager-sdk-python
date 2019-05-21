@@ -59,8 +59,6 @@ class TokenRefresherManager(object):
 
     def get_credential_list(self):
         credentials_list = self.db.full_query('credential-owners/*/channels/*')
-        for credential in credentials_list:
-            credential['value'] = self.implementer.auth_response(credential['value'])
         return credentials_list
 
     async def make_requests(self, conf_data: dict):
@@ -135,12 +133,17 @@ class TokenRefresherManager(object):
                 return
 
             # Validate if token is valid before the request
-            try:
-                now = int(time.time())
-                token_expiration_date = credentials['expiration_date']
-            except KeyError:
-                logger.debug('[TokenRefresher] Missing expiration_date for {}'.format(key))
-                return
+            now = int(time.time())
+            for attempt in range(1):
+                try:
+                    token_expiration_date = credentials['expiration_date']
+                    expires_in = credentials['expires_in']
+                except KeyError:
+                    if attempt < 1:
+                        credentials = self.implementer.auth_response(credentials)
+                    else:
+                        logger.debug('[TokenRefresher] Missing expiration_date for {}'.format(key))
+                        return
 
             if now >= (token_expiration_date - self.before_expires):
                 logger.info("[TokenRefresher] Refreshing token {}".format(key))
@@ -152,7 +155,6 @@ class TokenRefresherManager(object):
 
                 if response.status_code == requests.codes.ok:
                     new_credentials = self.implementer.auth_response(response.json())
-                    new_credentials = self.implementer.get_new_expiration_date(new_credentials)
 
                     if 'refresh_token' not in new_credentials:  # we need to keep same refresh_token always
                         new_credentials['refresh_token'] = credentials['refresh_token']
