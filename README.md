@@ -142,6 +142,17 @@ Used to handle the response received in the final authorization request to manuf
 
 * Returns dictionary of required credentials for persistence, otherwise returns *None* if no persistence required after analyzing.
 
+**Example:**
+
+        {
+            'access_token': '{access_token}',
+            'refresh_token': '{refresh_token}',
+            'token_type': '{token_type}',
+            'expires_in': {expires_in},
+            'expiration_date': {expiration_date},
+            'client_id': '{client_id}'
+        }
+
 ##### **get_devices(sender, credentials) :**
 Identify a user's device list from manufacturer to integrate with Muzzley.
 
@@ -285,10 +296,15 @@ Retrieves channel template data given an channeltemplate_id, returns an empty di
 ##### **get_latest_property_value(channel_id, component, property)**
 Return the latest value received by the platform for a given channel_id/component/property, an empty dict is returned if no data if found.
 
-##### **get_new_expiration_date**
-Given a credential dictionary including 'access_token', 'refresh_token' and 'expires_in' values will return same dictionary with an additional key **'expiration_date'** which is the current time + expire_in seconds value - before_expires_seconds
+##### **get_params(channel_id, url, credentials)**
+Create params dict to be sent in token_refresher request.
 
-_before_expires_seconds: If defined in config file a "token_refresher" block will take 'before_expires_seconds' value, otherwise 'before_expires_seconds' has a default value of **300** seconds_
+Return formated url (str) and params (dict).
+
+##### **get_headers(self, credentials, headers)**
+Create headers dict to be sent in token_refresher request.
+
+Return headers (dict).
 
 ---
 
@@ -362,7 +378,7 @@ This section is optional, when an automatic token refresh process needs to be en
 * interval_seconds: Is the period of time where a token_refresher thread will perform requests to manufacturer's api. If not defined, default value is `DEFAULT_REFRESH_INTERVAL` (constants.py).
 * rate_limit: Is the limited amount of request by second. Useful to follow possible restrictions on manufacturer's api. If not defined, default value is `DEFAULT_RATE_LIMIT` (constants.py)
 * before_expires_seconds: This is the time margin before an access token expires. Leaving enough space to the refresh token process to successful execute. This means, if an access_token has an expiration time of 1 hour and before_expires_seconds is defined by 300 seconds. This token will try to refresh after 5 minutes before it expires. If not defined, default value is `DEFAULT_BEFORE_EXPIRES` (constants.py).
-* update_owners: boolean value (true/false). Default False. If enabled while refreshing a Token will also try to find all owners associated to the current refreshing channel and update their credentials as well.
+* update_owners: boolean value (true/false). Default False. If enabled while refreshing a Token will also try to find all owners associated to the current refreshing channel, and all channels associated with the current refreshing owner, and update their credentials as well if they have the same refresh_token.
 
 *see token_refresher section in [sample configuration file](sample-manager-sdk-python.conf)*
 
