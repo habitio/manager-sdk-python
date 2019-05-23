@@ -324,7 +324,6 @@ class WebhookHubDevice(WebhookHubBase):
     def webhook_registration(self):
 
         try:
-            self.patch_endpoints()
 
             if self.poll:
                 self.poll.start() if self.poll.thread is None else \

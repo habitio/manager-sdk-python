@@ -40,6 +40,7 @@ class Views:
             self.implementer.queue = queue_pub
 
             webhook = Webhook(queue=queue_pub, implementer=self.implementer)
+            webhook.patch_endpoints()
 
             mqtt = MqttConnector(implementer=self.implementer, queue=queue_sub, queue_pub=queue_pub)
             mqtt.mqtt_config()
