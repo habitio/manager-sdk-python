@@ -122,26 +122,17 @@ class TokenRefresherManager(object):
             self.db.set_credentials(new_credentials, client_app_id, owner_id, channel_id)
 
     @rate_limited(settings.config_refresh.get('rate_limit', DEFAULT_RATE_LIMIT))
-    def send_request(self, credentials_dict, method, url, headers, **kwargs):
+    def send_request(self, credentials_dict, url, headers, **kwargs):
         try:
             key = credentials_dict['key']  # credential-owners/[owner_id]/channels/[channel_id]
             channel_id = key.split('/')[-1] if 'channel_id' not in kwargs else kwargs['channel_id']
             owner_id = key.split('/')[1] if 'owner_id' not in kwargs else kwargs['owner_id']
             credentials = credentials_dict['value']
+
             try:
                 client_app_id = credentials['client_id']
             except KeyError:
                 logger.debug('[TokenRefresher] Missing client_id for {}'.format(key))
-                return
-
-            # validate if channel exists
-            try:
-                channel_template_id = self.implementer.get_channel_by_owner(owner_id, channel_id)
-            except Exception as e:
-                logger.debug('[TokenRefresher] {}'.format(e))
-                channel_template_id = None
-
-            if not channel_template_id:
                 return
 
             # Validate if token is valid before the request
@@ -161,10 +152,17 @@ class TokenRefresherManager(object):
             if now >= (token_expiration_date - self.before_expires):
                 logger.info("[TokenRefresher] Refreshing token {}".format(key))
                 url, params = self.implementer.get_params(url, credentials)
-
                 headers = self.implementer.get_headers(credentials, headers)
 
-                response = requests.request(method, url, data=params, headers=headers)
+                data = {
+                    "location": {
+                        "method": "POST",
+                        "url": url.format(**credentials),
+                        "headers": headers
+                    }
+                }
+
+                response = requests.request("POST", url, data=data, headers=headers)
 
                 if response.status_code == requests.codes.ok:
                     new_credentials = self.implementer.auth_response(response.json())
