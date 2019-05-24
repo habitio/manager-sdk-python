@@ -66,11 +66,6 @@ class TokenRefresherManager(object):
             logger.info("[TokenRefresher] {} starting {}".format(threading.currentThread().getName(),
                                                                  datetime.datetime.now()))
 
-            url = conf_data['url']
-            method = conf_data['method']
-
-            headers = conf_data.get('headers', {})
-
             loop = asyncio.get_event_loop()
 
             with concurrent.futures.ThreadPoolExecutor(max_workers=DEFAULT_THREAD_MAX_WORKERS) as executor:
@@ -78,7 +73,7 @@ class TokenRefresherManager(object):
                     loop.run_in_executor(
                         executor,
                         self.send_request,
-                        credentials, method, url, headers
+                        credentials, conf_data
                     )
                     for credentials in self.get_credential_list()
                 ]
