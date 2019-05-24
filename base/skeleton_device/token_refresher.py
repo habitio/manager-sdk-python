@@ -122,12 +122,20 @@ class TokenRefresherManager(object):
             self.db.set_credentials(new_credentials, client_app_id, owner_id, channel_id)
 
     @rate_limited(settings.config_refresh.get('rate_limit', DEFAULT_RATE_LIMIT))
-    def send_request(self, credentials_dict, url, headers, **kwargs):
+    def send_request(self, credentials_dict, conf, **kwargs):
         try:
             key = credentials_dict['key']  # credential-owners/[owner_id]/channels/[channel_id]
             channel_id = key.split('/')[-1] if 'channel_id' not in kwargs else kwargs['channel_id']
             owner_id = key.split('/')[1] if 'owner_id' not in kwargs else kwargs['owner_id']
             credentials = credentials_dict['value']
+
+            try:
+                params = conf['params'].format(**credentials_dict)
+                url = '{}{}'.format(conf['base_url'], params)
+                headers = conf.get('headers', {})
+            except KeyError as e:
+                logger.error('Missing key {} on refresh conf'.format(e))
+                return
 
             try:
                 client_app_id = credentials['client_id']
@@ -157,7 +165,7 @@ class TokenRefresherManager(object):
                 data = {
                     "location": {
                         "method": "POST",
-                        "url": url.format(**credentials),
+                        "url": url,
                         "headers": headers
                     }
                 }

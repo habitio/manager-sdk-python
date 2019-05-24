@@ -241,8 +241,7 @@ class SkeletonDevice(SkeletonBase):
         refresher = TokenRefresherManager(implementer=self)
         conf = self.get_refresh_token_conf()
 
-        response = refresher.send_request(credentials_dict,
-                                          conf['method'], conf['url'], conf.get('is_json', False), **kwargs)
+        response = refresher.send_request(credentials_dict, conf, **kwargs)
         self.log('refresh_token response {}'.format(response), 7)
 
         if type(response) is dict and 'credentials' in response:
