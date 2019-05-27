@@ -126,9 +126,7 @@ class TokenRefresherManager(object):
             credentials = credentials_dict['value']
 
             try:
-                params = conf['params'].format(**credentials)
                 url = conf['base_url']
-                #url = '{}{}'.format(conf['base_url'], params)
                 headers = conf.get('headers', {})
             except KeyError as e:
                 logger.error('Missing key {} on refresh conf'.format(e))
@@ -174,7 +172,6 @@ class TokenRefresherManager(object):
                     "X-Channel-ID": channel_id
                 }
 
-                logger.debug('Refresh Token: {} {}'.format(data, request_headers))
                 response = requests.request("POST", settings.refresh_token_url, json=data, headers=request_headers)
 
                 if response.status_code == requests.codes.ok:
@@ -201,7 +198,6 @@ class TokenRefresherManager(object):
 
                 else:
                     logger.warning('[TokenRefresher] Error in refresh token request {} {}'.format(channel_id, response))
-                    logger.debug(response.json())
             else:
                 logger.debug("[TokenRefresher] access token hasn't expired yet {}".format(key))
                 return {
