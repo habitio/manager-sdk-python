@@ -61,6 +61,7 @@ class Settings:
         # All urls
         self.auth_url = "{}{}".format(self.api_server_full, "/auth/authorize")
         self.renew_url = "{}{}".format(self.api_server_full, "/auth/exchange")
+        self.refresh_token_url = "{}/managers/{}/refresh-token".format(self.api_server_full, self.client_id)
 
         # Logging file path
         if "file" in self.config_log and self.config_log["file"] == "{log_path}":

@@ -12,6 +12,7 @@ import datetime
 import logging
 import time
 import traceback
+from urllib.parse import urlencode
 
 logger = logging.getLogger(__name__)
 
@@ -66,11 +67,6 @@ class TokenRefresherManager(object):
             logger.info("[TokenRefresher] {} starting {}".format(threading.currentThread().getName(),
                                                                  datetime.datetime.now()))
 
-            url = conf_data['url']
-            method = conf_data['method']
-
-            headers = conf_data.get('headers', {})
-
             loop = asyncio.get_event_loop()
 
             with concurrent.futures.ThreadPoolExecutor(max_workers=DEFAULT_THREAD_MAX_WORKERS) as executor:
@@ -78,7 +74,7 @@ class TokenRefresherManager(object):
                     loop.run_in_executor(
                         executor,
                         self.send_request,
-                        credentials, method, url, headers
+                        credentials, conf_data
                     )
                     for credentials in self.get_credential_list()
                 ]
@@ -122,26 +118,24 @@ class TokenRefresherManager(object):
             self.db.set_credentials(new_credentials, client_app_id, owner_id, channel_id)
 
     @rate_limited(settings.config_refresh.get('rate_limit', DEFAULT_RATE_LIMIT))
-    def send_request(self, credentials_dict, method, url, headers, **kwargs):
+    def send_request(self, credentials_dict, conf, **kwargs):
         try:
             key = credentials_dict['key']  # credential-owners/[owner_id]/channels/[channel_id]
             channel_id = key.split('/')[-1] if 'channel_id' not in kwargs else kwargs['channel_id']
             owner_id = key.split('/')[1] if 'owner_id' not in kwargs else kwargs['owner_id']
             credentials = credentials_dict['value']
+
+            try:
+                url = conf['url']
+                headers = conf.get('headers', {})
+            except KeyError as e:
+                logger.error('Missing key {} on refresh conf'.format(e))
+                return
+
             try:
                 client_app_id = credentials['client_id']
             except KeyError:
                 logger.debug('[TokenRefresher] Missing client_id for {}'.format(key))
-                return
-
-            # validate if channel exists
-            try:
-                channel_template_id = self.implementer.get_channel_by_owner(owner_id, channel_id)
-            except Exception as e:
-                logger.debug('[TokenRefresher] {}'.format(e))
-                channel_template_id = None
-
-            if not channel_template_id:
                 return
 
             # Validate if token is valid before the request
@@ -161,10 +155,28 @@ class TokenRefresherManager(object):
             if now >= (token_expiration_date - self.before_expires):
                 logger.info("[TokenRefresher] Refreshing token {}".format(key))
                 url, params = self.implementer.get_params(url, credentials)
+                if not url and not params:
+                    logger.debug('Invalid credentials {}'.format(key))
+                    return
 
-                headers = self.implementer.get_headers(credentials, headers)
+                refresh_headers = self.implementer.get_headers(credentials, headers)
 
-                response = requests.request(method, url, data=params, headers=headers)
+                data = {
+                    "location": {
+                        "method": "POST",
+                        "url": '{}?{}'.format(url, urlencode(params)),
+                        "headers": refresh_headers
+                    }
+                }
+
+                request_headers = {
+                    "Authorization": "Bearer {}".format(settings.block["access_token"]),
+                    "X-Client-ID": client_app_id,
+                    "X-Owner-ID": owner_id,
+                    "X-Channel-ID": channel_id
+                }
+
+                response = requests.request("POST", settings.refresh_token_url, json=data, headers=request_headers)
 
                 if response.status_code == requests.codes.ok:
                     new_credentials = self.implementer.auth_response(response.json())
@@ -185,6 +197,9 @@ class TokenRefresherManager(object):
                         'old_credentials': credentials,
                         'new': True
                     }
+                elif response.status_code == requests.codes.bad_request and "text" in response.json():
+                    logger.debug("channel_id: {}, {}".format(channel_id, response.json()["text"]))
+
                 else:
                     logger.warning('[TokenRefresher] Error in refresh token request {} {}'.format(channel_id, response))
             else:
