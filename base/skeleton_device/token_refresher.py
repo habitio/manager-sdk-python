@@ -12,6 +12,7 @@ import datetime
 import logging
 import time
 import traceback
+from urllib.parse import urlencode
 
 logger = logging.getLogger(__name__)
 
@@ -125,8 +126,9 @@ class TokenRefresherManager(object):
             credentials = credentials_dict['value']
 
             try:
-                params = conf['params'].format(**credentials_dict)
-                url = '{}{}'.format(conf['base_url'], params)
+                params = conf['params'].format(**credentials)
+                url = conf['base_url']
+                #url = '{}{}'.format(conf['base_url'], params)
                 headers = conf.get('headers', {})
             except KeyError as e:
                 logger.error('Missing key {} on refresh conf'.format(e))
@@ -160,10 +162,12 @@ class TokenRefresherManager(object):
                 data = {
                     "location": {
                         "method": "POST",
-                        "url": url,
+                        "url": '{}?{}'.format(url, urlencode(params)),
                         "headers": headers
                     }
                 }
+
+                logger.info('Refresh Token: {}'.format(data))
 
                 response = requests.request("POST", url, data=data, headers=headers)
 
