@@ -12,6 +12,7 @@ import datetime
 import logging
 import time
 import traceback
+from urllib.parse import urlencode
 
 logger = logging.getLogger(__name__)
 
@@ -66,11 +67,6 @@ class TokenRefresherManager(object):
             logger.info("[TokenRefresher] {} starting {}".format(threading.currentThread().getName(),
                                                                  datetime.datetime.now()))
 
-            url = conf_data['url']
-            method = conf_data['method']
-
-            headers = conf_data.get('headers', {})
-
             loop = asyncio.get_event_loop()
 
             with concurrent.futures.ThreadPoolExecutor(max_workers=DEFAULT_THREAD_MAX_WORKERS) as executor:
@@ -78,7 +74,7 @@ class TokenRefresherManager(object):
                     loop.run_in_executor(
                         executor,
                         self.send_request,
-                        credentials, method, url, headers
+                        credentials, conf_data
                     )
                     for credentials in self.get_credential_list()
                 ]
@@ -122,12 +118,21 @@ class TokenRefresherManager(object):
             self.db.set_credentials(new_credentials, client_app_id, owner_id, channel_id)
 
     @rate_limited(settings.config_refresh.get('rate_limit', DEFAULT_RATE_LIMIT))
-    def send_request(self, credentials_dict, url, headers, **kwargs):
+    def send_request(self, credentials_dict, conf, **kwargs):
         try:
             key = credentials_dict['key']  # credential-owners/[owner_id]/channels/[channel_id]
             channel_id = key.split('/')[-1] if 'channel_id' not in kwargs else kwargs['channel_id']
             owner_id = key.split('/')[1] if 'owner_id' not in kwargs else kwargs['owner_id']
             credentials = credentials_dict['value']
+
+            try:
+                params = conf['params'].format(**credentials)
+                url = conf['base_url']
+                #url = '{}{}'.format(conf['base_url'], params)
+                headers = conf.get('headers', {})
+            except KeyError as e:
+                logger.error('Missing key {} on refresh conf'.format(e))
+                return
 
             try:
                 client_app_id = credentials['client_id']
@@ -157,7 +162,7 @@ class TokenRefresherManager(object):
                 data = {
                     "location": {
                         "method": "POST",
-                        "url": url.format(**credentials),
+                        "url": '{}?{}'.format(url, urlencode(params)),
                         "headers": refresh_headers
                     }
                 }
@@ -165,6 +170,9 @@ class TokenRefresherManager(object):
                 request_headers = {
                     "Authorization": "Bearer {}".format(settings.block["access_token"])
                 }
+
+                logger.debug('Refresh Token: {} {}'.format(data, request_headers))
+
                 response = requests.request("POST", url, data=data, headers=request_headers)
 
                 if response.status_code == requests.codes.ok:
