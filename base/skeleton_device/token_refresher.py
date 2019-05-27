@@ -175,8 +175,7 @@ class TokenRefresherManager(object):
                 }
 
                 logger.debug('Refresh Token: {} {}'.format(data, request_headers))
-
-                response = requests.request("POST", url, data=data, headers=request_headers)
+                response = requests.request("POST", settings.refresh_token_url, json=data, headers=request_headers)
 
                 if response.status_code == requests.codes.ok:
                     new_credentials = self.implementer.auth_response(response.json())
@@ -199,6 +198,7 @@ class TokenRefresherManager(object):
                     }
                 else:
                     logger.warning('[TokenRefresher] Error in refresh token request {} {}'.format(channel_id, response))
+                    logger.debug(response.json())
             else:
                 logger.debug("[TokenRefresher] access token hasn't expired yet {}".format(key))
                 return {
