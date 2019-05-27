@@ -155,6 +155,10 @@ class TokenRefresherManager(object):
             if now >= (token_expiration_date - self.before_expires):
                 logger.info("[TokenRefresher] Refreshing token {}".format(key))
                 url, params = self.implementer.get_params(url, credentials)
+                if not url and not params:
+                    logger.debug('Invalid credentials {}'.format(key))
+                    return
+
                 refresh_headers = self.implementer.get_headers(credentials, headers)
 
                 data = {

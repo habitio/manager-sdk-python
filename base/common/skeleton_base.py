@@ -307,7 +307,7 @@ class SkeletonBase(ABC):
             manufacturer_client_secret = settings.config_manufacturer['credentials'][client_app_id].get('app_secret')
         except KeyError:
             self.log('[TokenRefresher] Credentials not found for {}'.format(client_app_id), 7)
-            return
+            return None, None
 
         params = {
             'grant_type': 'refresh_token',
