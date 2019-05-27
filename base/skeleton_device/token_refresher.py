@@ -152,17 +152,20 @@ class TokenRefresherManager(object):
             if now >= (token_expiration_date - self.before_expires):
                 logger.info("[TokenRefresher] Refreshing token {}".format(key))
                 url, params = self.implementer.get_params(url, credentials)
-                headers = self.implementer.get_headers(credentials, headers)
+                refresh_headers = self.implementer.get_headers(credentials, headers)
 
                 data = {
                     "location": {
                         "method": "POST",
                         "url": url.format(**credentials),
-                        "headers": headers
+                        "headers": refresh_headers
                     }
                 }
 
-                response = requests.request("POST", url, data=data, headers=headers)
+                request_headers = {
+                    "Authorization": "Bearer {}".format(settings.block["access_token"])
+                }
+                response = requests.request("POST", url, data=data, headers=request_headers)
 
                 if response.status_code == requests.codes.ok:
                     new_credentials = self.implementer.auth_response(response.json())
