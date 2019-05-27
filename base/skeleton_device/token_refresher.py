@@ -168,7 +168,10 @@ class TokenRefresherManager(object):
                 }
 
                 request_headers = {
-                    "Authorization": "Bearer {}".format(settings.block["access_token"])
+                    "Authorization": "Bearer {}".format(settings.block["access_token"]),
+                    "X-Client-ID": client_app_id,
+                    "X-Owner-ID": owner_id,
+                    "X-Channel-ID": channel_id
                 }
 
                 logger.debug('Refresh Token: {} {}'.format(data, request_headers))
