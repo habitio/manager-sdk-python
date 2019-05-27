@@ -126,7 +126,7 @@ class TokenRefresherManager(object):
             credentials = credentials_dict['value']
 
             try:
-                url = conf['base_url']
+                url = conf['url']
                 headers = conf.get('headers', {})
             except KeyError as e:
                 logger.error('Missing key {} on refresh conf'.format(e))
