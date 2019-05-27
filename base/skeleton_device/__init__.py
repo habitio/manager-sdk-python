@@ -233,7 +233,7 @@ class SkeletonDevice(SkeletonBase):
         Required configuration if token refresher is enabled
         Returns a dictionary
             url - token refresh manufacturer url
-            method - HTTP method to use: GET / POST
+            headers - if required a dict with necessary headers
         """
         raise NotImplementedError('token refresher ENABLED but conf NOT DEFINED')
 

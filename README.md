@@ -203,7 +203,7 @@ Checks if access to read from/write to a component exists.
 ##### **get_refresh_token_conf()**
 When Token Refresh configuration is enabled, manager should implement this additional method.
 
-* Returns a python dictionary with 'url' and 'method' key. This will define what type of request should be made and which url.
+* Returns a python dictionary with 'url' and 'headers' (if required) keys
 
 ##### **get_polling_conf()**
 If Polling configuration is enabled, manager should implement this method
