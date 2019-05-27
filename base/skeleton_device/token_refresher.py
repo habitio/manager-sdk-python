@@ -197,7 +197,7 @@ class TokenRefresherManager(object):
                         'new': True
                     }
                 elif response.status_code == requests.codes.bad_request and "text" in response.json():
-                    logger.debug("channel_id: {}, {}".format(response.json(channel_id, response.json()["text"])))
+                    logger.debug("channel_id: {}, {}".format(channel_id, response.json()["text"]))
 
                 else:
                     logger.warning('[TokenRefresher] Error in refresh token request {} {}'.format(channel_id, response))
