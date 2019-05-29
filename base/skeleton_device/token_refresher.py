@@ -154,7 +154,14 @@ class TokenRefresherManager(object):
 
             if now >= (token_expiration_date - self.before_expires):
                 logger.info("[TokenRefresher] Refreshing token {}".format(key))
-                url, params = self.implementer.get_params(url, credentials)
+
+                params = {
+                    'grant_type': 'refresh_token',
+                    'refresh_token': credentials['refresh_token'],
+                    'client_id': '{client_id}',
+                    'client_secret': '{client_secret}'
+                }
+
                 if not url and not params:
                     logger.debug('Invalid credentials {}'.format(key))
                     return
