@@ -300,6 +300,8 @@ class SkeletonBase(ABC):
         :param url:
         :param credentials:
         :return: url (string), params (dict)
+
+        toDo: Delete
         """
         try:
             client_app_id = credentials['client_id']

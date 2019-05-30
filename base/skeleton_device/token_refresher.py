@@ -12,10 +12,8 @@ import datetime
 import logging
 import time
 import traceback
-from urllib.parse import urlencode
 
 logger = logging.getLogger(__name__)
-
 
 class TokenRefresherManager(object):
 
@@ -154,7 +152,9 @@ class TokenRefresherManager(object):
 
             if now >= (token_expiration_date - self.before_expires):
                 logger.info("[TokenRefresher] Refreshing token {}".format(key))
-                url, params = self.implementer.get_params(url, credentials)
+                params = "grant_type=refresh_token&client_id={client_id}&client_secret={client_secret}" \
+                         "&refresh_token=" + credentials["refresh_token"]
+
                 if not url and not params:
                     logger.debug('Invalid credentials {}'.format(key))
                     return
@@ -164,7 +164,7 @@ class TokenRefresherManager(object):
                 data = {
                     "location": {
                         "method": "POST",
-                        "url": '{}?{}'.format(url, urlencode(params)),
+                        "url": '{}?{}'.format(url, params),
                         "headers": refresh_headers
                     }
                 }
