@@ -148,7 +148,6 @@ class DBManager(Redis):
                 if return_key:
                     if type(result) is str:
                         result = json.loads(result)
-                    result = json.loads(result)
                     return_value = result.get('data', {}).get(return_key)
                 break
 
