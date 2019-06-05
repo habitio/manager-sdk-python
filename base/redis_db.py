@@ -142,7 +142,10 @@ class DBManager(Redis):
         return_value = None
         for key in key_list:
             result = self.get_key(key['key'])
-            if result:
+            if result and type(result) is list:
+                return_value = result
+                break
+            elif result:
                 return_value = result
                 return_key = key['return']
                 if return_key:
