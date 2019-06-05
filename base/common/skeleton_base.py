@@ -32,7 +32,8 @@ class SkeletonBase(ABC):
     def _clear_response_data(response_data):
         if response_data.get('refresh_token_expires_in'):
             response_data['expires_in'] = int(response_data.pop('refresh_token_expires_in', 0))
-
+        else:
+            response_data['expires_in'] = response_data.get('expires_in', 0)
         response_data['expiration_date'] = response_data.get('expiration_date', 0)
 
         return response_data
