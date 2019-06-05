@@ -85,14 +85,6 @@ class TokenRefresherManager(object):
         except Exception as e:
             logger.error("[TokenRefresher] {} Error on make_requests {}".format(e))
 
-    def update_expiration_date(self, credentials):
-        now = int(time.time())
-        expires_in = int(credentials['expires_in']) - self.before_expires
-        expiration_date = now + expires_in
-        credentials['expiration_date'] = expiration_date
-
-        return credentials
-
     def update_all_owners(self, old_credentials, new_credentials, orig_owner_id, channel_id, client_app_id):
         all_owners_credentials = self.db.full_query('credential-owners/*/channels/{}'.format(channel_id))
         old_refresh_token = old_credentials['refresh_token']
@@ -184,7 +176,7 @@ class TokenRefresherManager(object):
 
                 if response.status_code == requests.codes.ok:
                     new_credentials = self.implementer.auth_response(response.json())
-                    new_credentials = self.update_expiration_date(new_credentials)
+                    new_credentials = self.implementer.update_expiration_date(new_credentials)
 
                     if 'refresh_token' not in new_credentials:  # we need to keep same refresh_token always
                         new_credentials['refresh_token'] = credentials['refresh_token']

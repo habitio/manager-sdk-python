@@ -13,7 +13,8 @@ class SkeletonDevice(SkeletonBase):
 
     def __init__(self, mqtt=None):
         super(SkeletonDevice, self).__init__(mqtt)
-        self.DEFAULT_BEFORE_EXPIRES = DEFAULT_BEFORE_EXPIRES
+        #self.DEFAULT_BEFORE_EXPIRES = DEFAULT_BEFORE_EXPIRES
+        self.before_expires = settings.config_refresh.get('before_expires_seconds', DEFAULT_BEFORE_EXPIRES)
 
     def auth_requests(self, sender):
         """
@@ -260,6 +261,12 @@ class SkeletonDevice(SkeletonBase):
         """
         pass
 
+    def update_expiration_date(self, credentials):
+        now = int(time.time())
+        expires_in = int(credentials['expires_in']) - self.before_expires
+        expiration_date = now + expires_in
+        credentials['expiration_date'] = expiration_date
 
+        return credentials
 
 SkeletonBase.register(SkeletonDevice)
