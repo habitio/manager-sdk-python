@@ -279,8 +279,35 @@ class DBManager(Redis):
         logger.warning("[DB] To be implemented!")
 
     def get_channels(self, device_id=None):
-        if not device_id : device_id = '*'
+        if not device_id:
+            device_id = '*'
         return list(set(self.query('channel-devices/{}'.format(device_id))))
+
+    def update_all_owners(self, old_credentials, new_credentials, orig_owner_id, channel_id, client_app_id):
+        all_owners_credentials = self.full_query('credential-owners/*/channels/{}'.format(channel_id))
+        old_refresh_token = old_credentials['refresh_token']
+        logger.info('[TokenRefresher] update_all_owners: {} keys found'.format(len(all_owners_credentials)))
+        for cred_dict in all_owners_credentials:
+            key = cred_dict['key']
+            owner_id = key.split('/')[1]
+            value = cred_dict['value']
+            refresh_token = value.get('refresh_token', value.get('data', {}).get('refresh_token', ''))
+            if owner_id == orig_owner_id or refresh_token != old_refresh_token:
+                continue  # ignoring original owner
+            self.set_credentials(new_credentials, client_app_id, owner_id, channel_id)
+
+    def update_all_channels(self, old_credentials, new_credentials, owner_id, orig_channel_id, client_app_id):
+        all_channels_credentials = self.full_query('credential-owners/{}/channels/*'.format(owner_id))
+        old_refresh_token = old_credentials['refresh_token']
+        logger.info('[TokenRefresher] update_all_channels: {} keys found'.format(len(all_channels_credentials)))
+        for cred_dict in all_channels_credentials:
+            key = cred_dict['key']
+            channel_id = key.split('/')[-1]
+            value = cred_dict['value']
+            refresh_token = value.get('refresh_token', value.get('data', {}).get('refresh_token', ''))
+            if channel_id == orig_channel_id or refresh_token != old_refresh_token:
+                continue  # ignoring original owner
+            self.set_credentials(new_credentials, client_app_id, owner_id, channel_id)
 
 
 def get_redis():
