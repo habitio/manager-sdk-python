@@ -112,6 +112,9 @@ class TokenRefresherManager(object):
                 try:
                     token_expiration_date = credentials['expiration_date']
                     expires_in = credentials['expires_in']
+                    refresh_token = credentials['refresh_token']
+                    access_token = credentials['access_token']
+                    break
                 except KeyError:
                     if attempt < 1:
                         credentials = self.implementer.auth_response(credentials)
