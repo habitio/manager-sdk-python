@@ -2,7 +2,9 @@ import time
 
 from base.common.skeleton_base import SkeletonBase
 from base.constants import DEFAULT_BEFORE_EXPIRES
-from base.exceptions import ChannelTemplateNotFound
+from base.exceptions import ChannelTemplateNotFound, InvalidAccessCredentialsException
+from base import settings
+from typing import Dict
 
 from .router import *
 from .webhook import *
@@ -13,8 +15,38 @@ class SkeletonDevice(SkeletonBase):
 
     def __init__(self, mqtt=None):
         super(SkeletonDevice, self).__init__(mqtt)
-        #self.DEFAULT_BEFORE_EXPIRES = DEFAULT_BEFORE_EXPIRES
+        # self.DEFAULT_BEFORE_EXPIRES = DEFAULT_BEFORE_EXPIRES
         self.before_expires = settings.config_refresh.get('before_expires_seconds', DEFAULT_BEFORE_EXPIRES)
+
+    @property
+    def _swap_url(self) -> str:
+        server = settings.api_server
+        version = settings.api_version
+        client_id = settings.client_id
+        url = '{}/{}/managers/{}/swap-credentials'.format(server, version, client_id)
+        return url
+
+    def swap_credentials(self, credentials, sender, token_key='access_token') -> Dict:
+        url = self._swap_url
+        header = {
+            "Authorization": "Bearer {}".format(settings.block["access_token"]),
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "client_id": sender['client_id'],
+            "owner_id": sender['owner_id'],
+            "credentials": {
+                token_key: credentials[token_key]
+            }
+        }
+
+        response = requests.request('POST', url, headers=header, json=payload)
+
+        if response.status_code == 200:
+            return response.json()
+        else:
+            self.log('Error on request swap credentials. Status code: {}'.format(response.status_code), 3)
+            return {}
 
     def auth_requests(self, sender):
         """
@@ -116,7 +148,7 @@ class SkeletonDevice(SkeletonBase):
                     }
                     kwargs = {
                         'owner_id': sender['owner_id'],
-                        'channel_id': case['channel_id'] }
+                        'channel_id': case['channel_id']}
                     credentials = self.refresh_token(credentials_dict, **kwargs)
 
             return credentials
@@ -126,7 +158,8 @@ class SkeletonDevice(SkeletonBase):
         except Exception:
             self.log('Unexpected error {}'.format(traceback.format_exc(limit=5)), 3)
 
-        self.log('Missing info in access_check: \nsender: {} \ncase:{} \ncredentials:{}'.format(sender, case, credentials), 4)
+        self.log('Missing info in access_check: \nsender: {} \ncase:{} \ncredentials:{}'.format(sender, case,
+                                                                                                credentials), 4)
 
         return None
 
@@ -268,5 +301,6 @@ class SkeletonDevice(SkeletonBase):
         credentials['expiration_date'] = expiration_date
 
         return credentials
+
 
 SkeletonBase.register(SkeletonDevice)
