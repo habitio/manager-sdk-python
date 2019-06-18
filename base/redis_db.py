@@ -115,8 +115,8 @@ class DBManager(Redis):
 
         key_list = [
             owner_id,
-            "/".join([client_id, owner_id]),
-            "/".join(["/v3", "managers", settings.client_id, owner_id, channel_id]),
+            "/".join([str(client_id), str(owner_id)]),
+            "/".join(["/v3", "managers", str(settings.client_id), str(owner_id), str(channel_id)]),
         ]
         result = None
         for key in key_list:
@@ -137,7 +137,7 @@ class DBManager(Redis):
 
         key_list = [
             {'key': channel_id, 'return': None},
-            {'key': "/".join(["/v3", "managers", settings.client_id, channel_id]), 'return': 'device_id'},
+            {'key': "/".join(["/v3", "managers", str(settings.client_id), str(channel_id)]), 'return': 'device_id'},
         ]
         return_value = None
         for key in key_list:
