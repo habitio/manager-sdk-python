@@ -232,11 +232,9 @@ class WebhookHubDevice(WebhookHubBase):
 
             client_app_id = credentials['client_id']
             old_credentials = self.db.get_credentials(client_id, owner_id, channel_id)
-            if old_credentials and \
-                    credentials['access_token'] != old_credentials['access_token'] and \
-                    'refresh_token' in credentials:
-                self.db.update_all_owners(old_credentials, credentials, owner_id, channel_id, client_app_id)
-                self.db.update_all_channels(old_credentials, credentials, owner_id, channel_id, client_app_id)
+            if old_credentials and 'refresh_token' in credentials:
+                self.db.update_all_owners(old_credentials, credentials, owner_id, channel_id, client_app_id, True)
+                self.db.update_all_channels(old_credentials, credentials, owner_id, channel_id, client_app_id, True)
 
             self.db.set_credentials(credentials, client_id, owner_id, channel_id)
             return channel_id
@@ -261,7 +259,6 @@ class WebhookHubDevice(WebhookHubBase):
                 # Ensure persistence of manufacturer's device id (key) to channel id (field) in redis hash
                 self.db.set_channel_id(device["id"], channel_id, True)
                 logger.verbose("Channel added to database {}".format(channel_id))
-
 
             return channel_id
 

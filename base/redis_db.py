@@ -286,7 +286,8 @@ class DBManager(Redis):
             device_id = '*'
         return list(set(self.query('channel-devices/{}'.format(device_id))))
 
-    def update_all_owners(self, old_credentials, new_credentials, orig_owner_id, channel_id, client_app_id):
+    def update_all_owners(self, old_credentials, new_credentials, orig_owner_id, channel_id, client_app_id,
+                          force=False):
         all_owners_credentials = self.full_query('credential-owners/*/channels/{}'.format(channel_id))
         old_refresh_token = old_credentials['refresh_token']
         logger.info('[TokenRefresher] update_all_owners: {} keys found'.format(len(all_owners_credentials)))
@@ -295,11 +296,12 @@ class DBManager(Redis):
             owner_id = key.split('/')[1]
             value = cred_dict['value']
             refresh_token = value.get('refresh_token', value.get('data', {}).get('refresh_token', ''))
-            if owner_id == orig_owner_id or refresh_token != old_refresh_token:
-                continue  # ignoring original owner
+            if not force and refresh_token != old_refresh_token:
+                continue
             self.set_credentials(new_credentials, client_app_id, owner_id, channel_id)
 
-    def update_all_channels(self, old_credentials, new_credentials, owner_id, orig_channel_id, client_app_id):
+    def update_all_channels(self, old_credentials, new_credentials, owner_id, orig_channel_id, client_app_id,
+                            force=False):
         all_channels_credentials = self.full_query('credential-owners/{}/channels/*'.format(owner_id))
         old_refresh_token = old_credentials['refresh_token']
         logger.info('[TokenRefresher] update_all_channels: {} keys found'.format(len(all_channels_credentials)))
@@ -308,8 +310,8 @@ class DBManager(Redis):
             channel_id = key.split('/')[-1]
             value = cred_dict['value']
             refresh_token = value.get('refresh_token', value.get('data', {}).get('refresh_token', ''))
-            if channel_id == orig_channel_id or refresh_token != old_refresh_token:
-                continue  # ignoring original owner
+            if not force and refresh_token != old_refresh_token:
+                continue
             self.set_credentials(new_credentials, client_app_id, owner_id, channel_id)
 
 
