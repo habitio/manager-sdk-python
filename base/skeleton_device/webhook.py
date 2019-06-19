@@ -235,8 +235,8 @@ class WebhookHubDevice(WebhookHubBase):
             if old_credentials and \
                     credentials['access_token'] != old_credentials['access_token'] and \
                     'refresh_token' in credentials:
-                self.db.update_all_owners(old_credentials, credentials, owner_id, channel_id, client_app_id)
-                self.db.update_all_channels(old_credentials, credentials, owner_id, channel_id, client_app_id)
+                self.db.update_all_owners(old_credentials, credentials, owner_id, channel_id, client_app_id, True)
+                self.db.update_all_channels(old_credentials, credentials, owner_id, channel_id, client_app_id, True)
 
             self.db.set_credentials(credentials, client_id, owner_id, channel_id)
             return channel_id
