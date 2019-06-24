@@ -156,6 +156,34 @@ class DBManager(Redis):
 
         return return_value
 
+    def __get_channel_old(self, device_id):
+        """
+            Due to legacy code, this method retrieves channel_id stored just using old keys
+        """
+
+        logger.info("[DB] No channel found w/ new format! Search w/ old format")
+
+        key_list = [
+            {'key': device_id, 'return': None},
+            {'key': "/".join(["/v3", "managers", str(settings.client_id), str(device_id)]), 'return': 'channel_id'},
+        ]
+        return_value = None
+        for key in key_list:
+            result = self.get_key(key['key'])
+            if result and type(result) is list:
+                return_value = result
+                break
+            elif result:
+                return_value = result
+                return_key = key['return']
+                if return_key:
+                    if type(result) is str:
+                        result = json.loads(result)
+                    return_value = result.get('data', {}).get(return_key)
+                break
+
+        return return_value
+
     def get_credentials_with_key(self, client_id, owner_id, channel_id=None):
         data = None
         credentials_key = None
@@ -242,9 +270,7 @@ class DBManager(Redis):
         data = self.query(key)
 
         if not data:
-            logger.info("[DB] No channel found w/ new format! Search w/ old format")
-            key = device_id
-            result = self.get_key(key)
+            result = self.__get_channel_old(device_id)
 
             if not result:
                 logger.warning("[DB] No channel found for device {}".format(key))
