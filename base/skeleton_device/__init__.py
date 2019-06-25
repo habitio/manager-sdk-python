@@ -45,7 +45,8 @@ class SkeletonDevice(SkeletonBase):
         if response.status_code == 200:
             return response.json()
         else:
-            self.log('Error on request swap credentials. Status code: {}'.format(response.status_code), 3)
+            self.log('Error on request swap credentials. Status code: {}.\n URL: {}.\n Headers: {}.\n '
+                     'Payload: {}'.format(response.status_code, url, header, payload), 3)
             return {}
 
     def auth_requests(self, sender):
