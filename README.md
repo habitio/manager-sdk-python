@@ -82,7 +82,7 @@ Invoked when manufacturer's api intends to communicate with Muzzley's platform t
 	* **request**: A flask request object received from API webhook.
 
 * Returns a tuple as (case, data),
-	* **case**: Expecting a dictionary with keys _'device_id'_, _'component'_ and _'property'_, otherwise if _None_ is returned for case, then data will not be send to muzzley
+	* **case**: Expecting a dictionary with keys _'device_id'_ or _'channel_id'_ (according to the request data received), _'component'_ and _'property'_, otherwise if _None_ is returned for case, then data will not be send to muzzley
 	* **data**: Any data that has to be send to Muzzley's platform
 
 ---
