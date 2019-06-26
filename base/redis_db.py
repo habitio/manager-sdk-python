@@ -312,8 +312,7 @@ class DBManager(Redis):
             device_id = '*'
         return list(set(self.query('channel-devices/{}'.format(device_id))))
 
-    def update_all_owners(self, old_credentials, new_credentials, channel_id, client_app_id,
-                          force=False):
+    def update_all_owners(self, old_credentials, new_credentials, channel_id, client_app_id, force=False):
         if settings.config_boot.get('update_owners', True):
             all_owners_credentials = self.full_query('credential-owners/*/channels/{}'.format(channel_id))
             old_refresh_token = old_credentials['refresh_token']
@@ -327,8 +326,7 @@ class DBManager(Redis):
                     continue
                 self.set_credentials(new_credentials, client_app_id, owner_id, channel_id)
 
-    def update_all_channels(self, old_credentials, new_credentials, owner_id, orig_channel_id, client_app_id,
-                            force=False):
+    def update_all_channels(self, old_credentials, new_credentials, owner_id, client_app_id, force=False):
         if settings.config_boot.get('update_channels', True):
             all_channels_credentials = self.full_query('credential-owners/{}/channels/*'.format(owner_id))
             old_refresh_token = old_credentials['refresh_token']
