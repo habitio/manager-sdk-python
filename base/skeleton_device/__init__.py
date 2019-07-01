@@ -48,6 +48,7 @@ class SkeletonDevice(SkeletonBase):
 
         response = None
         payload = {}
+        credentials = credentials or {}
 
         for attempt in range(2):
             payload = {
