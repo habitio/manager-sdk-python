@@ -26,23 +26,47 @@ class SkeletonDevice(SkeletonBase):
         url = '{}/{}/managers/{}/swap-credentials'.format(server, version, client_id)
         return url
 
+    @staticmethod
+    def _refresh_token_kwargs(credentials, sender, case=None):
+        credentials_dict = {
+            'key': sender['key'],
+            'value': credentials
+        }
+        kwargs = {
+            'owner_id': sender['owner_id'],
+        }
+        if case and isinstance(case, dict):
+            kwargs['channel_id'] = case.get('channel_id', '')
+        return credentials_dict, kwargs
+
     def swap_credentials(self, credentials, sender, token_key='access_token') -> Dict:
         url = self._swap_url
         header = {
             "Authorization": "Bearer {}".format(settings.block["access_token"]),
             "Content-Type": "application/json"
         }
-        payload = {
-            "client_id": sender['client_id'],
-            "owner_id": sender['owner_id'],
-            "credentials": {
-                token_key: credentials[token_key]
+
+        response = None
+        payload = {}
+
+        for attempt in range(2):
+            payload = {
+                "client_id": credentials.get('client_id', sender.get('client_id', '')),
+                "owner_id": sender.get('owner_id', ''),
+                "credentials": {
+                    token_key: credentials.get(token_key, '')
+                }
             }
-        }
+            response = requests.request('POST', url, headers=header, json=payload)
+            if response.status_code == 204:
+                now = int(time.time())
+                credentials['expiration_date'] = now - 1
+                credentials_dict, kwargs = self._refresh_token_kwargs(credentials, sender)
+                credentials = self.refresh_token(credentials_dict, **kwargs)
+            else:
+                break
 
-        response = requests.request('POST', url, headers=header, json=payload)
-
-        if response.status_code == 200:
+        if response and response.status_code == 200:
             return response.json()
         else:
             self.log('Error on request swap credentials. Status code: {}.\n URL: {}.\n Headers: {}.\n '
@@ -142,14 +166,7 @@ class SkeletonDevice(SkeletonBase):
             if 'key' in sender:
                 if now >= expiration_date:  # we should refresh the token
                     self.log('token is expired trying to refresh {}'.format(sender['key']), 7)
-
-                    credentials_dict = {
-                        'key': sender['key'],
-                        'value': credentials
-                    }
-                    kwargs = {
-                        'owner_id': sender['owner_id'],
-                        'channel_id': case['channel_id']}
+                    credentials_dict, kwargs = self._refresh_token_kwargs(credentials, sender, case)
                     credentials = self.refresh_token(credentials_dict, **kwargs)
 
             return credentials
