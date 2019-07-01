@@ -51,19 +51,22 @@ class SkeletonDevice(SkeletonBase):
         credentials = credentials or {}
 
         for attempt in range(2):
-            payload = {
-                "client_id": credentials.get('client_id', sender.get('client_id', '')),
-                "owner_id": sender.get('owner_id', ''),
-                "credentials": {
-                    token_key: credentials.get(token_key, '')
+            if credentials:
+                payload = {
+                    "client_id": credentials.get('client_id', sender.get('client_id', '')),
+                    "owner_id": sender.get('owner_id', ''),
+                    "credentials": {
+                        token_key: credentials.get(token_key, '')
+                    }
                 }
-            }
-            response = requests.request('POST', url, headers=header, json=payload)
-            if response.status_code == 204:
-                now = int(time.time())
-                credentials['expiration_date'] = now - 1
-                credentials_dict, kwargs = self._refresh_token_kwargs(credentials, sender)
-                credentials = self.refresh_token(credentials_dict, **kwargs)
+                response = requests.request('POST', url, headers=header, json=payload)
+                if response.status_code == 204:
+                    now = int(time.time())
+                    credentials['expiration_date'] = now - 1
+                    credentials_dict, kwargs = self._refresh_token_kwargs(credentials, sender)
+                    credentials = self.refresh_token(credentials_dict, **kwargs)
+                else:
+                    break
             else:
                 break
 
