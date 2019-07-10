@@ -1,9 +1,13 @@
-import traceback, json, sys, logging, requests
+import traceback
+import json
+import os
+import logging
+import requests
 from tenacity import retry, wait_fixed
 from flask import Response
 
+from base import settings
 from base.common.webhook_base import WebhookHubBase
-from base.settings import settings
 from base.constants import DEFAULT_RETRY_WAIT
 
 logger = logging.getLogger(__name__)
@@ -79,7 +83,7 @@ class WebhookHubApplication(WebhookHubBase):
                 except Exception as ex:
 
                     logger.alert("Failed to set service!\n{}".format(ex))
-                    exit()
+                    os._exit(1)
 
         except Exception as e:
             logger.alert("Failed at patch endpoints! {}".format(traceback.format_exc(limit=5)))
@@ -87,10 +91,12 @@ class WebhookHubApplication(WebhookHubBase):
 
     def webhook_registration(self):
         try:
-            self.patch_endpoints()
-            self.implementer.start()
             if self.watchdog_monitor:
-                self.watchdog_monitor.start()
+                self.watchdog_monitor.start() if self.watchdog_monitor.thread is None else \
+                    logger.notice("Watchdog thread alive? : {}".format(self.watchdog_monitor.thread.is_alive()))
+
+            self.implementer.start()
+
         except Exception as e:
             logger.alert("Unexpected exception {}".format(traceback.format_exc(limit=5)))
-            exit()
+            os._exit(1)

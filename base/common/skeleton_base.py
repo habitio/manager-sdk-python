@@ -3,9 +3,9 @@ import time
 from abc import ABC, abstractmethod
 from datetime import timedelta
 
+from base import settings
+from base.redis_db import get_redis
 from base.exceptions import ChannelTemplateNotFound, PropertyHistoryNotFoundException
-from base.settings import settings
-from base.redis_db import db
 from base.constants import get_log_table, DEFAULT_BEFORE_EXPIRES
 import requests
 import traceback
@@ -15,9 +15,11 @@ LOGGER, LOG_TABLE = get_log_table(__name__)
 
 class SkeletonBase(ABC):
 
-    def __init__(self):
+    def __init__(self, queue=None):
         super(SkeletonBase, self).__init__()
         self._type = settings.implementor_type
+        self.db = get_redis()
+        self.queue = queue
 
     @abstractmethod
     def start(self):
@@ -26,6 +28,19 @@ class SkeletonBase(ABC):
         """
         return NotImplemented
 
+    @staticmethod
+    def _clear_response_data(response_data):
+        if response_data.get('refresh_token_expires_in'):
+            response_data['expires_in'] = int(response_data.pop('refresh_token_expires_in', 0))
+        else:
+            response_data['expires_in'] = response_data.get('expires_in', 0)
+        response_data['expiration_date'] = response_data.get('expiration_date', 0)
+
+        return response_data
+
+    def start(self):
+        pass
+
     def auth_response(self, response_data):
         """
         *** MANDATORY ***
@@ -33,6 +48,16 @@ class SkeletonBase(ABC):
 
         Returns dictionary of required credentials for persistence, otherwise
         returns None if no persistence required after analyzing.
+
+        dictionary template:
+        {
+            'access_token': '{access_token}',
+            'refresh_token': '{refresh_token}',
+            'token_type': '{token_type}',
+            'expires_in': {expires_in},
+            'expiration_date': {expiration_date},
+            'client_id': '{client_id}'
+        }
         """
         return NotImplemented
 
@@ -86,35 +111,43 @@ class SkeletonBase(ABC):
         To retrieve channel status using channel_id
 
         """
-        return db.get_channel_status(channel_id)
+        return self.db.get_channel_status(channel_id)
 
     def store_channel_status(self, channel_id, status):
         """
         To store a value to database with a unique identifier called key
 
         """
-        db.set_channel_status(channel_id, status)
+        self.db.set_channel_status(channel_id, status)
+
+    def get_all_credentials(self):
+        """
+        Get a full list of existing credentials with corresponding key
+
+        """
+        credentials_list = self.db.full_query('credential-owners/*/channels/*')
+        return credentials_list
 
     def store(self, key, value):
         """
         To store a value to database with a unique identifier called key
 
         """
-        db.set_key(key, value)
+        self.db.set_key(key, value)
 
     def retrieve(self, key):
         """
         To retireve a value from database with its unique identifier, key.
 
         """
-        return db.get_key(key)
+        return self.db.get_key(key)
 
     def exists(self, key):
         """
         To check if a key is already present in database.
 
         """
-        return db.has_key(key)
+        return self.db.has_key(key)
 
     def log(self, message, level):
         """
@@ -154,7 +187,11 @@ class SkeletonBase(ABC):
             data - data to be published
         """
         self.log("Will publisher to mqtt", 7)
-        self.mqtt.publisher(io="iw", data=data, case=case)
+        self.queue.put({
+            "io": "iw",
+            "data": data,
+            "case": case
+        })
 
     def renew_credentials(self, channel_id, sender, credentials):
         """
@@ -165,7 +202,7 @@ class SkeletonBase(ABC):
                         'client_id'.
         """
         try:
-            db.set_credentials(
+            self.db.set_credentials(
                 credentials, sender["client_id"], sender["owner_id"], channel_id)
             self.log("Credentials successfully renewed !", 6)
         except Exception as ex:
@@ -223,12 +260,12 @@ class SkeletonBase(ABC):
             if int(resp.status_code) == 200:
                 return resp.json()
             else:
-                raise ChannelTemplateNotFound("Failed to retrieve channel_template_id")
+                raise ChannelTemplateNotFound("Failed to retrieve channeltemplate_data {}".format(channeltemplate_id))
 
         except (OSError, ChannelTemplateNotFound) as e:
             self.log('Error while making request to platform: {}'.format(e), 3)
         except Exception as ex:
-            self.log("Unexpected error get_channel_template: {}".format(traceback.format_exc(limit=5)), 3)
+            self.log("Unexpected error get_channeltemplate_data: {}".format(traceback.format_exc(limit=5)), 3)
         return {}
 
     def get_latest_property_value(self, channel_id, component, property):
@@ -254,24 +291,43 @@ class SkeletonBase(ABC):
             self.log("Unexpected error get_latest_property_value: {}".format(traceback.format_exc(limit=5)), 3)
         return {}
 
-    def get_new_expiration_date(self, credentials):
+    # -------------
+    # TOKEN REFRESH
+    # -------------
+
+    def get_params(self, url, credentials):
+        """
+        Create params dict to be sent in token_refresher request
+        :param url:
+        :param credentials:
+        :return: url (string), params (dict)
+
+        toDo: Delete
+        """
         try:
-            if 'access_token' and 'refresh_token' in credentials:
-                if 'expires_in' in credentials:
-                    now = int(time.time())
-                    before_expires_sec = settings.config_refresh.get('before_expires_seconds', DEFAULT_BEFORE_EXPIRES)
-                    expires_in = int(credentials['expires_in']) - before_expires_sec
-                    expiration_date = now + expires_in
-                    credentials['expiration_date'] = expiration_date
-                else:
-                    credentials['expiration_date'] = 0
-                    credentials['expires_in'] = 0
+            client_app_id = credentials['client_id']
+            manufacturer_client_id = settings.config_manufacturer['credentials'][client_app_id].get('app_id')
+            manufacturer_client_secret = settings.config_manufacturer['credentials'][client_app_id].get('app_secret')
+        except KeyError:
+            self.log('[TokenRefresher] Credentials not found for {}'.format(client_app_id), 7)
+            return None, None
 
-                return credentials
-        except KeyError as e:
-            self.log('Error missing {} key'.format(e), 4)
+        params = {
+            'grant_type': 'refresh_token',
+            'refresh_token': credentials['refresh_token'],
+            'client_id': manufacturer_client_id
+        }
 
-        self.log('Credentials are not valid: {}'.format(credentials), 4)
+        if manufacturer_client_secret is not None:
+            params['client_secret'] = manufacturer_client_secret
 
-        return None
+        return url.split('?')[0], params
 
+    def get_headers(self, credentials, headers):
+        """
+        Create headers to send with token_refresher request
+        :param credentials:
+        :param headers:
+        :return: headers
+        """
+        return headers

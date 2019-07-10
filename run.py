@@ -1,53 +1,30 @@
-print('[Boot]: Starting the process: OK')
-
-print('[Boot]: Settings: Importing')
-from base.settings import settings
-print('[Boot]: Settings: OK')
-
-
-print('[Boot]: Logs: Setting up')
+import os
+from base import settings
 from base import logger
-print('[Boot]: Logs: OK')
-
-print('[Boot]: Flask: Setting up')
 from flask import Flask
-print('[Boot]: Flask: OK')
-
+from base import views
 
 # Flask App
 logger.verbose("Creating Flask Object...")
 
 try:
-    app = Flask(__name__, instance_relative_config=True)
-    print("[Boot]: Flask object successfully created!")
-    logger.info("[Boot]: Flask object successfully created!")
+    if not settings.mqtt:
+        app = Flask(__name__, instance_relative_config=True)
+        app.config.from_object("flask_config")
+        views = views.Views(app)
+        logger.info("[Boot]: Flask object successfully created!")
+    else:
+        app = views.Views()
+        logger.info("[Boot]: Mqtt")
+
+
 except Exception as ex:
-    print("[Boot]: Flask object creation failed!")
-    print(ex)
     logger.emergency("[Boot]: Flask object creation failed!")
     logger.trace(ex)
     raise
 
-print('[Boot]: Flask Config: Setting up')
-app.config.from_object("flask_config")
-print('[Boot]: Flask Config: OK')
-
-print('[Boot]: Views: Setting up')
-
-try:
-    from base import views
-except Exception as ex:
-    print('Error: {}'.format(ex))
-    exit()
-
-try:
-    views = views.Views(app)
-except Exception as ex:
-    print('Error: {}'.format(ex))
-    exit()
 
 print('[Boot]: Views: OK')
-
 print("__name__ = {}".format(__name__))
 
 if __name__ == "__main__":

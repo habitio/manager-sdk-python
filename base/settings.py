@@ -9,7 +9,6 @@ from .exceptions import ImplementorTypeNotFoundException
 
 class Settings:
 
-
     def __init__(self):
 
         # Loading and Reading from Config file
@@ -23,6 +22,7 @@ class Settings:
 
         self.config_boot = self.config_data["boot"][0]
         self.config_log = self.config_data["$log"]
+        self.mqtt = self.config_boot.get("only_mqtt", False)
         self.config_cred = self.config_boot["rest"]["credentials"]
         self.config_http = self.config_boot["http"]
         self.config_redis = self.config_boot["redis"]["managers"]
@@ -31,6 +31,8 @@ class Settings:
         self.config_manufacturer = self.config_boot.get("manufacturer", {})
         self.config_polling = self.config_boot.get("polling", {})
         self.config_refresh = self.config_boot.get("token_refresher", {})
+        self.config_mqtt = self.config_boot.get("mqtt", {})
+        self.config_channel_templates = self.config_boot.get("channel_templates", {})
 
         self.client_id = self.config_cred["client_id"]
         self.client_secret = self.config_cred["client_secret"]
@@ -59,7 +61,7 @@ class Settings:
         # All urls
         self.auth_url = "{}{}".format(self.api_server_full, "/auth/authorize")
         self.renew_url = "{}{}".format(self.api_server_full, "/auth/exchange")
-
+        self.refresh_token_url = "{}/managers/{}/refresh-token".format(self.api_server_full, self.client_id)
 
         # Logging file path
         if "file" in self.config_log and self.config_log["file"] == "{log_path}":
@@ -98,8 +100,9 @@ class Settings:
             self.webhook_url = None
             self.mqtt_topic = 'applications'
         else:
-            raise ImplementorTypeNotFoundException('Error to find the implementor type in credentials, not device or application implementor!')
-            exit()
+            raise ImplementorTypeNotFoundException('Error to find the implementor type in credentials, not device or '
+                                                   'application implementor!')
+            os._exit(1)
 
         # Application specific conf
         self.services = self.config_boot.get('services', [])
@@ -119,12 +122,4 @@ class Settings:
 
     def get_config(self):
         return self.config_data
-
-
-# An instance of Settings class
-try:
-    settings = Settings()
-except Exception as e:
-    print('Error: {}'.format(e))
-    exit()
 

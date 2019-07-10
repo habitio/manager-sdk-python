@@ -14,6 +14,10 @@ DEFAULT_BEFORE_EXPIRES = 300  # 300 seconds
 # Retry connection
 DEFAULT_RETRY_WAIT = 2  # 2 seconds
 
+# mqtt
+DEFAULT_MIN_WAIT_SECS = 1
+DEFAULT_MAX_MQTT_TASKS = 5
+
 MANAGER_SCOPE = 'manager'
 APPLICATION_SCOPE = 'application'
 

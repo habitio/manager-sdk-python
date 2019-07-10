@@ -1,29 +1,41 @@
 from flask import Response, jsonify
 import logging, traceback
+import requests
 
-from base.redis_db import db
-from base.settings import settings
+from base.redis_db import get_redis
+from base import settings
 from base.utils import format_str
 from .watchdog import Watchdog
 
 logger = logging.getLogger(__name__)
 
+
 class WebhookHubBase:
 
-    def __init__(self, mqtt=None):
-        from base.solid import implementer
+    def __init__(self, queue=None, implementer=None):
         self.implementer = implementer
-        self.implementer.mqtt = mqtt
-        self.mqtt = mqtt
-        self.headers = {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer {0}".format(settings.block["access_token"])
-        }
+        self.queue = queue
+
         try:
             self.watchdog_monitor = Watchdog()
         except Exception as e:
             logger.error("Failed to start Watchdog, {} {}".format(e, traceback.format_exc(limit=5)))
             self.watchdog_monitor = None
+
+        self.session = requests.Session()
+        self.session.headers.update({
+            "Content-Type": "application/json",
+            "Authorization": "Bearer {0}".format(settings.block["access_token"])
+        })
+
+        self.db = get_redis()
+
+    @staticmethod
+    def _create_expiration_date(credentials):
+        credentials['expiration_date'] = credentials.get('expiration_date', 0)
+        credentials['expires_in'] = credentials.get('expires_in', 0)
+
+        return credentials
 
     def receive_token(self, request):
         logger.debug("\n\n\n\n\n\t\t\t\t\t********************** RECEIVE_TOKEN **************************")
@@ -38,8 +50,10 @@ class WebhookHubBase:
                     return Response(status=422)
 
                 data = self.implementer.auth_response(received_data)
-                if data != None:
-                    db.set_credentials(data, request.headers["X-Client-Id"], request.headers["X-Owner-Id"])
+                data = self._create_expiration_date(data)
+
+                if data:
+                    self.db.set_credentials(data, request.headers["X-Client-Id"], request.headers["X-Owner-Id"])
                     return Response(status=200)
                 else:
                     logger.warning("No credentials to be stored!")
@@ -53,13 +67,13 @@ class WebhookHubBase:
     def inbox(self, request):
 
         logger.debug("\n\n\n\n\n\t\t\t\t\t*******************INBOX****************************")
-        logger.debug("Received {} - {}".format(request.method, request.path))
-        logger.verbose("\n{}".format(request.headers))
+        logger.info("Received {} - {}".format(request.method, request.path))
+        logger.info("\n{}".format(request.headers))
 
         if request.is_json:
-            logger.verbose(format_str(request.get_json(), is_json=True))
+            logger.info(format_str(request.get_json(), is_json=True))
         else:
-            logger.verbose("\n{}".format(request.get_data(as_text=True)))
+            logger.info("\n{}".format(request.get_data(as_text=True)))
 
         downstream_result = self.implementer.downstream(request)
         downstream_list = downstream_result if type(downstream_result) == list else [downstream_result]
@@ -75,7 +89,11 @@ class WebhookHubBase:
                         custom_mqtt = downstream_tuple[3]
                         custom_mqtt.publisher(io="iw", data=data, case=case)
                     except (IndexError, AttributeError):
-                        self.mqtt.publisher(io="iw", data=data, case=case)
+                        self.queue.put({
+                            "io": "iw",
+                            "data": data,
+                            "case": case
+                        })
             except (TypeError, KeyError):
                 logger.debug('downstream method returned {}'.format(downstream_tuple))
 
