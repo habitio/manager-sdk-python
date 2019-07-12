@@ -100,7 +100,7 @@ class Implementor(Skeleton):
 
         return data
 
-    def did_pair_devices(self, credentials, sender, paired_devices):
+    def did_pair_devices(self, credentials, sender, paired_devices, channels):
         """
         *** MANDATORY ***
         Invoked after successful device pairing.
@@ -110,6 +110,7 @@ class Implementor(Skeleton):
             sender          - A dictionary with keys 'channel_template_id', 'owner_id' and 
                             'client_id'.
             paired_devices     - A list of dictionaries with selected device's data
+            channels - A list of channels_id
 
         """
         pass
