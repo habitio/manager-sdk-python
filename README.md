@@ -1,3 +1,5 @@
+# THIS VERSION IS DEPRECATED. NOW IT IS AN OPENSOURCE PROJECT CONTINUED HERE: https://github.com/habitio/manager-sdk-python
+
 # manager-sdk-python
 Internship project of a sdk for python integrations with Muzzley
 
