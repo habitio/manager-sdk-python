@@ -1,5 +1,3 @@
-import logging
-
 # manufacturer's api request
 DEFAULT_RATE_LIMIT = 1  # 1/second
 DEFAULT_THREAD_MAX_WORKERS = 2
@@ -20,27 +18,6 @@ DEFAULT_MAX_MQTT_TASKS = 5
 
 MANAGER_SCOPE = 'manager'
 APPLICATION_SCOPE = 'application'
-
-def get_log_table(_file_name):
-
-    logger = logging.getLogger(_file_name)
-
-    return (
-        logger,
-        {
-            0: logger.emergency,
-            1: logger.alert,
-            2: logger.critical,
-            3: logger.error,
-            4: logger.warning,
-            5: logger.notice,
-            6: logger.info,
-            7: logger.debug,
-            8: logger.trace,
-            9: logger.verbose
-        }
-    )
-
 
 # Access variables
 ACCESS_NO_POWER = 'no_power'

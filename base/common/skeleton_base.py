@@ -1,16 +1,14 @@
 import json
-import time
 from abc import ABC, abstractmethod
 from datetime import timedelta
 
-from base import settings
+from base import settings, logger
 from base.redis_db import get_redis
 from base.exceptions import ChannelTemplateNotFound, PropertyHistoryNotFoundException
-from base.constants import get_log_table, DEFAULT_BEFORE_EXPIRES
+from base.logger_base import LOG_TABLE
+from base.constants import DEFAULT_BEFORE_EXPIRES
 import requests
 import traceback
-
-LOGGER, LOG_TABLE = get_log_table(__name__)
 
 
 class SkeletonBase(ABC):
@@ -171,7 +169,7 @@ class SkeletonBase(ABC):
         try:
             LOG_TABLE[level](message)
         except IndexError as ex:
-            LOGGER.error(str(ex))
+            logger.error(str(ex))
 
     def get_config(self):
         """

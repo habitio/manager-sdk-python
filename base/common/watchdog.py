@@ -1,11 +1,8 @@
 import threading
 import traceback
-import logging
 import requests
 
-from base import settings
-
-logger = logging.getLogger(__name__)
+from base import settings, logger
 
 
 class Watchdog:

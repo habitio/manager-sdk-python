@@ -1,6 +1,6 @@
 import concurrent
 
-from base import settings
+from base import settings, logger
 from base.redis_db import get_redis
 from base.utils import rate_limited
 from base.constants import DEFAULT_POLLING_INTERVAL, DEFAULT_RATE_LIMIT, DEFAULT_THREAD_MAX_WORKERS
@@ -8,10 +8,8 @@ import asyncio
 import requests
 import threading
 import datetime
-import logging
 import time
 
-logger = logging.getLogger(__name__)
 
 class PollingManager(object):
 
@@ -28,9 +26,10 @@ class PollingManager(object):
         If polling is enabled in config file, retrieves conf for polling in implementor
         """
         try:
-            if settings.config_polling.get('enabled') == True:
+            if settings.config_polling.get('enabled') is True:
                 logger.info('[Polling] **** starting polling ****')
-                self.thread = threading.Thread(target=self.worker, args=[self.implementer.get_polling_conf()], name="Polling")
+                self.thread = threading.Thread(target=self.worker, args=[self.implementer.get_polling_conf()],
+                                               name="Polling")
                 self.thread.daemon = True
                 self.thread.start()
             else:
@@ -82,11 +81,12 @@ class PollingManager(object):
                     for channel_id in self.db.get_channels()
                 ]
                 for response in await asyncio.gather(*futures):
-                    if response: self.implementer.polling(response)
+                    if response:
+                        self.implementer.polling(response)
 
             logger.info("[Polling] {} finishing {}".format(threading.currentThread().getName(),  datetime.datetime.now()))
         except Exception as e:
-            logger.error("[Polling] {} Error on make_requests {}".format(e))
+            logger.error("[Polling] Error on make_requests: {}".format(e))
 
     @rate_limited(settings.config_polling.get('rate_limit', DEFAULT_RATE_LIMIT))
     def send_request(self, channel_id, method, url, params, data):
@@ -112,7 +112,8 @@ class PollingManager(object):
                         cred_key, now, token_expiration_date))
                     continue
 
-                response = requests.request(method,  url, params=params, data=data, headers=self.authorization(credentials))
+                response = requests.request(method,  url, params=params, data=data,
+                                            headers=self.authorization(credentials))
                 if response.status_code == requests.codes.ok:
                     logger.info('[Polling] polling request successful with {}'.format(cred_key))
                     return {
@@ -130,7 +131,6 @@ class PollingManager(object):
             logger.error('[Polling] Unknown error on polling.send_request {}'.format(e))
         logger.notice('[Polling] No valid credentials found for channel {}'.format(channel_id))
         return False
-
 
     def validate_channel(self, credential_key):
         try:

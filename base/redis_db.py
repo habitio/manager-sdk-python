@@ -1,12 +1,9 @@
 import ast
 import json
-import logging
 import traceback
 
 from redis import Redis
-from base import settings
-
-logger = logging.getLogger(__name__)
+from base import settings, logger
 
 
 class DBManager(Redis):
@@ -226,7 +223,6 @@ class DBManager(Redis):
             return credentials, key
 
         return credentials
-
 
     def set_credentials(self, credentials, client_id, owner_id, channel_id=None):
         if not client_id or not owner_id:

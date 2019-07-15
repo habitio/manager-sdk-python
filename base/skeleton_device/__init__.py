@@ -2,8 +2,7 @@ import time
 
 from base.common.skeleton_base import SkeletonBase
 from base.constants import DEFAULT_BEFORE_EXPIRES
-from base.exceptions import ChannelTemplateNotFound, InvalidAccessCredentialsException
-from base import settings
+from base.exceptions import ChannelTemplateNotFound
 from typing import Dict
 
 from .router import *
@@ -73,8 +72,8 @@ class SkeletonDevice(SkeletonBase):
         if response and response.status_code == 200:
             return response.json()
         else:
-            self.log('Error on request swap credentials. Status code: {}.\n URL: {}.\n Headers: {}.\n '
-                     'Payload: {}'.format(response.status_code, url, header, payload), 3)
+            self.log('Error on request swap credentials. Status code: {}.\n URL: {}'.format(response.status_code,
+                                                                                            url), 3)
             return {}
 
     def auth_requests(self, sender):

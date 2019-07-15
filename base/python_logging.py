@@ -1,4 +1,7 @@
+import json
 import logging.handlers
+from functools import wraps
+
 
 log_levels = {
     "EMERGENCY": ["\x1B[4;31m emergency \x1B[0m ", 109],
@@ -13,68 +16,149 @@ log_levels = {
     "VERBOSE": ["\x1B[4;32m  verbose  \x1B[0m ", 100]
 }
 
-def verbose(self, message, *args, **kws):
+
+class CustomFormatter(logging.Formatter):
+
+    def __init__(self, fmt=None, datefmt=None, style='%', log_type='json') -> None:
+        self._log_type = log_type
+        super().__init__(fmt, datefmt, style)
+
+    @property
+    def log_type(self) -> str:
+        return self._log_type
+
+    @log_type.setter
+    def log_type(self, value) -> None:
+        self._log_type = value
+
+    def formatTime(self, record, datefmt=None) -> [float, str]:
+        if self.log_type == 'json':
+            return round(float(record.created), 3)
+        else:
+            return super().formatTime(record, datefmt)
+
+
+def format_message(func):
+    @wraps(func)
+    def message_replace(self, message, *args, **kwargs) -> func:
+        if hasattr(self, 'log_type') and self.log_type == 'json':
+            if not type(message) is str:
+                message = json.dumps(message)
+            message = message.replace('"', '\\"')
+            message = message.replace('\n', '')
+            message = message.replace('\t', '')
+        return func(self, message, *args, **kwargs)
+
+    return message_replace
+
+
+def get_log_kwargs(log_level: int) -> dict:
+    kwargs = {
+        'extra': {'zptLogLevel': 109 - log_level},
+        'exc_info': True if log_level == 101 else None
+    }
+    return kwargs
+
+
+@format_message
+def verbose(self, message, *args, **kws) -> None:
     # Yes, logger takes its "*args" as "args".
 
-    if self.isEnabledFor(log_levels["VERBOSE"][1]):
-        self._log(log_levels["VERBOSE"][1], message, args, **kws)
+    log_level = log_levels["VERBOSE"][1]
+    if self.isEnabledFor(log_level):
+        kws = get_log_kwargs(log_level)
+        self._log(log_level, message, args, **kws)
 
-def trace(self, message, *args, **kws):
+
+@format_message
+def trace(self, message, *args, **kws) -> None:
     # Yes, logger takes its "*args" as "args".
 
-    if self.isEnabledFor(log_levels["TRACE"][1]):
-        kws["exc_info"] = True
-        self._log(log_levels["TRACE"][1], message, args, **kws)
+    log_level = log_levels["TRACE"][1]
+    if self.isEnabledFor(log_level):
+        kws = get_log_kwargs(log_level)
+        self._log(log_level, message, args, **kws)
 
-def debug(self, message, *args, **kws):
+
+@format_message
+def debug(self, message, *args, **kws) -> None:
     # Yes, logger takes its "*args" as "args".
 
-    if self.isEnabledFor(log_levels["DEBUG"][1]):
-        self._log(log_levels["DEBUG"][1], message, args, **kws)
+    log_level = log_levels["DEBUG"][1]
+    if self.isEnabledFor(log_level):
+        kws = get_log_kwargs(log_level)
+        self._log(log_level, message, args, **kws)
 
-def info(self, message, *args, **kws):
+
+@format_message
+def info(self, message, *args, **kws) -> None:
     # Yes, logger takes its "*args" as "args".
 
-    if self.isEnabledFor(log_levels["INFO"][1]):
-        self._log(log_levels["INFO"][1], message, args, **kws)
+    log_level = log_levels["INFO"][1]
+    if self.isEnabledFor(log_level):
+        kws = get_log_kwargs(log_level)
+        self._log(log_level, message, args, **kws)
 
-def notice(self, message, *args, **kws):
+
+@format_message
+def notice(self, message, *args, **kws) -> None:
     # Yes, logger takes its "*args" as "args".
 
-    if self.isEnabledFor(log_levels["NOTICE"][1]):
-        self._log(log_levels["NOTICE"][1], message, args, **kws)
+    log_level = log_levels["NOTICE"][1]
+    if self.isEnabledFor(log_level):
+        kws = get_log_kwargs(log_level)
+        self._log(log_level, message, args, **kws)
 
-def warning(self, message, *args, **kws):
+
+@format_message
+def warning(self, message, *args, **kws) -> None:
     # Yes, logger takes its "*args" as "args".
 
-    if self.isEnabledFor(log_levels["WARNING"][1]):
-        self._log(log_levels["WARNING"][1], message, args, **kws)
+    log_level = log_levels["WARNING"][1]
+    if self.isEnabledFor(log_level):
+        kws = get_log_kwargs(log_level)
+        self._log(log_level, message, args, **kws)
 
-def error(self, message, *args, **kws):
+
+@format_message
+def error(self, message, *args, **kws) -> None:
     # Yes, logger takes its "*args" as "args".
 
-    if self.isEnabledFor(log_levels["ERROR"][1]):
-        self._log(log_levels["ERROR"][1], message, args, **kws)
+    log_level = log_levels["ERROR"][1]
+    if self.isEnabledFor(log_level):
+        kws = get_log_kwargs(log_level)
+        self._log(log_level, message, args, **kws)
 
-def critical(self, message, *args, **kws):
+
+@format_message
+def critical(self, message, *args, **kws) -> None:
     # Yes, logger takes its "*args" as "args".
 
-    if self.isEnabledFor(log_levels["CRITICAL"][1]):
-        self._log(log_levels["CRITICAL"][1], message, args, **kws)
+    log_level = log_levels["CRITICAL"][1]
+    if self.isEnabledFor(log_level):
+        kws = get_log_kwargs(log_level)
+        self._log(log_level, message, args, **kws)
 
-def alert(self, message, *args, **kws):
+
+@format_message
+def alert(self, message, *args, **kws) -> None:
     # Yes, logger takes its "*args" as "args".
 
-    if self.isEnabledFor(log_levels["ALERT"][1]):
-        self._log(log_levels["ALERT"][1], message, args, **kws)
+    log_level = log_levels["ALERT"][1]
+    if self.isEnabledFor(log_level):
+        kws = get_log_kwargs(log_level)
+        self._log(log_level, message, args, **kws)
 
-def emergency(self, message, *args, **kws):
+
+@format_message
+def emergency(self, message, *args, **kws) -> None:
     # Yes, logger takes its "*args" as "args".
 
     if self.isEnabledFor(log_levels["EMERGENCY"][1]):
         self._log(log_levels["EMERGENCY"][1], message, args, **kws)
 
-def setup_logger_handler(log_path, log_level):
+
+def setup_logger_handler(log_path, log_level, log_type, host_pub, api_version) -> logging.handlers:
     # Create the Handler for logging data to a file
     if log_path == "/var/log/syslog":
         logger_handler = logging.handlers.SysLogHandler(address="/dev/log")
@@ -82,8 +166,24 @@ def setup_logger_handler(log_path, log_level):
         logger_handler = logging.FileHandler(log_path)
 
     # Create a Formatter for formatting the log messages
-    logger_formatter = logging.Formatter("%(levelname)s | \x1B[1;37m%(asctime)s\x1B[0m | %(message)s | %(processName)s:%(process)d %(filename)s:%(lineno)d ",
-                                         datefmt="%Y-%m-%d %H:%M:%S")
+    if log_type == 'pretty':
+        logger_formatter = CustomFormatter("%(levelname)s | \x1B[1;37m%(asctime)s\x1B[0m | %(message)s | "
+                                           "%(processName)s:%(process)d %(filename)s:%(lineno)d ",
+                                           datefmt="%Y-%m-%d %H:%M:%S",
+                                           log_type=log_type)
+    else:
+        logger_formatter = CustomFormatter("{\"version\":\""+api_version+"\","
+                                           "\"host\":\""+host_pub+"\","
+                                           "\"source\":\"%(filename)s\","
+                                           "\"short_message\":\"%(message)s\","
+                                           "\"timestamp\":%(asctime)s,"
+                                           "\"level\":%(zptLogLevel)s,"
+                                           "\"pid\":%(process)d,"
+                                           "\"exec\":\"%(processName)s\","
+                                           "\"file\":\"%(filename)s\","
+                                           "\"line\":%(lineno)d}",
+                                           datefmt="",
+                                           log_type=log_type)
 
     # Adding Formatter to the Handler
     logger_handler.setFormatter(logger_formatter)
@@ -93,7 +193,8 @@ def setup_logger_handler(log_path, log_level):
 
     return logger_handler
 
-def setup_loglevel():
+
+def setup_loglevel() -> None:
     for lvl in log_levels.keys():
         logging.addLevelName(log_levels[lvl][0], log_levels[lvl][1])
 

@@ -1,6 +1,6 @@
 import concurrent
 
-from base import settings
+from base import settings, logger
 from base.redis_db import get_redis
 from base.utils import rate_limited
 from base.constants import DEFAULT_REFRESH_INTERVAL, DEFAULT_RATE_LIMIT, DEFAULT_THREAD_MAX_WORKERS, \
@@ -9,11 +9,8 @@ import asyncio
 import requests
 import threading
 import datetime
-import logging
 import time
 import traceback
-
-logger = logging.getLogger(__name__)
 
 
 class TokenRefresherManager(object):
@@ -34,7 +31,7 @@ class TokenRefresherManager(object):
         :return:
         """
         try:
-            if settings.config_refresh.get('enabled') == True:
+            if settings.config_refresh.get('enabled') is True:
                 logger.info('[TokenRefresher] **** starting token refresher ****')
                 self.thread = threading.Thread(target=self.worker,
                                                args=[self.implementer.get_refresh_token_conf()],
@@ -84,7 +81,7 @@ class TokenRefresherManager(object):
             logger.info("[TokenRefresher] {} finishing {}".format(threading.currentThread().getName(),
                                                                   datetime.datetime.now()))
         except Exception as e:
-            logger.error("[TokenRefresher] {} Error on make_requests {}".format(e))
+            logger.error("[TokenRefresher] Error on make_requests: {}".format(e))
 
     @rate_limited(settings.config_refresh.get('rate_limit', DEFAULT_RATE_LIMIT))
     def send_request(self, credentials_dict, conf, **kwargs):

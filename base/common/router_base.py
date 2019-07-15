@@ -1,7 +1,5 @@
 from flask import request, Response, json
-
-import logging
-logger = logging.getLogger(__name__)
+from base import logger
 
 
 class RouterBase:
@@ -40,4 +38,3 @@ class RouterBase:
             logger.error('Post request logging failed!')
 
         return response
-

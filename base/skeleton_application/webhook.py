@@ -1,16 +1,13 @@
 import traceback
 import json
 import os
-import logging
 import requests
 from tenacity import retry, wait_fixed
 from flask import Response
 
-from base import settings
+from base import settings, logger
 from base.common.webhook_base import WebhookHubBase
 from base.constants import DEFAULT_RETRY_WAIT
-
-logger = logging.getLogger(__name__)
 
 
 class WebhookHubApplication(WebhookHubBase):

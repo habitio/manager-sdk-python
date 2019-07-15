@@ -9,15 +9,19 @@ from importlib import util
 print('[Solid]: ImportLib::Utils: OK')
 
 print('[Solid]: Inspect and Logging: Setting up')
-import inspect, logging, traceback
-print('[Solid]: Inspect and Logging: OK')
+import inspect, traceback
+print('[Solid]: Inspect and Traceback: OK')
+
+from base import logger
+print('[Solid]: Logger: OK')
 
 from base import skeleton_device, skeleton_application
+print('[Solid]: Skeletons: OK')
 
-logger = logging.getLogger(__name__)
 
 class ImplementorNotFound(Exception):
     pass
+
 
 def get_implementer():
     try:
@@ -40,3 +44,6 @@ def get_implementer():
     except Exception:
         logger.critical("Failed to find Skeleton implementer class {}, check for missing abstract methods".format(traceback.format_exc(limit=5)))
         os._exit(1)
+
+
+implementer = get_implementer()

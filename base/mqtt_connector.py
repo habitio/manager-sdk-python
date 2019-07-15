@@ -4,13 +4,11 @@ import traceback
 import paho.mqtt.client as paho
 from tenacity import retry, wait_fixed
 
-from base import settings
+from base import settings, logger
 from base.redis_db import get_redis
 from base.utils import format_str
 from base.constants import *
 from base.exceptions import *
-
-logger = logging.getLogger(__name__)
 
 RC_LIST = {
     0: "Connection successful",
@@ -21,9 +19,11 @@ RC_LIST = {
     5: "Connection refused - not authorised"
 }
 
+
 class MqttConnector:
 
-    def __init__(self, client_id=None, access_token=None, implementer=None, queue=None, queue_pub=None, subscribe=True, **kwargs):
+    def __init__(self, client_id=None, access_token=None, implementer=None, queue=None, queue_pub=None, subscribe=True,
+                 **kwargs):
         logger.debug("Mqtt - Init")
         self.mqtt_client = paho.Client()
         self.mqtt_client.enable_logger()
@@ -45,7 +45,6 @@ class MqttConnector:
         self.queue = queue
         self.queue_pub = queue_pub
         self.subscribe = subscribe
-
 
     def on_connect(self, client, userdata, flags, rc):
         try:

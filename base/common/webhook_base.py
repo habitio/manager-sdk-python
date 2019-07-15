@@ -1,13 +1,11 @@
 from flask import Response, jsonify
-import logging, traceback
+import traceback
 import requests
 
 from base.redis_db import get_redis
-from base import settings
+from base import settings, logger
 from base.utils import format_str
 from .watchdog import Watchdog
-
-logger = logging.getLogger(__name__)
 
 
 class WebhookHubBase:

@@ -1,5 +1,4 @@
 import os
-import logging
 import threading
 import traceback
 from datetime import datetime
@@ -7,12 +6,10 @@ from datetime import datetime
 import requests
 from dateutil import parser, tz
 
-from base import settings
+from base import settings, logger
 from base.utils import format_response
 from base.constants import DEFAULT_RETRY_WAIT
 from tenacity import retry, wait_fixed
-
-logger = logging.getLogger(__name__)
 
 
 @retry(wait=wait_fixed(DEFAULT_RETRY_WAIT))

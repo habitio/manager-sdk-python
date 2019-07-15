@@ -1,5 +1,4 @@
 import json
-import logging
 import requests
 import traceback
 import os
@@ -8,15 +7,13 @@ from tenacity import retry, wait_fixed
 import concurrent
 import asyncio
 
-from base import settings
+from base import settings, logger
 from base.common.webhook_base import WebhookHubBase
 from base.utils import format_str
 from base.constants import DEFAULT_RETRY_WAIT
 
 from .polling import PollingManager
 from .token_refresher import TokenRefresherManager
-
-logger = logging.getLogger(__name__)
 
 
 class WebhookHubDevice(WebhookHubBase):
@@ -116,8 +113,11 @@ class WebhookHubDevice(WebhookHubBase):
             if received_hash == self.confirmation_hash:
 
                 if request.is_json:
-                    logger.verbose(format_str(request.get_json(), is_json=True))
-                    paired_devices = request.get_json()["channels"]
+                    payload = request.get_json()
+                    logger.verbose(format_str(payload, is_json=True))
+                    paired_devices = payload["channels"]
+                    if not paired_devices:
+                        logger.error("No paired devices found in request: {}".format(payload))
                 else:
                     return Response(status=422)
 

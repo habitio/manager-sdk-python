@@ -1,9 +1,7 @@
 from flask import request
 from base.common.router_base import RouterBase
-from base import settings
+from base import settings, logger
 
-import logging
-logger = logging.getLogger(__name__)
 
 class RouterDevice(RouterBase):
 

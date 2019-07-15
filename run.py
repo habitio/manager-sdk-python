@@ -1,4 +1,3 @@
-import os
 from base import settings
 from base import logger
 from flask import Flask
