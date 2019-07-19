@@ -44,9 +44,10 @@ def format_message(func):
         if hasattr(self, 'log_type') and self.log_type == 'json':
             if not type(message) is str:
                 message = json.dumps(message)
+            message = message.replace('\n', '\\n')
+            message = message.replace('\t', '\\t')
             message = message.replace('"', '\\"')
-            message = message.replace('\n', '')
-            message = message.replace('\t', '')
+            message = message.replace("'", "\\'")
         return func(self, message, *args, **kwargs)
 
     return message_replace

@@ -146,7 +146,10 @@ class WebhookHubDevice(WebhookHubBase):
                     "owner_id": owner_id
                 }
 
-                self.implementer.did_pair_devices(sender=sender, credentials=credentials, paired_devices=paired_devices)
+                self.implementer.did_pair_devices(sender=sender,
+                                                  credentials=credentials,
+                                                  paired_devices=paired_devices,
+                                                  channels=channels)
 
                 return Response(
                     response=json.dumps(channels),

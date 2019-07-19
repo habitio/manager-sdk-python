@@ -132,16 +132,19 @@ class SkeletonDevice(SkeletonBase):
         """
         return None
 
-    def did_pair_devices(self, credentials, sender, paired_devices):
+    def did_pair_devices(self, credentials, sender, paired_devices, channels):
         """
         *** MANDATORY ***
         Invoked after successful device pairing.
 
         Receives,
-            credentials     - All persisted user credentials.
-            sender          - A dictionary with keys 'channel_template_id', 'owner_id' and 'client_id'.
-            paired_devices  - A list of dictionaries with selected device's data
-
+            credentials - All persisted user credentials.
+            sender - A dictionary:
+             {'channel_template_id': xxxx-xxxxx-xxxxx-xxxx,
+              'owner_id': xxxx-xxxxx-xxxxx-xxxx,
+              'client_id': xxxx-xxxxx-xxxxx-xxxx}
+            paired_devices - A list of dictionaries with selected device's data
+            channels - A list of channels_id from paired_devices
         """
         return NotImplemented
 
