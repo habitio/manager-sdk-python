@@ -569,6 +569,32 @@ def authorize() :
     )
 ```
 
+For _managers_ that need to keep the users access-token refreshed the platform provides a refresh-token protocol. A POST should be made, then the refresh should be done to **/v3/managers/{id}/refresh-token** with a payload with the same structure as the authorize webhook and it's headers.
+For instance,
+
+```json
+{
+    "location" : [
+        {
+            "method" : "post",
+            "url" : "http://cloud.manufacturer.com/authorize?redirect_uri={redirect_uri}",
+            "headers" : {
+                "Authorization" : "{refresh-token}"
+            }
+        }
+    ]
+}
+```
+
+And the following HTTP headers:
+
+| HEADER | DESCRIPTION |
+|:------|:-------|
+| _**X-Client-Id**_ | The unique identifier for the requesting _intervenient_ (e.g. the _application_ being used)|
+| _**X-Owner-Id**_ | The unique identifier for the _intervenient_ the requesting _intervenient_ is interaction on behalf of (e.g., _application_ interacting on behalf of the _user_)|
+| _**X-Channel-Id**_ |  The unique identifier for the _channel_ to be used |
+
+
 ### Test the authorize callback [GET]
 
 + Parameters
@@ -586,6 +612,9 @@ def authorize() :
     + Headers
             
             Location: /some/final/redirect/url
+
+
+
 
 
 ## Receive token webhook [/v3/managers/{id}/receive-token]
