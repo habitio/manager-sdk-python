@@ -569,7 +569,7 @@ def authorize() :
     )
 ```
 
-For _managers_ that need to keep the users access-token refreshed the platform provides a refresh-token protocol. A POST should be made, then the refresh should be done to **/v3/managers/{id}/refresh-token** with a payload with the same structure as the authorize webhook and it's headers.
+For _managers_ that need to keep the users access-token refreshed the platform provides a refresh-token protocol. A POST should be done to **/v3/managers/{id}/refresh-token** with a payload with the same structure as the authorize webhook and it's headers.
 For instance,
 
 ```json
