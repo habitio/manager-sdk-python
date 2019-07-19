@@ -424,9 +424,8 @@ by other _intervenients_ interested in interacting.
 This may be accomplished via **/v3/managers/{id}**, the _manager_ document resource. Each callback type is stored as an attribute of
 this document.
 
-The return message for this request will provide a _confirmation hash_ field, that should be stored and kept. This hash will be passed on with 
-each webhook callback invocation, as a part of the HTTP **Authorization** header. The _manager_ should validate the received hash against the stored
-one, in order to confirm that the request is being sent by the Habit platform.
+The return message for this request will provide a _confirmation hash_ field. This hash will be passed on with 
+each webhook callback invocation, as a part of the HTTP **Authorization** header. The _manager_ should validate the received hash against the one it as access on the platform by requesting */v3/managers/{id}*, in order to confirm that the request is being sent by the Habit platform.
 
 ### Request parameters
 
