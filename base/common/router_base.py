@@ -1,5 +1,6 @@
 from flask import request, Response, json
-from base import logger
+from base import settings, logger
+from base.logger_base import level_runtime
 
 
 class RouterBase:
@@ -34,7 +35,13 @@ class RouterBase:
                 logger.verbose('\n{}\n'.format(json.dumps(json.loads(response.response[0]), indent=4, sort_keys=True)))
 
         except:
-
             logger.error('Post request logging failed!')
 
         return response
+
+    def level_runtime(self):
+        return level_runtime(request)
+
+    def route_setup(self, app):
+        app.add_url_rule("/{}/level-runtime".format(settings.api_version), view_func=self.level_runtime,
+                         methods=['GET', 'POST'])

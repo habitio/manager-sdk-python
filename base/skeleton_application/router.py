@@ -13,6 +13,7 @@ class RouterApplication(RouterBase):
 
     def route_setup(self, app):
         logger.debug("App {}".format(app))
+        super().route_setup(app)
 
         app.add_url_rule('/', view_func=self.starter, methods=['GET'])
         app.add_url_rule("/{}/receive-token".format(settings.api_version), view_func=self.receive_token, methods=['POST'])
