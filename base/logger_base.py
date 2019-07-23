@@ -2,6 +2,7 @@ import logging
 from flask import Response, json
 from base import python_logging as pl
 from base.settings import Settings
+from base.utils import GlobalLogLevel
 
 settings = Settings()
 
@@ -72,7 +73,7 @@ def level_runtime(request) -> Response:
                 payload = {"error": "level_number is not a number or it's not between 0 and 9"}
             else:
                 level = get_real_logger_level(int(payload['level_number']))
-                logger.setLevel(level)
+                GlobalLogLevel(level)
                 status = 200
         else:
             payload = {}

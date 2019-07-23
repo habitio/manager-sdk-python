@@ -1,6 +1,7 @@
 import json
 import logging.handlers
 from functools import wraps
+from base.utils import GlobalLogLevel
 
 
 log_levels = {
@@ -38,6 +39,17 @@ class CustomFormatter(logging.Formatter):
             return super().formatTime(record, datefmt)
 
 
+def update_log_level(func):
+    @wraps(func)
+    def update_level(self, message, *args, **kwargs) -> func:
+        global_level = GlobalLogLevel().level
+        if self.level != global_level:
+            self.setLevel(global_level)
+        return func(self, message, *args, **kwargs)
+
+    return update_level
+
+
 def format_message(func):
     @wraps(func)
     def message_replace(self, message, *args, **kwargs) -> func:
@@ -61,6 +73,7 @@ def get_log_kwargs(log_level: int) -> dict:
     return kwargs
 
 
+@update_log_level
 @format_message
 def verbose(self, message, *args, **kws) -> None:
     # Yes, logger takes its "*args" as "args".
@@ -71,6 +84,7 @@ def verbose(self, message, *args, **kws) -> None:
         self._log(log_level, message, args, **kws)
 
 
+@update_log_level
 @format_message
 def trace(self, message, *args, **kws) -> None:
     # Yes, logger takes its "*args" as "args".
@@ -81,16 +95,19 @@ def trace(self, message, *args, **kws) -> None:
         self._log(log_level, message, args, **kws)
 
 
+@update_log_level
 @format_message
 def debug(self, message, *args, **kws) -> None:
     # Yes, logger takes its "*args" as "args".
 
     log_level = log_levels["DEBUG"][1]
+    current_level = GlobalLogLevel().level
     if self.isEnabledFor(log_level):
         kws = get_log_kwargs(log_level)
         self._log(log_level, message, args, **kws)
 
 
+@update_log_level
 @format_message
 def info(self, message, *args, **kws) -> None:
     # Yes, logger takes its "*args" as "args".
@@ -101,6 +118,7 @@ def info(self, message, *args, **kws) -> None:
         self._log(log_level, message, args, **kws)
 
 
+@update_log_level
 @format_message
 def notice(self, message, *args, **kws) -> None:
     # Yes, logger takes its "*args" as "args".
@@ -111,6 +129,7 @@ def notice(self, message, *args, **kws) -> None:
         self._log(log_level, message, args, **kws)
 
 
+@update_log_level
 @format_message
 def warning(self, message, *args, **kws) -> None:
     # Yes, logger takes its "*args" as "args".
@@ -121,6 +140,7 @@ def warning(self, message, *args, **kws) -> None:
         self._log(log_level, message, args, **kws)
 
 
+@update_log_level
 @format_message
 def error(self, message, *args, **kws) -> None:
     # Yes, logger takes its "*args" as "args".
@@ -131,6 +151,7 @@ def error(self, message, *args, **kws) -> None:
         self._log(log_level, message, args, **kws)
 
 
+@update_log_level
 @format_message
 def critical(self, message, *args, **kws) -> None:
     # Yes, logger takes its "*args" as "args".
@@ -141,6 +162,7 @@ def critical(self, message, *args, **kws) -> None:
         self._log(log_level, message, args, **kws)
 
 
+@update_log_level
 @format_message
 def alert(self, message, *args, **kws) -> None:
     # Yes, logger takes its "*args" as "args".
@@ -151,6 +173,7 @@ def alert(self, message, *args, **kws) -> None:
         self._log(log_level, message, args, **kws)
 
 
+@update_log_level
 @format_message
 def emergency(self, message, *args, **kws) -> None:
     # Yes, logger takes its "*args" as "args".
@@ -190,7 +213,7 @@ def setup_logger_handler(log_path, log_level, log_type, host_pub) -> logging.han
     logger_handler.setFormatter(logger_formatter)
 
     # Setting Level to the handler
-    logger_handler.setLevel(log_level)
+    logger_handler.setLevel(GlobalLogLevel(log_level).level)
 
     return logger_handler
 

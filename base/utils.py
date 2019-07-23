@@ -37,12 +37,11 @@ def is_json(str_value):
     return True
 
 
-"""
-    Rate-limits the decorated function locally, for one process.
-    source: https://gist.github.com/gregburek/1441055#gistcomment-945625
-"""
 def rate_limited(max_per_second: int):
-    """Rate-limits the decorated function locally, for one process."""
+    """
+        Rate-limits the decorated function locally, for one process.
+        source: https://gist.github.com/gregburek/1441055#gistcomment-945625
+    """
     lock = threading.Lock()
     min_interval = 1.0 / max_per_second
 
@@ -68,6 +67,7 @@ def rate_limited(max_per_second: int):
 
     return decorate
 
+
 def mask_token(token):
     return '{}...{}'.format(token[:8], token[-5:])
 
@@ -84,3 +84,23 @@ def synchronized(lock):
                 lock.release()
         return newFunction
     return wrap
+
+
+class GlobalLogLevel:
+    singleton = None
+
+    def __new__(cls, *args, **kwargs):
+        if not cls.singleton:
+            cls.singleton = object.__new__(GlobalLogLevel)
+        return cls.singleton
+
+    def __init__(self, level=None):
+        assert type(level) is int or level is None
+        if level:
+            self._level = level
+        elif not hasattr(self, '_level'):
+            self._level = 0
+
+    @property
+    def level(self) -> int:
+        return self._level
