@@ -6,7 +6,6 @@ from base import settings, logger
 from base.redis_db import get_redis
 from base.exceptions import ChannelTemplateNotFound, PropertyHistoryNotFoundException
 from base.logger_base import LOG_TABLE
-from base.constants import DEFAULT_BEFORE_EXPIRES
 import requests
 import traceback
 

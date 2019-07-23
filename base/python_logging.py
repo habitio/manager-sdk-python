@@ -43,6 +43,9 @@ def update_log_level(func):
     @wraps(func)
     def update_level(self, message, *args, **kwargs) -> func:
         global_level = GlobalLogLevel().level
+        f = open("log_level.txt")
+        global_level = int(f.read())
+        f.close()
         if self.level != global_level:
             self.setLevel(global_level)
         return func(self, message, *args, **kwargs)
@@ -101,7 +104,6 @@ def debug(self, message, *args, **kws) -> None:
     # Yes, logger takes its "*args" as "args".
 
     log_level = log_levels["DEBUG"][1]
-    current_level = GlobalLogLevel().level
     if self.isEnabledFor(log_level):
         kws = get_log_kwargs(log_level)
         self._log(log_level, message, args, **kws)

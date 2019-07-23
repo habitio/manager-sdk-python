@@ -28,6 +28,9 @@ class LoggerBase(logging.Logger):
 
 
 log_level = get_real_logger_level(int(settings.config_log["level"]))
+f = open("log_level.txt", "w")
+f.write(str(log_level))
+f.close()
 pl.setup_loglevel()
 log_type = settings.config_log.get('format', 'json')
 host_pub = settings.host_pub
@@ -74,6 +77,9 @@ def level_runtime(request) -> Response:
             else:
                 level = get_real_logger_level(int(payload['level_number']))
                 GlobalLogLevel(level)
+                f = open("log_level.txt", "w")
+                f.write(str(level))
+                f.close()
                 status = 200
         else:
             payload = {}
