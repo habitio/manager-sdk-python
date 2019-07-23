@@ -159,7 +159,7 @@ def emergency(self, message, *args, **kws) -> None:
         self._log(log_levels["EMERGENCY"][1], message, args, **kws)
 
 
-def setup_logger_handler(log_path, log_level, log_type, host_pub, api_version) -> logging.handlers:
+def setup_logger_handler(log_path, log_level, log_type, host_pub) -> logging.handlers:
     # Create the Handler for logging data to a file
     if log_path == "/var/log/syslog":
         logger_handler = logging.handlers.SysLogHandler(address="/dev/log")
@@ -173,7 +173,7 @@ def setup_logger_handler(log_path, log_level, log_type, host_pub, api_version) -
                                            datefmt="%Y-%m-%d %H:%M:%S",
                                            log_type=log_type)
     else:
-        logger_formatter = CustomFormatter("{\"version\":\""+api_version+"\","
+        logger_formatter = CustomFormatter("{\"version\":\"1.1\","
                                            "\"host\":\""+host_pub+"\","
                                            "\"source\":\"%(filename)s\","
                                            "\"short_message\":\"%(message)s\","

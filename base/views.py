@@ -59,86 +59,94 @@ class Views:
             router = Router(webhook)
             router.route_setup(app)
 
-            worker_process = mp.Process(target=self.worker_sub, args=(mqtt,), name="onMessage")
-            worker_process.start()
+            worker_thread = threading.Thread(target=worker_sub, args=(mqtt,), name="onMessage", daemon=True)
+            worker_thread.start()
 
-            publisher_thread = threading.Thread(target=self.worker_pub, args=(mqtt,), name='Publish', daemon=True)
+            publisher_thread = threading.Thread(target=worker_pub, args=(mqtt,), name='Publish', daemon=True)
             publisher_thread.start()
 
             mqtt.mqtt_client.loop_start()
 
-    async def _get_item(self):
-        item = None
+
+async def _get_item():
+    item = None
+    try:
+        item = queue_sub.get(timeout=min_timeout)
+    except Empty:
+        pass
+    except Exception as e:
+        logger.error('Error on get_item: {}'.format(e))
+    return item
+
+
+async def _get_task(item, mqtt_instance):
+    task = None
+    if item:
+        logger.info('New on_message')
+        implementor_type = item['type']
+
+        if implementor_type == 'device':
+            task = (mqtt_instance.on_message_manager, (item['topic'], item['payload']))
+        else:
+            task = (mqtt_instance.on_message_application, (item['topic'], item['payload']))
+        logger.info(f'Processed Task: {task}')
+    return task
+
+
+@sync_to_async
+def _deal_with_task(task):
+    if task:
+        task[0](*task[1])
+        logger.info(f'Executed Task: {task}')
+
+
+async def _send_callback(mqtt_instance):
+    item = await _get_item()
+    task = await _get_task(item, mqtt_instance)
+    await _deal_with_task(task)
+
+
+async def _worker_sub_process(mqtt_instance):
+    async with sem:
+        asyncio.ensure_future(_worker_sub_process(mqtt_instance), loop=loop)
+        await _send_callback(mqtt_instance)
+
+
+def worker_sub(mqtt_instance):
+    logger.notice('New Queue Sub')
+    asyncio.set_event_loop(loop)
+
+    try:
+        asyncio.ensure_future(_worker_sub_process(mqtt_instance))
+        loop.run_forever()
+    finally:
+        loop.run_until_complete(loop.shutdown_asyncgens())
+        loop.close()
+
+
+def worker_pub(mqtt_instance):
+    logger.notice('New Queue Pub')
+    asyncio.set_event_loop(loop)
+
+    timeout_pub = max_timeout
+
+    while True:
         try:
-            item = queue_sub.get(timeout=self.timeout)
-            self.timeout = min_timeout
+            item = queue_pub.get(timeout=timeout_pub)
+            if item:
+                timeout_pub = min_timeout
+                logger.info('New publisher')
+                loop.run_until_complete(send_task(
+                    (mqtt_instance.publisher, (item['io'], item['data'], item['case']))
+                ))
         except Empty:
-            self.timeout = max_timeout
-        return item
+            timeout_pub = max_timeout
+            pass
+        except:
+            pass
 
-    @staticmethod
-    async def _get_task(item, mqtt_instance):
-        task = None
-        if item:
-            logger.info('New on_message')
-            implementor_type = item['type']
 
-            if implementor_type == 'device':
-                task = (mqtt_instance.on_message_manager, (item['topic'], item['payload']))
-            else:
-                task = (mqtt_instance.on_message_application, (item['topic'], item['payload']))
-            logger.info(f'Processed Task: {task}')
-        return task
-
-    @sync_to_async
-    def _deal_with_task(self, task):
-        if task:
-            task[0](*task[1])
-            logger.info(f'Executed Task: {task}')
-
-    async def _send_callback(self, mqtt_instance):
-        item = await self._get_item()
-        task = await self._get_task(item, mqtt_instance)
-        await self._deal_with_task(task)
-
-    async def _worker_sub_process(self, mqtt_instance):
-        async with sem:
-            asyncio.ensure_future(self._worker_sub_process(mqtt_instance), loop=loop)
-            await self._send_callback(mqtt_instance)
-
-    def worker_sub(self, mqtt_instance):
-        logger.notice('New Queue Sub')
-        asyncio.set_event_loop(loop)
-
-        try:
-            asyncio.ensure_future(self._worker_sub_process(mqtt_instance))
-            loop.run_forever()
-        finally:
-            loop.run_until_complete(loop.shutdown_asyncgens())
-            loop.close()
-
-    def worker_pub(self, mqtt_instance):
-        logger.notice('New Queue Pub')
-        asyncio.set_event_loop(loop)
-
-        timeout = max_timeout
-
-        while True:
-            try:
-                item = queue_pub.get(timeout=timeout)
-                if item:
-                    timeout = min_timeout
-                    logger.info('New publisher')
-                    loop.run_until_complete(self.send_task(
-                        (mqtt_instance.publisher, (item['io'], item['data'], item['case']))
-                    ))
-            except Empty:
-                timeout = max_timeout
-                pass
-            except:
-                pass
-
-    async def send_task(self, task):
-        logger.info('Running task')
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            await loop.run_in_executor(executor, task[0], *task[1])
+async def send_task(task):
+    logger.info('Running task')
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        await loop.run_in_executor(executor, task[0], *task[1])

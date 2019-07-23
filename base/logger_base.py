@@ -30,8 +30,7 @@ log_level = get_real_logger_level(int(settings.config_log["level"]))
 pl.setup_loglevel()
 log_type = settings.config_log.get('format', 'json')
 host_pub = settings.host_pub
-api_version = settings.api_version
-logger_handler = pl.setup_logger_handler(settings.log_path, log_level, log_type, host_pub, api_version)
+logger_handler = pl.setup_logger_handler(settings.log_path, log_level, log_type, host_pub)
 logging.setLoggerClass(LoggerBase)
 
 logger = logging.getLogger(__name__)
