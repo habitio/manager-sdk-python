@@ -1,5 +1,4 @@
 from base import auth
-import concurrent
 import threading
 from base import settings, logger
 from base.constants import DEFAULT_MAX_MQTT_TASKS, DEFAULT_MIN_TIMEOUT, DEFAULT_MAX_TIMEOUT
@@ -15,7 +14,6 @@ max_tasks = settings.config_mqtt.get("max_tasks", DEFAULT_MAX_MQTT_TASKS)
 min_timeout = settings.config_mqtt.get("min_timeout_secs", DEFAULT_MIN_TIMEOUT)
 max_timeout = settings.config_mqtt.get("max_timeout_secs", DEFAULT_MAX_TIMEOUT)
 
-loop = asyncio.get_event_loop()
 sem = asyncio.Semaphore(max_tasks)
 
 queue_sub = mp.Queue()
@@ -59,86 +57,98 @@ class Views:
             router = Router(webhook)
             router.route_setup(app)
 
-            worker_process = mp.Process(target=self.worker_sub, args=(mqtt,), name="onMessage")
-            worker_process.start()
+            worker_thread = threading.Thread(target=worker_sub, args=(mqtt,), name="onMessage", daemon=True)
+            worker_thread.start()
 
-            publisher_thread = threading.Thread(target=self.worker_pub, args=(mqtt,), name='Publish', daemon=True)
+            publisher_thread = threading.Thread(target=worker_pub, args=(mqtt,), name='Publish', daemon=True)
             publisher_thread.start()
 
             mqtt.mqtt_client.loop_start()
 
-    async def _get_item(self):
-        item = None
-        try:
-            item = queue_sub.get(timeout=self.timeout)
-            self.timeout = min_timeout
-        except Empty:
-            self.timeout = max_timeout
-        return item
 
-    @staticmethod
-    async def _get_task(item, mqtt_instance):
-        task = None
-        if item:
-            logger.info('New on_message')
-            implementor_type = item['type']
+async def _get_item(queue):
+    item = None
+    try:
+        item = queue.get(timeout=min_timeout)
+    except Empty:
+        pass
+    except Exception as e:
+        logger.error('Error on get_item: {}\nQueue: {}'.format(e, queue))
+    return item
 
-            if implementor_type == 'device':
-                task = (mqtt_instance.on_message_manager, (item['topic'], item['payload']))
-            else:
-                task = (mqtt_instance.on_message_application, (item['topic'], item['payload']))
-            logger.info(f'Processed Task: {task}')
-        return task
 
-    @sync_to_async
-    def _deal_with_task(self, task):
-        if task:
-            task[0](*task[1])
-            logger.info(f'Executed Task: {task}')
+async def _get_sub_task(item, mqtt_instance):
+    task = None
+    if item:
+        logger.info('New on_message')
+        implementor_type = item['type']
 
-    async def _send_callback(self, mqtt_instance):
-        item = await self._get_item()
-        task = await self._get_task(item, mqtt_instance)
-        await self._deal_with_task(task)
+        if implementor_type == 'device':
+            task = (mqtt_instance.on_message_manager, (item['topic'], item['payload']))
+        else:
+            task = (mqtt_instance.on_message_application, (item['topic'], item['payload']))
+        logger.info(f'Processed Task: {task}')
+    return task
 
-    async def _worker_sub_process(self, mqtt_instance):
-        async with sem:
-            asyncio.ensure_future(self._worker_sub_process(mqtt_instance), loop=loop)
-            await self._send_callback(mqtt_instance)
 
-    def worker_sub(self, mqtt_instance):
-        logger.notice('New Queue Sub')
-        asyncio.set_event_loop(loop)
+async def _get_pub_task(item, mqtt_instance):
+    task = None
+    if item:
+        logger.info('New on_message')
+        task = (mqtt_instance.publisher, (item['io'], item['data'], item['case']))
+        logger.info(f'Processed Task: {task}')
+    return task
 
-        try:
-            asyncio.ensure_future(self._worker_sub_process(mqtt_instance))
-            loop.run_forever()
-        finally:
-            loop.run_until_complete(loop.shutdown_asyncgens())
-            loop.close()
 
-    def worker_pub(self, mqtt_instance):
-        logger.notice('New Queue Pub')
-        asyncio.set_event_loop(loop)
+@sync_to_async
+def _deal_with_task(task):
+    if task:
+        task[0](*task[1])
+        logger.info(f'Executed Task: {task}')
 
-        timeout = max_timeout
 
-        while True:
-            try:
-                item = queue_pub.get(timeout=timeout)
-                if item:
-                    timeout = min_timeout
-                    logger.info('New publisher')
-                    loop.run_until_complete(self.send_task(
-                        (mqtt_instance.publisher, (item['io'], item['data'], item['case']))
-                    ))
-            except Empty:
-                timeout = max_timeout
-                pass
-            except:
-                pass
+async def _send_callback(mqtt_instance, queue):
+    item = await _get_item(queue)
+    if queue == queue_sub:
+        task = await _get_sub_task(item, mqtt_instance)
+    else:
+        task = await _get_pub_task(item, mqtt_instance)
+    await _deal_with_task(task)
 
-    async def send_task(self, task):
-        logger.info('Running task')
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            await loop.run_in_executor(executor, task[0], *task[1])
+
+async def _worker_sub_process(mqtt_instance, queue_sub_):
+    async with sem:
+        asyncio.ensure_future(_worker_sub_process(mqtt_instance, queue_sub_))
+        await _send_callback(mqtt_instance, queue_sub_)
+
+
+def worker_sub(mqtt_instance):
+    logger.notice('New Queue Sub')
+    loop_sub = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop_sub)
+
+    try:
+        asyncio.ensure_future(_worker_sub_process(mqtt_instance, queue_sub))
+        loop_sub.run_forever()
+    finally:
+        loop_sub.run_until_complete(loop_sub.shutdown_asyncgens())
+        loop_sub.close()
+
+
+async def _worker_pub_process(mqtt_instance, queue_pub_):
+    async with sem:
+        asyncio.ensure_future(_worker_pub_process(mqtt_instance, queue_pub_))
+        await _send_callback(mqtt_instance, queue_pub_)
+
+
+def worker_pub(mqtt_instance):
+    logger.notice('New Queue Pub')
+    loop_pub = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop_pub)
+
+    try:
+        asyncio.ensure_future(_worker_pub_process(mqtt_instance, queue_pub))
+        loop_pub.run_forever()
+    finally:
+        loop_pub.run_until_complete(loop_pub.shutdown_asyncgens())
+        loop_pub.close()

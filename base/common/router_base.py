@@ -34,7 +34,6 @@ class RouterBase:
                 logger.verbose('\n{}\n'.format(json.dumps(json.loads(response.response[0]), indent=4, sort_keys=True)))
 
         except:
-
             logger.error('Post request logging failed!')
 
         return response
