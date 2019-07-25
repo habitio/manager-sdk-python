@@ -1,8 +1,8 @@
 import logging
+import uwsgi
 from flask import Response, json
 from base import python_logging as pl
 from base.settings import Settings
-from base.utils import GlobalLogLevel
 
 settings = Settings()
 
@@ -28,9 +28,7 @@ class LoggerBase(logging.Logger):
 
 
 log_level = get_real_logger_level(int(settings.config_log["level"]))
-f = open("log_level.txt", "w")
-f.write(str(log_level))
-f.close()
+uwsgi.sharedarea_write(0, 0, json.dumps(log_level))
 pl.setup_loglevel()
 log_type = settings.config_log.get('format', 'json')
 host_pub = settings.host_pub
@@ -58,33 +56,42 @@ LOG_TABLE = {
 def level_runtime(request) -> Response:
 
     if request.method == 'GET':
+        shared_area = uwsgi.sharedarea_read(0, 0, 3)
+        try:
+            level = int(shared_area.decode('utf-8'))
+        except:
+            level = 0
         context = {
-            "level_number": (9 - int(logger.level))
+            "level_number": level
         }
         return Response(status=200,
                         response=json.dumps(context),
                         mimetype='application/json')
 
     elif request.method == 'POST':
-        if request.is_json:
-            payload = request.get_json()
-            if 'level_number' not in payload:
-                status = 412
-                payload = {"error": "level_number not found in payload"}
-            elif type(payload['level_number']) is not int or not 0 <= payload['level_number'] <= 9:
-                status = 412
-                payload = {"error": "level_number is not a number or it's not between 0 and 9"}
+        try:
+            if request.is_json:
+                payload = request.get_json()
+                if 'level_number' not in payload:
+                    status = 412
+                    payload = {"error": "level_number not found in payload"}
+                elif type(payload['level_number']) is not int or not 0 <= payload['level_number'] <= 9:
+                    status = 412
+                    payload = {"error": "level_number is not a number or it's not between 0 and 9"}
+                else:
+                    level = int(get_real_logger_level(int(payload['level_number'])))
+                    payload = {
+                        "level_number": level
+                    }
+                    uwsgi.sharedarea_write(0, 0, json.dumps(level))
+                    status = 200
             else:
-                level = get_real_logger_level(int(payload['level_number']))
-                GlobalLogLevel(level)
-                f = open("log_level.txt", "w")
-                f.write(str(level))
-                f.close()
-                status = 200
-        else:
-            payload = {}
-            status = 422
+                payload = {}
+                status = 422
 
-        return Response(status=status,
-                        response=json.dumps(payload),
-                        mimetype='application/json')
+            return Response(status=status,
+                            response=json.dumps(payload),
+                            mimetype='application/json')
+        except Exception as e:
+            print(e)
+            return Response(status=500)

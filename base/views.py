@@ -119,6 +119,8 @@ def worker_sub(mqtt_instance):
     try:
         asyncio.ensure_future(_worker_sub_process(mqtt_instance))
         loop.run_forever()
+    except Exception as e:
+        logger.error('ERROR starting worker_sub: {}'.format(e))
     finally:
         loop.run_until_complete(loop.shutdown_asyncgens())
         loop.close()

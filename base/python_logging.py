@@ -1,7 +1,7 @@
+import uwsgi
 import json
 import logging.handlers
 from functools import wraps
-from base.utils import GlobalLogLevel
 
 
 log_levels = {
@@ -42,10 +42,11 @@ class CustomFormatter(logging.Formatter):
 def update_log_level(func):
     @wraps(func)
     def update_level(self, message, *args, **kwargs) -> func:
-        global_level = GlobalLogLevel().level
-        f = open("log_level.txt")
-        global_level = int(f.read())
-        f.close()
+        shared_area = uwsgi.sharedarea_read(0, 0, 3)
+        try:
+            global_level = int(shared_area.decode('utf-8'))
+        except:
+            global_level = 0
         if self.level != global_level:
             self.setLevel(global_level)
         return func(self, message, *args, **kwargs)
@@ -215,7 +216,7 @@ def setup_logger_handler(log_path, log_level, log_type, host_pub) -> logging.han
     logger_handler.setFormatter(logger_formatter)
 
     # Setting Level to the handler
-    logger_handler.setLevel(GlobalLogLevel(log_level).level)
+    logger_handler.setLevel(log_level)
 
     return logger_handler
 
