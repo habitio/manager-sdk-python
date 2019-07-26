@@ -43,6 +43,7 @@ class Views:
         auth.get_access()
 
         if settings.block["access_token"] != "":
+            loop = asyncio.new_event_loop()
 
             self.implementer = get_implementer()
             self.implementer.queue = queue_pub
@@ -57,11 +58,8 @@ class Views:
             router = Router(webhook)
             router.route_setup(app)
 
-            worker_thread = threading.Thread(target=worker_sub, args=(mqtt,), name="onMessage", daemon=True)
+            worker_thread = threading.Thread(target=workers, args=(mqtt, loop), name="messages", daemon=True)
             worker_thread.start()
-
-            publisher_thread = threading.Thread(target=worker_pub, args=(mqtt,), name='Publish', daemon=True)
-            publisher_thread.start()
 
             mqtt.mqtt_client.loop_start()
 
@@ -117,14 +115,20 @@ async def _send_callback(mqtt_instance, queue):
 
 
 async def _worker_sub_process(mqtt_instance, queue_sub_):
-    async with sem:
+    try:
+        async with sem:
+            asyncio.ensure_future(_worker_sub_process(mqtt_instance, queue_sub_))
+            await _send_callback(mqtt_instance, queue_sub_)
+    except RuntimeError:
+        pass
+    except Exception as e:
+        logger.error('Error on worker_sub_process: {}'.format(e))
+    finally:
         asyncio.ensure_future(_worker_sub_process(mqtt_instance, queue_sub_))
-        await _send_callback(mqtt_instance, queue_sub_)
 
 
-def worker_sub(mqtt_instance):
+def worker_sub(mqtt_instance, loop_sub):
     logger.notice('New Queue Sub')
-    loop_sub = asyncio.new_event_loop()
     asyncio.set_event_loop(loop_sub)
 
     try:
@@ -136,19 +140,25 @@ def worker_sub(mqtt_instance):
 
 
 async def _worker_pub_process(mqtt_instance, queue_pub_):
-    async with sem:
+    try:
+        async with sem:
+            asyncio.ensure_future(_worker_pub_process(mqtt_instance, queue_pub_))
+            await _send_callback(mqtt_instance, queue_pub_)
+    except RuntimeError:
+        pass
+    except Exception as e:
+        logger.error('Error on worker_pub_process: {}'.format(e))
+    finally:
         asyncio.ensure_future(_worker_pub_process(mqtt_instance, queue_pub_))
-        await _send_callback(mqtt_instance, queue_pub_)
 
 
-def worker_pub(mqtt_instance):
-    logger.notice('New Queue Pub')
-    loop_pub = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop_pub)
+def workers(mqtt_instance, loop_):
+    asyncio.set_event_loop(loop_)
 
     try:
         asyncio.ensure_future(_worker_pub_process(mqtt_instance, queue_pub))
-        loop_pub.run_forever()
+        asyncio.ensure_future(_worker_sub_process(mqtt_instance, queue_sub))
+        loop_.run_forever()
     finally:
-        loop_pub.run_until_complete(loop_pub.shutdown_asyncgens())
-        loop_pub.close()
+        loop_.run_until_complete(loop_.shutdown_asyncgens())
+        loop_.close()
