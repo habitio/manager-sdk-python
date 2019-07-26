@@ -60,9 +60,9 @@ def level_runtime(request) -> Response:
         try:
             level = int(shared_area.decode('utf-8'))
         except:
-            level = 0
+            level = 100
         context = {
-            "level_number": level
+            "level_number": 109 - level
         }
         return Response(status=200,
                         response=json.dumps(context),

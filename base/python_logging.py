@@ -46,7 +46,7 @@ def update_log_level(func):
         try:
             global_level = int(shared_area.decode('utf-8'))
         except:
-            global_level = 0
+            global_level = 100
         if self.level != global_level:
             self.setLevel(global_level)
         return func(self, message, *args, **kwargs)
