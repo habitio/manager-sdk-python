@@ -171,8 +171,8 @@ class TokenRefresherManager(object):
                     self.db.set_credentials(new_credentials, client_app_id, owner_id, channel_id)
 
                     if self.update_owners:
-                        self.db.update_all_owners(credentials, new_credentials, channel_id, client_app_id)
-                        self.db.update_all_channels(credentials, new_credentials, owner_id, client_app_id)
+                        self.db.update_all_owners(credentials, new_credentials, channel_id)
+                        self.db.update_all_channels(credentials, new_credentials, owner_id)
                     return {
                         'channel_id': channel_id,
                         'credentials': new_credentials,

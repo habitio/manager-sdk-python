@@ -1,3 +1,4 @@
+import sys
 import traceback
 import json
 import os
@@ -16,7 +17,8 @@ class WebhookHubApplication(WebhookHubBase):
 
         try:
 
-            return self.implementer.activate(request=request, client_id=settings.client_id, access_token=settings.block['access_token'])
+            return self.implementer.activate(request=request,
+                                             client_id=settings.client_id, access_token=settings.block['access_token'])
 
         except Exception as _e:
 
@@ -61,13 +63,15 @@ class WebhookHubApplication(WebhookHubBase):
                 try:
 
                     data = {
-                        'activation_uri': '{}://{}/v3/services/{}/authorize'.format(settings.schema_pub, settings.host_pub, _service['id'])
+                        'activation_uri': '{}://{}/v3/services/{}/authorize'.format(settings.schema_pub,
+                                                                                    settings.host_pub, _service['id'])
                     }
 
                     logger.debug("Initiated PATCH - {}".format(_service['url']))
                     logger.verbose("\n{}\n".format(json.dumps(data, indent=4, sort_keys=True)))
 
-                    resp = requests.patch('{}/services/{}'.format(settings.api_server_full, _service['id']), data=json.dumps(data), headers=self.headers)
+                    resp = requests.patch('{}/services/{}'.format(settings.api_server_full, _service['id']),
+                                          data=json.dumps(data), headers=self.headers)
 
                     logger.verbose("Received response code[{}]".format(resp.status_code))
                     logger.verbose("\n{}\n".format(json.dumps(resp.json(), indent=4, sort_keys=True)))

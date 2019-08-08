@@ -44,6 +44,7 @@ class WebhookHubBase:
             if received_hash == self.confirmation_hash:
                 if request.is_json:
                     received_data = request.get_json()
+                    logger.debug(f'Authorize response data: {received_data}')
                 else:
                     return Response(status=422)
 
