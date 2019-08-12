@@ -1,6 +1,10 @@
-import uwsgi
+try:
+    import uwsgi
+except ModuleNotFoundError:
+    pass
 import json
 import logging.handlers
+import time
 from functools import wraps
 
 
@@ -42,11 +46,19 @@ class CustomFormatter(logging.Formatter):
 def update_log_level(func):
     @wraps(func)
     def update_level(self, message, *args, **kwargs) -> func:
-        shared_area = uwsgi.sharedarea_read(0, 0, 3)
         try:
-            global_level = int(shared_area.decode('utf-8'))
-        except:
-            global_level = 100
+            shared_log_level = uwsgi.sharedarea_read(0, 3, 3)
+            shared_timestamp = uwsgi.sharedarea_read(0, 6).decode('ascii').strip().strip('\x00')
+            global_level = int(shared_log_level.decode('ascii'))
+            global_timestamp = int(shared_timestamp)
+            if 0 < global_timestamp < int(time.time()):
+                default_log_level = uwsgi.sharedarea_read(0, 0, 3)
+                global_level = int(default_log_level.decode('ascii'))
+                memory_length = len(uwsgi.sharedarea_memoryview(0))
+                uwsgi.sharedarea_write(0, 3, json.dumps(global_level))
+                uwsgi.sharedarea_write(0, 6, (json.dumps(0) + (memory_length - 7)*'\x00'))
+        except NameError:
+            global_level = self.level
         if self.level != global_level:
             self.setLevel(global_level)
         return func(self, message, *args, **kwargs)

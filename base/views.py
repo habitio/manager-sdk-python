@@ -10,6 +10,7 @@ import asyncio
 import multiprocessing as mp
 from queue import Empty
 from asgiref.sync import sync_to_async
+from base.exceptions import InvalidUsage, handle_invalid_usage
 
 max_tasks = settings.config_mqtt.get("max_tasks", DEFAULT_MAX_MQTT_TASKS)
 min_timeout = settings.config_mqtt.get("min_timeout_secs", DEFAULT_MIN_TIMEOUT)
@@ -41,6 +42,7 @@ class Views:
         Setting up manager before it starts serving
 
         """
+        app.register_error_handler(InvalidUsage, handle_invalid_usage)
         logger.verbose("Starting sdk with a kickoff ...")
         auth.get_access()
 

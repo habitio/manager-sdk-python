@@ -1,14 +1,12 @@
 import logging
-import uwsgi
-from flask import Response, json
+import time
+from flask import Response, json, jsonify
 from base import python_logging as pl
 from base.settings import Settings
+from base.exceptions import InvalidUsage
+from base.utils import get_real_logger_level
 
 settings = Settings()
-
-
-def get_real_logger_level(level):
-    return 100 + 9 - level
 
 
 class LoggerBase(logging.Logger):
@@ -28,7 +26,15 @@ class LoggerBase(logging.Logger):
 
 
 log_level = get_real_logger_level(int(settings.config_log["level"]))
-uwsgi.sharedarea_write(0, 0, json.dumps(log_level))
+try:
+    import uwsgi
+
+    uwsgi.sharedarea_write(0, 0, json.dumps(log_level))
+    uwsgi.sharedarea_write(0, 3, json.dumps(log_level))
+    uwsgi.sharedarea_write(0, 6, json.dumps(0))
+except ModuleNotFoundError:
+    pass
+
 pl.setup_loglevel()
 log_type = settings.config_log.get('format', 'json')
 host_pub = settings.host_pub
@@ -56,42 +62,47 @@ LOG_TABLE = {
 def level_runtime(request) -> Response:
 
     if request.method == 'GET':
-        shared_area = uwsgi.sharedarea_read(0, 0, 3)
         try:
+            shared_area = uwsgi.sharedarea_read(0, 3, 3)
             level = int(shared_area.decode('utf-8'))
         except:
-            level = 100
+            level = logger.level
         context = {
             "level_number": 109 - level
         }
-        return Response(status=200,
-                        response=json.dumps(context),
-                        mimetype='application/json')
+        response = jsonify(context)
+        response.status_code = 200
 
     elif request.method == 'POST':
-        try:
-            if request.is_json:
-                payload = request.get_json()
-                if 'level_number' not in payload:
-                    status = 412
-                    payload = {"error": "level_number not found in payload"}
-                elif type(payload['level_number']) is not int or not 0 <= payload['level_number'] <= 9:
-                    status = 412
-                    payload = {"error": "level_number is not a number or it's not between 0 and 9"}
-                else:
-                    level = int(get_real_logger_level(int(payload['level_number'])))
-                    payload = {
-                        "level_number": level
-                    }
-                    uwsgi.sharedarea_write(0, 0, json.dumps(level))
-                    status = 200
+        if request.is_json and request.data:
+            payload = request.get_json()
+            if 'level_number' not in payload:
+                raise InvalidUsage(status_code=412, message='level_number not found in payload')
+            elif type(payload['level_number']) is not int or not 0 <= payload['level_number'] <= 9:
+                raise InvalidUsage(status_code=412, message='level_number is not a number or not between 0 and 9')
             else:
-                payload = {}
-                status = 422
+                level = payload.get('level_number', 9)
+                real_level = int(get_real_logger_level(int(level)))
+                expire_hours = payload.get('expire_hours', 0)
+                expire_timestamp = int(time.time()) + int(float(expire_hours) * 3600) if expire_hours else 0
+                payload = {
+                    "level_number": level,
+                    "expire_hours": expire_hours
+                }
+                try:
+                    if expire_hours == 0:
+                        uwsgi.sharedarea_write(0, 0, json.dumps(real_level))
+                    uwsgi.sharedarea_write(0, 3, json.dumps(real_level))
+                    uwsgi.sharedarea_write(0, 6, json.dumps(expire_timestamp))
+                except NameError:
+                    logger.setLevel(real_level)
 
-            return Response(status=status,
-                            response=json.dumps(payload),
-                            mimetype='application/json')
-        except Exception as e:
-            print(e)
-            return Response(status=500)
+                response = jsonify(payload)
+                response.status_code = 200
+
+        else:
+            raise InvalidUsage('No data or data format invalid.', status_code=422)
+    else:
+        raise InvalidUsage('The method is not allowed for the requested URL.', status_code=405)
+
+    return response
