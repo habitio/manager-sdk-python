@@ -9,10 +9,6 @@ from base.utils import get_real_logger_level
 settings = Settings()
 
 
-def get_real_logger_level(level):
-    return 100 + 9 - level
-
-
 class LoggerBase(logging.Logger):
 
     def __init__(self, name, *args, **kwargs):
