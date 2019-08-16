@@ -247,5 +247,3 @@ def setup_loglevel() -> None:
     logging.Logger.critical = critical
     logging.Logger.alert = alert
     logging.Logger.emergency = emergency
-
-

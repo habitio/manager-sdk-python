@@ -1,8 +1,8 @@
 from base import auth
-import concurrent
 import threading
+import concurrent
 from base import settings, logger
-from base.constants import DEFAULT_MAX_MQTT_TASKS, DEFAULT_MIN_TIMEOUT, DEFAULT_MAX_TIMEOUT
+from base.constants import DEFAULT_MIN_TIMEOUT, DEFAULT_MAX_TIMEOUT
 from base.mqtt_connector import MqttConnector
 from base.skeleton import Webhook, Router
 from base.solid import get_implementer
@@ -12,12 +12,13 @@ from queue import Empty
 from asgiref.sync import sync_to_async
 from base.exceptions import InvalidUsage, handle_invalid_usage
 
-max_tasks = settings.config_mqtt.get("max_tasks", DEFAULT_MAX_MQTT_TASKS)
+max_tasks = mp.cpu_count() - 1
 min_timeout = settings.config_mqtt.get("min_timeout_secs", DEFAULT_MIN_TIMEOUT)
 max_timeout = settings.config_mqtt.get("max_timeout_secs", DEFAULT_MAX_TIMEOUT)
+loop_sub = asyncio.new_event_loop()
+asyncio.set_event_loop(loop_sub)
 
-loop = asyncio.get_event_loop()
-sem = asyncio.Semaphore(max_tasks)
+queue_timeout = min_timeout
 
 queue_sub = mp.Queue()
 queue_pub = mp.Queue()
@@ -61,8 +62,9 @@ class Views:
             router = Router(webhook)
             router.route_setup(app)
 
-            worker_thread = threading.Thread(target=worker_sub, args=(mqtt,), name="onMessage", daemon=True)
-            worker_thread.start()
+            for _ in range(max_tasks):
+                worker_thread = mp.Process(target=worker_sub, args=(mqtt,), name=f"onMessage_{_}")
+                worker_thread.start()
 
             publisher_thread = threading.Thread(target=worker_pub, args=(mqtt,), name='Publish', daemon=True)
             publisher_thread.start()
@@ -70,18 +72,20 @@ class Views:
             mqtt.mqtt_client.loop_start()
 
 
-async def _get_item():
+async def _get_item(queue):
     item = None
+    global queue_timeout
     try:
-        item = queue_sub.get(timeout=min_timeout)
+        item = queue.get(timeout=queue_timeout)
+        queue_timeout = min_timeout
     except Empty:
-        pass
+        queue_timeout = max_timeout
     except Exception as e:
-        logger.error('Error on get_item: {}'.format(e))
+        logger.error('Error on get_item: {}\nQueue: {}'.format(e, queue))
     return item
 
 
-async def _get_task(item, mqtt_instance):
+async def _get_sub_task(item, mqtt_instance):
     task = None
     if item:
         logger.info('New on_message')
@@ -102,55 +106,52 @@ def _deal_with_task(task):
         logger.info(f'Executed Task: {task}')
 
 
-async def _send_callback(mqtt_instance):
-    item = await _get_item()
-    task = await _get_task(item, mqtt_instance)
+async def _send_callback(mqtt_instance, queue):
+    item = await _get_item(queue)
+    task = await _get_sub_task(item, mqtt_instance)
     await _deal_with_task(task)
 
 
-async def _worker_sub_process(mqtt_instance):
-    async with sem:
-        asyncio.ensure_future(_worker_sub_process(mqtt_instance), loop=loop)
-        await _send_callback(mqtt_instance)
+async def _worker_sub_process(mqtt_instance, queue_sub_):
+    await _send_callback(mqtt_instance, queue_sub_)
+    asyncio.ensure_future(_worker_sub_process(mqtt_instance, queue_sub_))
+    mp.current_process().is_alive()
 
 
 def worker_sub(mqtt_instance):
     logger.notice('New Queue Sub')
-    asyncio.set_event_loop(loop)
+    asyncio.set_event_loop(loop_sub)
 
     try:
-        asyncio.ensure_future(_worker_sub_process(mqtt_instance))
-        loop.run_forever()
-    except Exception as e:
-        logger.error('ERROR starting worker_sub: {}'.format(e))
+        asyncio.ensure_future(_worker_sub_process(mqtt_instance, queue_sub))
+        loop_sub.run_forever()
     finally:
-        loop.run_until_complete(loop.shutdown_asyncgens())
-        loop.close()
+        loop_sub.run_until_complete(loop_sub.shutdown_asyncgens())
+        loop_sub.close()
 
 
 def worker_pub(mqtt_instance):
     logger.notice('New Queue Pub')
-    asyncio.set_event_loop(loop)
-
-    timeout_pub = max_timeout
+    loop_pub = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop_pub)
+    global queue_timeout
 
     while True:
         try:
-            item = queue_pub.get(timeout=timeout_pub)
+            item = queue_pub.get(timeout=queue_timeout)
+            queue_timeout = min_timeout
             if item:
-                timeout_pub = min_timeout
                 logger.info('New publisher')
-                loop.run_until_complete(send_task(
-                    (mqtt_instance.publisher, (item['io'], item['data'], item['case']))
+                loop_pub.run_until_complete(send_task(
+                    (mqtt_instance.publisher, (item['io'], item['data'], item['case'])), loop_pub
                 ))
         except Empty:
-            timeout_pub = max_timeout
-            pass
-        except:
+            queue_timeout = max_timeout
+        except Exception:
             pass
 
 
-async def send_task(task):
+async def send_task(task, loop):
     logger.info('Running task')
     with concurrent.futures.ThreadPoolExecutor() as executor:
         await loop.run_in_executor(executor, task[0], *task[1])

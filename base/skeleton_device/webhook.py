@@ -84,6 +84,8 @@ class WebhookHubDevice(WebhookHubBase):
                     "owner_id": request.headers["X-Owner-Id"]
                 }
                 data = self.implementer.get_devices(sender=sender, credentials=credentials)
+                if not data:
+                    logger.info("No devices found for this user")
 
                 for element in data:
                     if "content" not in element or ("content" in element and not element["content"]):
@@ -233,12 +235,12 @@ class WebhookHubDevice(WebhookHubBase):
                     traceback.format_exc(limit=5)))
                 return False
 
-            client_app_id = credentials['client_id']
             old_credentials = self.db.get_credentials(client_id, owner_id, channel_id)
+            credentials = self.implementer.auth_response(credentials)
+            credentials = self.implementer.update_expiration_date(credentials)
             if old_credentials and 'refresh_token' in credentials:
-                old_credentials = self.implementer.auth_response(old_credentials)
-                self.db.update_all_owners(old_credentials, credentials, channel_id, client_app_id, True)
-                self.db.update_all_channels(old_credentials, credentials, owner_id, client_app_id, True)
+                self.db.update_all_owners(old_credentials, credentials, channel_id, force=True)
+                self.db.update_all_channels(old_credentials, credentials, owner_id, force=True)
 
             self.db.set_credentials(credentials, client_id, owner_id, channel_id)
             return channel_id
