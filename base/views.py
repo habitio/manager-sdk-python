@@ -15,8 +15,6 @@ from base.exceptions import InvalidUsage, handle_invalid_usage
 max_tasks = mp.cpu_count() - 1
 min_timeout = settings.config_mqtt.get("min_timeout_secs", DEFAULT_MIN_TIMEOUT)
 max_timeout = settings.config_mqtt.get("max_timeout_secs", DEFAULT_MAX_TIMEOUT)
-loop_sub = asyncio.new_event_loop()
-asyncio.set_event_loop(loop_sub)
 
 queue_timeout = min_timeout
 
@@ -64,6 +62,8 @@ class Views:
 
             for _ in range(max_tasks):
                 worker_thread = mp.Process(target=worker_sub, args=(mqtt,), name=f"onMessage_{_}")
+                current_process = mp.current_process()
+                worker_thread.__setattr__('global_log_level', current_process.__getattribute__('global_log_level'))
                 worker_thread.start()
 
             publisher_thread = threading.Thread(target=worker_pub, args=(mqtt,), name='Publish', daemon=True)
@@ -120,6 +120,7 @@ async def _worker_sub_process(mqtt_instance, queue_sub_):
 
 def worker_sub(mqtt_instance):
     logger.notice('New Queue Sub')
+    loop_sub = asyncio.new_event_loop()
     asyncio.set_event_loop(loop_sub)
 
     try:
@@ -134,19 +135,17 @@ def worker_pub(mqtt_instance):
     logger.notice('New Queue Pub')
     loop_pub = asyncio.new_event_loop()
     asyncio.set_event_loop(loop_pub)
-    global queue_timeout
 
     while True:
         try:
-            item = queue_pub.get(timeout=queue_timeout)
-            queue_timeout = min_timeout
+            item = queue_pub.get(timeout=min_timeout)
             if item:
                 logger.info('New publisher')
                 loop_pub.run_until_complete(send_task(
                     (mqtt_instance.publisher, (item['io'], item['data'], item['case'])), loop_pub
                 ))
         except Empty:
-            queue_timeout = max_timeout
+            pass
         except Exception:
             pass
 

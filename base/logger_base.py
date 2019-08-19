@@ -1,5 +1,7 @@
 import logging
 import time
+import threading
+import multiprocessing as mp
 from flask import Response, json, jsonify
 from base import python_logging as pl
 from base.settings import Settings
@@ -26,15 +28,6 @@ class LoggerBase(logging.Logger):
 
 
 log_level = get_real_logger_level(int(settings.config_log["level"]))
-try:
-    import uwsgi
-
-    uwsgi.sharedarea_write(0, 0, json.dumps(log_level))
-    uwsgi.sharedarea_write(0, 3, json.dumps(log_level))
-    uwsgi.sharedarea_write(0, 6, json.dumps(0))
-except ModuleNotFoundError:
-    pass
-
 pl.setup_loglevel()
 log_type = settings.config_log.get('format', 'json')
 host_pub = settings.host_pub
@@ -44,6 +37,9 @@ logging.setLoggerClass(LoggerBase)
 logger = logging.getLogger(__name__)
 logger.log_type = log_type
 logger.addHandler(logger_handler)
+
+current_process = mp.current_process()
+current_process.__setattr__('global_log_level', mp.Value('i', log_level, lock=True))
 
 LOG_TABLE = {
             0: logger.emergency,
@@ -62,10 +58,11 @@ LOG_TABLE = {
 def level_runtime(request) -> Response:
 
     if request.method == 'GET':
+        request_process = mp.current_process()
         try:
-            shared_area = uwsgi.sharedarea_read(0, 3, 3)
-            level = int(shared_area.decode('utf-8'))
-        except:
+            global_log_level = request_process.__getattribute__('global_log_level')
+            level = int(global_log_level.value)
+        except AttributeError:
             level = logger.level
         context = {
             "level_number": 109 - level
@@ -89,13 +86,17 @@ def level_runtime(request) -> Response:
                     "level_number": level,
                     "expire_hours": expire_hours
                 }
+                request_process = mp.current_process()
                 try:
-                    if expire_hours == 0:
-                        uwsgi.sharedarea_write(0, 0, json.dumps(real_level))
-                    uwsgi.sharedarea_write(0, 3, json.dumps(real_level))
-                    uwsgi.sharedarea_write(0, 6, json.dumps(expire_timestamp))
-                except NameError:
-                    logger.setLevel(real_level)
+                    global_log_level = request_process.__getattribute__('global_log_level')
+                    global_log_level.value = int(real_level)
+                except AttributeError:
+                    request_process.__setattr__('global_log_level', mp.Value('i', real_level, lock=True))
+
+                if expire_hours > 0:
+                    timer_thread = threading.Thread(target=set_global_log_level, args=(expire_timestamp,), name='Timer',
+                                                    daemon=True)
+                    timer_thread.start()
 
                 response = jsonify(payload)
                 response.status_code = 200
@@ -106,3 +107,14 @@ def level_runtime(request) -> Response:
         raise InvalidUsage('The method is not allowed for the requested URL.', status_code=405)
 
     return response
+
+
+def set_global_log_level(expire_timestamp):
+    timer_ = expire_timestamp - int(time.time())
+    time.sleep(int(timer_))
+    request_process = mp.current_process()
+    try:
+        global_log_level = request_process.__getattribute__('global_log_level')
+        global_log_level.value = int(log_level)
+    except AttributeError:
+        request_process.__setattr__('global_log_level', mp.Value('i', log_level, lock=True))
