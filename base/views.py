@@ -137,27 +137,20 @@ def worker_pub(mqtt_instance):
     asyncio.set_event_loop(loop_pub)
 
     while True:
-        thread_list = []
         try:
             item = queue_pub.get(timeout=min_timeout)
             if item:
                 logger.info('New publisher')
-                sub_pub_thread = threading.Thread(target=send_task,
-                                                  args=((mqtt_instance.publisher,
-                                                         (item['io'], item['data'], item['case'])),),
-                                                  name='sub_publish', daemon=True)
-                sub_pub_thread.start()
-                thread_list.append(sub_pub_thread)
+                loop_pub.run_until_complete(send_task(
+                    (mqtt_instance.publisher, (item['io'], item['data'], item['case'])), loop_pub
+                ))
         except Empty:
-            for thread_ in thread_list:
-                thread_.join()
-        except Exception as e:
-            logger.error(f'Error worker_pub::{e}')
+            pass
+        except Exception:
+            pass
 
 
-def send_task(task):
+async def send_task(task, loop):
     logger.info('Running task')
-
-    if task:
-        task[0](*task[1])
-        logger.info(f'Executed Task: {task}')
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        await loop.run_in_executor(executor, task[0], *task[1])
