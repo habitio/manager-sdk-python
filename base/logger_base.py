@@ -1,5 +1,6 @@
 import logging
 import time
+import threading
 from flask import Response, json, jsonify
 from base import python_logging as pl
 from base.settings import Settings
@@ -31,7 +32,6 @@ try:
 
     uwsgi.sharedarea_write(0, 0, json.dumps(log_level))
     uwsgi.sharedarea_write(0, 3, json.dumps(log_level))
-    uwsgi.sharedarea_write(0, 6, json.dumps(0))
 except ModuleNotFoundError:
     pass
 
@@ -92,8 +92,12 @@ def level_runtime(request) -> Response:
                 try:
                     if expire_hours == 0:
                         uwsgi.sharedarea_write(0, 0, json.dumps(real_level))
+                    else:
+                        timer_thread = threading.Thread(target=set_global_log_level, args=(expire_timestamp,),
+                                                        name='Timer',
+                                                        daemon=True)
+                        timer_thread.start()
                     uwsgi.sharedarea_write(0, 3, json.dumps(real_level))
-                    uwsgi.sharedarea_write(0, 6, json.dumps(expire_timestamp))
                 except NameError:
                     logger.setLevel(real_level)
 
@@ -106,3 +110,14 @@ def level_runtime(request) -> Response:
         raise InvalidUsage('The method is not allowed for the requested URL.', status_code=405)
 
     return response
+
+
+def set_global_log_level(expire_timestamp):
+    timer_ = expire_timestamp - int(time.time())
+    time.sleep(int(timer_))
+    try:
+        default_log_level = uwsgi.sharedarea_read(0, 0, 3)
+        global_level = int(default_log_level.decode('ascii'))
+        uwsgi.sharedarea_write(0, 3, json.dumps(global_level))
+    except NameError:
+        pass
