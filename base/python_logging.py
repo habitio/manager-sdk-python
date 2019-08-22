@@ -1,5 +1,10 @@
+try:
+    import uwsgi
+except ModuleNotFoundError:
+    pass
 import json
 import logging.handlers
+import time
 from functools import wraps
 
 
@@ -38,6 +43,21 @@ class CustomFormatter(logging.Formatter):
             return super().formatTime(record, datefmt)
 
 
+def update_log_level(func):
+    @wraps(func)
+    def update_level(self, message, *args, **kwargs) -> func:
+        try:
+            shared_log_level = uwsgi.sharedarea_read(0, 3, 3)
+            global_level = int(shared_log_level.decode('ascii'))
+        except NameError:
+            global_level = self.level
+        if self.level != global_level:
+            self.setLevel(global_level)
+        return func(self, message, *args, **kwargs)
+
+    return update_level
+
+
 def format_message(func):
     @wraps(func)
     def message_replace(self, message, *args, **kwargs) -> func:
@@ -61,6 +81,7 @@ def get_log_kwargs(log_level: int) -> dict:
     return kwargs
 
 
+@update_log_level
 @format_message
 def verbose(self, message, *args, **kws) -> None:
     # Yes, logger takes its "*args" as "args".
@@ -71,6 +92,7 @@ def verbose(self, message, *args, **kws) -> None:
         self._log(log_level, message, args, **kws)
 
 
+@update_log_level
 @format_message
 def trace(self, message, *args, **kws) -> None:
     # Yes, logger takes its "*args" as "args".
@@ -81,6 +103,7 @@ def trace(self, message, *args, **kws) -> None:
         self._log(log_level, message, args, **kws)
 
 
+@update_log_level
 @format_message
 def debug(self, message, *args, **kws) -> None:
     # Yes, logger takes its "*args" as "args".
@@ -91,6 +114,7 @@ def debug(self, message, *args, **kws) -> None:
         self._log(log_level, message, args, **kws)
 
 
+@update_log_level
 @format_message
 def info(self, message, *args, **kws) -> None:
     # Yes, logger takes its "*args" as "args".
@@ -101,6 +125,7 @@ def info(self, message, *args, **kws) -> None:
         self._log(log_level, message, args, **kws)
 
 
+@update_log_level
 @format_message
 def notice(self, message, *args, **kws) -> None:
     # Yes, logger takes its "*args" as "args".
@@ -111,6 +136,7 @@ def notice(self, message, *args, **kws) -> None:
         self._log(log_level, message, args, **kws)
 
 
+@update_log_level
 @format_message
 def warning(self, message, *args, **kws) -> None:
     # Yes, logger takes its "*args" as "args".
@@ -121,6 +147,7 @@ def warning(self, message, *args, **kws) -> None:
         self._log(log_level, message, args, **kws)
 
 
+@update_log_level
 @format_message
 def error(self, message, *args, **kws) -> None:
     # Yes, logger takes its "*args" as "args".
@@ -131,6 +158,7 @@ def error(self, message, *args, **kws) -> None:
         self._log(log_level, message, args, **kws)
 
 
+@update_log_level
 @format_message
 def critical(self, message, *args, **kws) -> None:
     # Yes, logger takes its "*args" as "args".
@@ -141,6 +169,7 @@ def critical(self, message, *args, **kws) -> None:
         self._log(log_level, message, args, **kws)
 
 
+@update_log_level
 @format_message
 def alert(self, message, *args, **kws) -> None:
     # Yes, logger takes its "*args" as "args".
@@ -151,6 +180,7 @@ def alert(self, message, *args, **kws) -> None:
         self._log(log_level, message, args, **kws)
 
 
+@update_log_level
 @format_message
 def emergency(self, message, *args, **kws) -> None:
     # Yes, logger takes its "*args" as "args".

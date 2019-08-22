@@ -9,7 +9,7 @@ A sdk for python integrations with Muzzley
 
 	    $ git submodule add git@github.com:habitio/manager-sdk-python.git sdk
 
-2. Install dependencies from sdk/requirements.txt, (Requires python 3.5.x or later version)
+2. Install dependencies from sdk/requirements.txt, (Requires python 3.6.x or later version)
 
 	    $ pip install -r sdk/requirements.txt
 
@@ -391,6 +391,45 @@ This section is optional, when an automatic token refresh process needs to be en
 ##### usecases
 
 ---
+## Level runtime endpoint
+
+Retrive or change log level.
+
+For perfect functioning of this endpoint, it's necessary to run your project using uWSGI with --sharedarea option.
+
+         uwsgi (...) --sharedarea pages=1
+
+###/{:sdk_version}/level-runtime
+
+**GET /{:sdk_version}/level-runtime**
+
+Retrive current log level 
+
+**Response sample**
+        
+        {
+           "level_number": 9
+        }        
+
+**POST /{:sdk_version}/level-runtime**
+
+Change current log level, for an interval of time. If the interval of time wasn't sent, the change will be permanent.
+
+**Payload**
+
+        {
+            "level_number": 3,
+            "expire_hours": 0
+        }
+
+**Response sample**
+        
+        {
+           "level_number": 9,
+           "expire_hours": 0
+        }
+
+---
 
 ### Access Values
 
@@ -410,8 +449,30 @@ This section is optional, when an automatic token refresh process needs to be en
 
 ### How to execute your project ? ##
 
+### Without uWSGI
 * To execute your manager, use the command below
 
 		cd sdk
 		python run.py path_to_conf
 
+### With uWSGI
+We list here the required options for a perfect execution of this project. You are free to use other options.
+
+    --protocol=http 
+    --pyargv «path_to_conf» 
+    --wsgi-file run.py 
+    --callable app  
+    --enable-threads 
+    --die-on-term 
+    --vacuum 
+    --master 
+    --sharedarea pages=1 
+    --logto «path_to_log»
+ 
+> If you are running using uWSGI and sharedarea, log system will map global and current log level in 
+>uwsgi memory page as follows:
+
+| position | value             |
+|----------|-------------------|
+| 0-2      | global log level  |
+| 3-5      | current log level |

@@ -86,6 +86,10 @@ def synchronized(lock):
     return wrap
 
 
+def get_real_logger_level(level) -> int:
+    return 100 + 9 - level
+
+
 class GlobalLogLevel:
     singleton = None
 

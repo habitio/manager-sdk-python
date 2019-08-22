@@ -1,6 +1,5 @@
 from base import auth
 import threading
-import concurrent
 from base import settings, logger
 from base.constants import DEFAULT_MIN_TIMEOUT, DEFAULT_MAX_TIMEOUT
 from base.mqtt_connector import MqttConnector
@@ -10,12 +9,12 @@ import asyncio
 import multiprocessing as mp
 from queue import Empty
 from asgiref.sync import sync_to_async
+from base.exceptions import InvalidUsage, handle_invalid_usage
 
 max_tasks = mp.cpu_count() - 1
 min_timeout = settings.config_mqtt.get("min_timeout_secs", DEFAULT_MIN_TIMEOUT)
 max_timeout = settings.config_mqtt.get("max_timeout_secs", DEFAULT_MAX_TIMEOUT)
-loop_sub = asyncio.new_event_loop()
-asyncio.set_event_loop(loop_sub)
+
 
 queue_timeout = min_timeout
 
@@ -42,6 +41,7 @@ class Views:
         Setting up manager before it starts serving
 
         """
+        app.register_error_handler(InvalidUsage, handle_invalid_usage)
         logger.verbose("Starting sdk with a kickoff ...")
         auth.get_access()
 
@@ -118,6 +118,7 @@ async def _worker_sub_process(mqtt_instance, queue_sub_):
 
 def worker_sub(mqtt_instance):
     logger.notice('New Queue Sub')
+    loop_sub = asyncio.new_event_loop()
     asyncio.set_event_loop(loop_sub)
 
     try:
@@ -132,24 +133,29 @@ def worker_pub(mqtt_instance):
     logger.notice('New Queue Pub')
     loop_pub = asyncio.new_event_loop()
     asyncio.set_event_loop(loop_pub)
-    global queue_timeout
 
     while True:
+        thread_list = []
         try:
-            item = queue_pub.get(timeout=queue_timeout)
-            queue_timeout = min_timeout
+            item = queue_pub.get(timeout=min_timeout)
             if item:
                 logger.info('New publisher')
-                loop_pub.run_until_complete(send_task(
-                    (mqtt_instance.publisher, (item['io'], item['data'], item['case'])), loop_pub
-                ))
+                sub_pub_thread = threading.Thread(target=send_task,
+                                                  args=((mqtt_instance.publisher,
+                                                         (item['io'], item['data'], item['case'])),),
+                                                  name='sub_publish', daemon=True)
+                sub_pub_thread.start()
+                thread_list.append(sub_pub_thread)
         except Empty:
-            queue_timeout = max_timeout
-        except Exception:
-            pass
+            for thread_ in thread_list:
+                thread_.join()
+        except Exception as e:
+            logger.error(f'Error worker_pub::{e}')
 
 
-async def send_task(task, loop):
+def send_task(task):
     logger.info('Running task')
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        await loop.run_in_executor(executor, task[0], *task[1])
+
+    if task:
+        task[0](*task[1])
+        logger.info(f'Executed Task: {task}')
