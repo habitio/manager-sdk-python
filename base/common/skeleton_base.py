@@ -27,6 +27,8 @@ class SkeletonBase(ABC):
 
     @staticmethod
     def _clear_response_data(response_data):
+        self.log("_clear_response_data :: response_data: {}".format(response_data), 9)
+
         if response_data.get('refresh_token_expires_in'):
             response_data['expires_in'] = int(response_data.pop('refresh_token_expires_in', 0))
         else:

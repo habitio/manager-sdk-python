@@ -221,7 +221,7 @@ class SkeletonDevice(SkeletonBase):
                 raise ChannelTemplateNotFound("Failed to retrieve channel_template_id for {}".format(channel_id))
 
         except (OSError, ChannelTemplateNotFound) as e:
-            logger.warning('Error while making request to platform: {}'.format(e))
+            logger.warning('get_channel_template :: Error while making request to platform: {}'.format(e))
         except Exception as ex:
             logger.alert("Unexpected error get_channel_template: {}".format(traceback.format_exc(limit=5)))
         return ''
@@ -252,7 +252,7 @@ class SkeletonDevice(SkeletonBase):
                 raise ChannelTemplateNotFound("Failed to retrieve channel_template_id for {}".format(channel_id))
 
         except (OSError, ChannelTemplateNotFound) as e:
-            logger.warning('Error while making request to platform: {}'.format(e))
+            logger.warning('get_channel_by_owner :: Error while making request to platform: {}'.format(e))
         except Exception as ex:
             logger.alert("Unexpected error get_channel_by_owner: {}".format(traceback.format_exc(limit=5)))
         return ''
