@@ -56,6 +56,7 @@ class DBManager(Redis):
         results = []
         try:
             for element in self.hscan_iter(settings.redis_db, match=regex):
+                str_element = element[1]
                 try:
                     value = json.loads(str_element)
                 except Exception as e:
@@ -77,7 +78,7 @@ class DBManager(Redis):
         results = []
         try:
             for element in self.hscan_iter(settings.redis_db, match=regex):
-                #str_element = element[1].replace('\'', '\"')
+                str_element = element[1]
                 try:
                     value = json.loads(str_element)
                 except Exception as e:
