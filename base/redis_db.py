@@ -1,6 +1,7 @@
 import ast
 import json
 import traceback
+import re
 
 from redis import Redis
 from base import settings, logger
@@ -18,6 +19,8 @@ class DBManager(Redis):
 
         """
         try:
+            if type(value) is dict:
+                value = json.dumps(value)
             self.hset(settings.redis_db, key, value)
 
             logger.debug("[DB] Key {} added/updated in database".format(key))
@@ -53,12 +56,14 @@ class DBManager(Redis):
         results = []
         try:
             for element in self.hscan_iter(settings.redis_db, match=regex):
-                str_element = element[1].replace('\'', '\"')
                 try:
                     value = json.loads(str_element)
-                except ValueError:
-                    value = str_element
-
+                except Exception as e:
+                    try:
+                        value = ast.literal_eval(str_element)
+                    except Exception as e:
+                        value = str_element
+                    
                 results.append(value)
 
             logger.debug("[DB] Query found {} results!".format(len(results)))
@@ -72,11 +77,14 @@ class DBManager(Redis):
         results = []
         try:
             for element in self.hscan_iter(settings.redis_db, match=regex):
-                str_element = element[1].replace('\'', '\"')
+                #str_element = element[1].replace('\'', '\"')
                 try:
                     value = json.loads(str_element)
-                except ValueError:
-                    value = str_element
+                except Exception as e:
+                    try:
+                        value = ast.literal_eval(str_element)
+                    except Exception as e:
+                        value = str_element
 
                 results.append({
                     'key': element[0],
