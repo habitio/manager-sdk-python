@@ -25,16 +25,25 @@ queue_pub = mp.Queue()
 class Views:
 
     def __init__(self, _app=None):
-        self._timeout = max_timeout
+        self._implementer = None
+        self._webhook = None
         self.kickoff(_app)
 
     @property
-    def timeout(self):
-        return self._timeout
+    def implementer(self):
+        return self._implementer
 
-    @timeout.setter
-    def timeout(self, value):
-        self._timeout = value
+    @implementer.setter
+    def implementer(self, value):
+        self._implementer = value
+
+    @property
+    def webhook(self):
+        return self._webhook
+
+    @webhook.setter
+    def webhook(self, value):
+        self._webhook = value
 
     def kickoff(self, app):
         """
@@ -52,6 +61,8 @@ class Views:
 
             webhook = Webhook(queue=queue_pub, implementer=self.implementer)
             webhook.patch_endpoints()
+            self.webhook = webhook
+            self.implementer.confirmation_hash = self.webhook.confirmation_hash
 
             mqtt = MqttConnector(implementer=self.implementer, queue=queue_sub, queue_pub=queue_pub)
             mqtt.mqtt_config()

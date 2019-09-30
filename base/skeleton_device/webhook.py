@@ -127,20 +127,8 @@ class WebhookHubDevice(WebhookHubBase):
                 client_id = request.headers["X-Client-Id"]
                 channel_template = request.headers["X-Channeltemplate-Id"]
 
-                credentials = self.db.get_credentials(client_id, owner_id)
-                channels = []
-
-                if paired_devices:
-                    loop = asyncio.new_event_loop()
-                    responses = loop.run_until_complete(self.send_channel_requests(paired_devices,
-                                                                                   credentials,
-                                                                                   client_id,
-                                                                                   owner_id,
-                                                                                   channel_template))
-                    loop.close()
-                    channels = [{"id": channel_id} for channel_id in responses]
-
-                logger.info(channels)
+                channels, credentials = self.handle_channel_requests(client_id, owner_id, channel_template,
+                                                                     paired_devices)
 
                 sender = {
                     "channel_template_id": channel_template,
@@ -165,6 +153,27 @@ class WebhookHubDevice(WebhookHubBase):
             logger.error("Couldn't complete processing request, {}".format(traceback.format_exc(limit=5)))
 
         return Response(status=403)
+
+    def handle_channel_requests(self, client_id, owner_id, channel_template, paired_devices):
+        logger.debug("\n\n\n\n\n\t\t\t\t\t*******************HANDLE_CHANNEL_REQUEST****************************")
+        logger.info(f"Client_id {client_id}; Owner_id: {owner_id}; Channel_template: {channel_template}; "
+                    f"Paired_devices: {paired_devices}")
+        credentials = self.db.get_credentials(client_id, owner_id)
+        channels = []
+
+        if paired_devices:
+            loop = asyncio.new_event_loop()
+            responses = loop.run_until_complete(self.send_channel_requests(paired_devices,
+                                                                           credentials,
+                                                                           client_id,
+                                                                           owner_id,
+                                                                           channel_template))
+            loop.close()
+            channels = [{"id": channel_id} for channel_id in responses]
+
+        logger.info(f"Channels: {channels}")
+
+        return channels, credentials
 
     async def send_channel_requests(self, devices, credentials, client_id, owner_id, channel_template):
         loop = asyncio.get_event_loop()
@@ -236,11 +245,12 @@ class WebhookHubDevice(WebhookHubBase):
                 return False
 
             old_credentials = self.db.get_credentials(client_id, owner_id, channel_id)
-            credentials = self.implementer.auth_response(credentials)
-            credentials = self.implementer.update_expiration_date(credentials)
-            if old_credentials and 'refresh_token' in credentials:
-                self.db.update_all_owners(old_credentials, credentials, channel_id, force=True)
-                self.db.update_all_channels(old_credentials, credentials, owner_id, force=True)
+            if settings.config_refresh.get('enabled') is True:
+                credentials = self.implementer.auth_response(credentials)
+                credentials = self.implementer.update_expiration_date(credentials)
+                if old_credentials and 'refresh_token' in credentials:
+                    self.db.update_all_owners(old_credentials, credentials, channel_id, force=True)
+                    self.db.update_all_channels(old_credentials, credentials, owner_id, force=True)
 
             self.db.set_credentials(credentials, client_id, owner_id, channel_id)
             return channel_id

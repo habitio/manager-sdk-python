@@ -17,6 +17,7 @@ class SkeletonBase(ABC):
         self._type = settings.implementor_type
         self.db = get_redis()
         self.queue = queue
+        self.confirmation_hash = ""
 
     @abstractmethod
     def start(self):
@@ -35,7 +36,12 @@ class SkeletonBase(ABC):
 
         return response_data
 
-    def start(self):
+    def route_setup(self, app):
+        """
+        Route setup for Manager implementation
+        :param app: Flask app object
+        :return: None
+        """
         pass
 
     def auth_response(self, response_data):

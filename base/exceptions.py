@@ -33,6 +33,14 @@ class ImplementorTypeNotFoundException(Exception):
     pass
 
 
+class TCPServerNotFoundException(Exception):
+    pass
+
+
+class TCPWrongMessageException(Exception):
+    pass
+
+
 class ApiConnectionErrorException(Exception):
     pass
 

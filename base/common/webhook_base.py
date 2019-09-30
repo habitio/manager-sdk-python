@@ -48,20 +48,25 @@ class WebhookHubBase:
                 else:
                     return Response(status=422)
 
-                data = self.implementer.auth_response(received_data)
-                data = self._create_expiration_date(data)
+                return self.handle_receive_token(received_data, request.headers["X-Client-Id"],
+                                                 request.headers["X-Owner-Id"])
 
-                if data:
-                    self.db.set_credentials(data, request.headers["X-Client-Id"], request.headers["X-Owner-Id"])
-                    return Response(status=200)
-                else:
-                    logger.warning("No credentials to be stored!")
-                    return Response(status=401)
             else:
                 logger.debug("Provided invalid confirmation hash!")
                 return Response(status=403)
         except Exception as e:
             logger.error("Couldn't complete processing request, {}".format(traceback.format_exc(limit=5)))
+
+    def handle_receive_token(self, received_data, client_id, owner_id):
+        data = self.implementer.auth_response(received_data)
+        data = self._create_expiration_date(data)
+
+        if data:
+            self.db.set_credentials(data, client_id, owner_id)
+            return Response(status=200)
+        else:
+            logger.warning("No credentials to be stored!")
+            return Response(status=401)
 
     def inbox(self, request):
 
@@ -73,6 +78,13 @@ class WebhookHubBase:
             logger.info(format_str(request.get_json(), is_json=True))
         else:
             logger.info("\n{}".format(request.get_data(as_text=True)))
+
+        return self.handle_request(request)
+
+    def handle_request(self, request):
+
+        logger.debug("\n\n\n\n\n\t\t\t\t\t*******************HANDLE_REQUEST****************************")
+        logger.info(f"Request {request}")
 
         downstream_result = self.implementer.downstream(request)
         downstream_list = downstream_result if type(downstream_result) == list else [downstream_result]

@@ -33,6 +33,8 @@ class Settings:
         self.config_refresh = self.config_boot.get("token_refresher", {})
         self.config_mqtt = self.config_boot.get("mqtt", {})
         self.config_channel_templates = self.config_boot.get("channel_templates", {})
+        self.config_tcp = self.config_boot.get("tcp_udp_server", {})
+        self.enable_cors = self.config_boot.get("enable_cors", False)
 
         self.client_id = self.config_cred["client_id"]
         self.client_secret = self.config_cred["client_secret"]
@@ -102,7 +104,6 @@ class Settings:
         else:
             raise ImplementorTypeNotFoundException('Error to find the implementor type in credentials, not device or '
                                                    'application implementor!')
-            os._exit(1)
 
         # Application specific conf
         self.services = self.config_boot.get('services', [])

@@ -45,3 +45,4 @@ class RouterBase:
     def route_setup(self, app):
         app.add_url_rule("/{}/level-runtime".format(settings.api_version), view_func=self.level_runtime,
                          methods=['GET', 'POST'])
+        self.webhook.implementer.route_setup(app)
