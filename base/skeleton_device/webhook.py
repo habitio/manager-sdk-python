@@ -202,7 +202,8 @@ class WebhookHubDevice(WebhookHubBase):
             try:
                 data = {
                     "client_id": client_id,
-                    "role": "application"
+                    "role": "application",
+                    "remote_key": device.get('id')
                 }
 
                 logger.debug("Initiated POST - {}".format(url))
@@ -226,7 +227,8 @@ class WebhookHubDevice(WebhookHubBase):
                 data = {
                     "client_id": owner_id,
                     "requesting_client_id": client_id,
-                    "role": "user"
+                    "role": "user",
+                    "remote_key": device.get('id')
                 }
 
                 logger.debug("Initiated POST - {}".format(url))
@@ -288,7 +290,8 @@ class WebhookHubDevice(WebhookHubBase):
         # Creating a new channel for the particular device"s id
         data = {
             "name": device.get("content", "Device"),
-            "channeltemplate_id": channel_template
+            "channeltemplate_id": channel_template,
+            "remote_key": device.get('id')
         }
 
         try:
