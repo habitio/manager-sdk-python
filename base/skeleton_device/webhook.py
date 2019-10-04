@@ -194,7 +194,7 @@ class WebhookHubDevice(WebhookHubBase):
 
         try:
             channel_template = self.implementer.update_channel_template(device['id']) or channel_template
-            channel_id = self.get_or_create_channel(device, channel_template)
+            channel_id = self.get_or_create_channel(device, channel_template, client_id)
 
             # Granting permission to intervenient with id X-Client-Id
             url = "{}/channels/{}/grant-access".format(settings.api_server_full, channel_id)
@@ -202,6 +202,7 @@ class WebhookHubDevice(WebhookHubBase):
             try:
                 data = {
                     "client_id": client_id,
+                    "requesting_client_id": client_id,
                     "role": "application",
                     "remote_key": device.get('id')
                 }
@@ -262,7 +263,7 @@ class WebhookHubDevice(WebhookHubBase):
 
         return None
 
-    def get_or_create_channel(self, device, channel_template):
+    def get_or_create_channel(self, device, channel_template, client_id):
         try:
             channel_id = self.db.get_channel_id(device["id"])
 
@@ -272,7 +273,7 @@ class WebhookHubDevice(WebhookHubBase):
             logger.verbose("/v3/channels/{} response code {}".format(channel_id, resp.status_code))
 
             if resp.status_code not in (200, 201):
-                channel_id = self.create_channel_id(device, channel_template)
+                channel_id = self.create_channel_id(device, channel_template, client_id)
 
                 # Ensure persistence of manufacturer's device id (key) to channel id (field) in redis hash
                 self.db.set_channel_id(device["id"], channel_id, True)
@@ -285,13 +286,14 @@ class WebhookHubDevice(WebhookHubBase):
 
         return None
 
-    def create_channel_id(self, device, channel_template):
+    def create_channel_id(self, device, channel_template, client_id):
 
         # Creating a new channel for the particular device"s id
         data = {
             "name": device.get("content", "Device"),
             "channeltemplate_id": channel_template,
-            "remote_key": device.get('id')
+            "remote_key": device.get('id'),
+            "requesting_client_id": client_id
         }
 
         try:
