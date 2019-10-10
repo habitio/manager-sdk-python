@@ -62,12 +62,10 @@ class PollingManager(object):
 
     async def make_requests(self, conf_data: dict):
         try:
-            logger.info("[Polling] {} starting {}".format(threading.currentThread().getName(),  datetime.datetime.now()))
+            logger.info(f"[Polling] {threading.currentThread().getName()} starting {datetime.datetime.now()}")
 
-            url = conf_data['url']
-            method = conf_data['method']
-            data = conf_data.get('data')
-            params = conf_data.get('params')
+            if type(conf_data) is not list:
+                conf_data = [conf_data]
 
             loop = asyncio.get_event_loop()
 
@@ -76,20 +74,22 @@ class PollingManager(object):
                     loop.run_in_executor(
                         executor,
                         self.send_request,
-                        channel_id, method, url, params, data
+                        conf_data, channel_id
                     )
                     for channel_id in self.db.get_channels()
                 ]
                 for response in await asyncio.gather(*futures):
                     if response:
-                        self.implementer.polling(response)
+                        for resp in response:
+                            self.implementer.polling(resp)
 
-            logger.info("[Polling] {} finishing {}".format(threading.currentThread().getName(),  datetime.datetime.now()))
+            logger.info("[Polling] {} finishing {}".format(threading.currentThread().getName(),
+                                                           datetime.datetime.now()))
         except Exception as e:
             logger.error("[Polling] Error on make_requests: {}".format(e))
 
     @rate_limited(settings.config_polling.get('rate_limit', DEFAULT_RATE_LIMIT))
-    def send_request(self, channel_id, method, url, params, data):
+    def send_request(self, conf_data, channel_id):
         try:
             # validate if channel exists
             credentials_list = self.db.full_query('credential-owners/*/channels/{}'.format(channel_id))
@@ -112,17 +112,30 @@ class PollingManager(object):
                         cred_key, now, token_expiration_date))
                     continue
 
-                response = requests.request(method,  url, params=params, data=data,
-                                            headers=self.authorization(credentials))
-                if response.status_code == requests.codes.ok:
-                    logger.info('[Polling] polling request successful with {}'.format(cred_key))
-                    return {
-                        'response': response.json(),
-                        'channel_id': channel_id,
-                        'credentials': credentials
-                    }
-                else:
-                    logger.warning('[Polling] Error in polling request {} {}'.format(channel_id, response))
+                resp_list = []
+                for endpoint_conf in conf_data:
+                    url = endpoint_conf['url']
+                    method = endpoint_conf['method']
+                    data = endpoint_conf.get('data')
+                    params = endpoint_conf.get('params')
+
+                    if '{device_id}' in url:
+                        url = self.replace_device_id(url, cred_key.split('/')[-1])
+
+                    response = requests.request(method,  url, params=params, data=data,
+                                                headers=self.authorization(credentials))
+                    if response.status_code == requests.codes.ok:
+                        logger.info('[Polling] polling request successful with {}'.format(cred_key))
+                        resp_list.append({
+                            'response': response.json(),
+                            'channel_id': channel_id,
+                            'credentials': credentials
+                        })
+                    else:
+                        logger.warning(f'[Polling] Error in polling request: CHANNEL_ID: {channel_id}; '
+                                       f'URL: {url}; RESPONSE: {response}')
+                if resp_list:
+                    return resp_list
         except requests.exceptions.RequestException as e:
             logger.error('Request Error on polling.send_request {}'.format(e))
             return False
@@ -142,3 +155,9 @@ class PollingManager(object):
             logger.debug('[Polling] {}'.format(e))
 
         return False
+
+    def replace_device_id(self, url, channel_id):
+        device_id = self.db.get_device_id(channel_id)
+        if device_id:
+            url = url.format(device_id=device_id)
+        return url
