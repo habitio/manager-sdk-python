@@ -4,6 +4,8 @@ from base import settings, logger
 from base.redis_db import get_redis
 from base.utils import rate_limited
 from base.constants import DEFAULT_POLLING_INTERVAL, DEFAULT_RATE_LIMIT, DEFAULT_THREAD_MAX_WORKERS
+from multiprocessing.pool import ThreadPool
+from itertools import repeat
 import asyncio
 import requests
 import threading
@@ -113,27 +115,11 @@ class PollingManager(object):
                     continue
 
                 resp_list = []
-                for endpoint_conf in conf_data:
-                    url = endpoint_conf['url']
-                    method = endpoint_conf['method']
-                    data = endpoint_conf.get('data')
-                    params = endpoint_conf.get('params')
+                pool = ThreadPool(processes=DEFAULT_THREAD_MAX_WORKERS)
+                results = pool.starmap(self.get_response, zip(conf_data, repeat(credentials), repeat(channel_id),
+                                                              repeat(cred_key)))
+                resp_list.extend([result for result in results if result])
 
-                    if '{device_id}' in url:
-                        url = self.replace_device_id(url, cred_key.split('/')[-1])
-
-                    response = requests.request(method,  url, params=params, data=data,
-                                                headers=self.authorization(credentials))
-                    if response.status_code == requests.codes.ok:
-                        logger.info('[Polling] polling request successful with {}'.format(cred_key))
-                        resp_list.append({
-                            'response': response.json(),
-                            'channel_id': channel_id,
-                            'credentials': credentials
-                        })
-                    else:
-                        logger.warning(f'[Polling] Error in polling request: CHANNEL_ID: {channel_id}; '
-                                       f'URL: {url}; RESPONSE: {response}')
                 if resp_list:
                     return resp_list
         except requests.exceptions.RequestException as e:
@@ -161,3 +147,27 @@ class PollingManager(object):
         if device_id:
             url = url.format(device_id=device_id)
         return url
+
+    def get_response(self, endpoint_conf, credentials, channel_id, cred_key):
+        url = endpoint_conf['url']
+        method = endpoint_conf['method']
+        data = endpoint_conf.get('data')
+        params = endpoint_conf.get('params')
+
+        if '{device_id}' in url:
+            url = self.replace_device_id(url, cred_key.split('/')[-1])
+
+        response = requests.request(method, url, params=params, data=data,
+                                    headers=self.authorization(credentials))
+
+        if response.status_code == requests.codes.ok:
+            logger.info('[Polling] polling request successful with {}'.format(cred_key))
+            return {
+                'response': response.json(),
+                'channel_id': channel_id,
+                'credentials': credentials
+            }
+        else:
+            logger.warning(f'[Polling] Error in polling request: CHANNEL_ID: {channel_id}; '
+                           f'URL: {url}; RESPONSE: {response}')
+            return {}
