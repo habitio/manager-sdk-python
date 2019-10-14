@@ -46,6 +46,11 @@ class Watchdog:
                     if resp.status_code == 200:
                         logger.debug('[Watchdog] everything is ok')
                         notify('WATCHDOG=1')
+                    else:
+                        logger.warning(f'[Watchdog] Watchdog not sent. Response status: {resp.status_code}; '
+                                       f'Response: {resp.__dict__}')
+                else:
+                    logger.critical(f'[Watchdog] Main thread is not alive.')
         except (KeyError, TypeError, ValueError):
             logger.info('[Watchdog] not enabled, keep_alive missing')
         except ImportError:
