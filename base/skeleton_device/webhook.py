@@ -11,6 +11,7 @@ from base import settings, logger
 from base.common.webhook_base import WebhookHubBase
 from base.utils import format_str
 from base.constants import DEFAULT_RETRY_WAIT
+from base.exceptions import UnauthorizedException
 
 from .polling import PollingManager
 from .token_refresher import TokenRefresherManager
@@ -194,7 +195,7 @@ class WebhookHubDevice(WebhookHubBase):
 
         try:
             channel_template = self.implementer.update_channel_template(device['id']) or channel_template
-            channel_id = self.get_or_create_channel(device, channel_template)
+            channel_id = self.get_or_create_channel(device, channel_template, client_id)
 
             # Granting permission to intervenient with id X-Client-Id
             url = "{}/channels/{}/grant-access".format(settings.api_server_full, channel_id)
@@ -202,7 +203,9 @@ class WebhookHubDevice(WebhookHubBase):
             try:
                 data = {
                     "client_id": client_id,
-                    "role": "application"
+                    "requesting_client_id": client_id,
+                    "role": "application",
+                    "remote_key": device.get('id')
                 }
 
                 logger.debug("Initiated POST - {}".format(url))
@@ -211,9 +214,15 @@ class WebhookHubDevice(WebhookHubBase):
                 resp_app = self.session.post(url, json=data)
                 logger.debug("Received response code[{}]".format(resp_app.status_code))
 
+                if resp_app.status_code == 412 and resp_app.json().get('code') == 2000:
+                    raise UnauthorizedException(resp_app.json().get('text'))
+
                 if resp_app.status_code not in (201, 200):
                     logger.debug(format_str(resp_app.json(), is_json=True))
                     return False
+            except UnauthorizedException as e:
+                logger.error(f"{e}")
+                return False
             except Exception:
                 logger.error("Failed to grant access to client {} {}".format(
                     client_id,
@@ -226,7 +235,8 @@ class WebhookHubDevice(WebhookHubBase):
                 data = {
                     "client_id": owner_id,
                     "requesting_client_id": client_id,
-                    "role": "user"
+                    "role": "user",
+                    "remote_key": device.get('id')
                 }
 
                 logger.debug("Initiated POST - {}".format(url))
@@ -235,9 +245,15 @@ class WebhookHubDevice(WebhookHubBase):
                 resp_user = self.session.post(url, json=data)
                 logger.verbose("Received response code[{}]".format(resp_user.status_code))
 
+                if resp_app.status_code == 412 and resp_app.json().get('code') == 2000:
+                    raise UnauthorizedException(resp_app.json().get('text'))
+
                 if resp_user.status_code not in (201, 200):
                     logger.debug(format_str(resp_user.json(), is_json=True))
                     return False
+            except UnauthorizedException as e:
+                logger.error(f"{e}")
+                return False
             except Exception:
                 logger.error("Failed to grant access to owner {} {}".format(
                     channel_template,
@@ -260,7 +276,7 @@ class WebhookHubDevice(WebhookHubBase):
 
         return None
 
-    def get_or_create_channel(self, device, channel_template):
+    def get_or_create_channel(self, device, channel_template, client_id):
         try:
             channel_id = self.db.get_channel_id(device["id"])
 
@@ -270,45 +286,44 @@ class WebhookHubDevice(WebhookHubBase):
             logger.verbose("/v3/channels/{} response code {}".format(channel_id, resp.status_code))
 
             if resp.status_code not in (200, 201):
-                channel_id = self.create_channel_id(device, channel_template)
+                channel_id = self.create_channel_id(device, channel_template, client_id)
 
                 # Ensure persistence of manufacturer's device id (key) to channel id (field) in redis hash
                 self.db.set_channel_id(device["id"], channel_id, True)
                 logger.verbose("Channel added to database {}".format(channel_id))
 
             return channel_id
-
+        except UnauthorizedException as e:
+            logger.error(f"{e}")
         except Exception as e:
             logger.error('Error get_or_create_channel {}'.format(e))
 
         return None
 
-    def create_channel_id(self, device, channel_template):
+    def create_channel_id(self, device, channel_template, client_id):
 
         # Creating a new channel for the particular device"s id
         data = {
             "name": device.get("content", "Device"),
-            "channeltemplate_id": channel_template
+            "channeltemplate_id": channel_template,
+            "remote_key": device.get('id'),
+            "requesting_client_id": client_id
         }
 
-        try:
-            logger.debug("Initiated POST - {}".format(settings.api_server_full))
-            logger.verbose(format_str(data, is_json=True))
+        logger.debug("Initiated POST - {}".format(settings.api_server_full))
+        logger.verbose(format_str(data, is_json=True))
 
-            resp = self.session.post("{}/managers/self/channels".format(settings.api_server_full), json=data)
+        resp = self.session.post("{}/managers/self/channels".format(settings.api_server_full), json=data)
 
-            logger.debug("Received response code[{}]".format(resp.status_code))
+        logger.debug("Received response code[{}]".format(resp.status_code))
 
-            if resp.status_code != 201:
-                logger.debug(format_str(resp.json(), is_json=True))
-                raise Exception
+        if resp.status_code == 412 and resp.json().get('code') == 2000:
+            raise UnauthorizedException(resp.json().get('text'))
 
-        except Exception as e:
-            logger.error(
-                "Failed to create channel for channel template {} {}".format(channel_template,
-                                                                             traceback.format_exc(limit=5)))
-            return Response(status=400)
-
+        if resp.status_code != 201:
+            logger.debug(format_str(resp.json(), is_json=True))
+            raise Exception(f"Failed to create channel for channel template {channel_template} "
+                            f"{traceback.format_exc(limit=5)}")
         return resp.json()["id"]
 
     @retry(wait=wait_fixed(DEFAULT_RETRY_WAIT))
