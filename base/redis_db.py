@@ -42,8 +42,11 @@ class DBManager(Redis):
                 logger.debug("[DB]  Key {} retrieved from database.".format(key))
                 try:
                     evaluated_value = ast.literal_eval(value)
-                except Exception as e:
-                    evaluated_value = value
+                except Exception:
+                    try:
+                        evaluated_value = json.loads(value)
+                    except Exception:
+                        evaluated_value = value
                 return evaluated_value
             else:
                 logger.info("[DB] Key {} not found in database.".format(key))
