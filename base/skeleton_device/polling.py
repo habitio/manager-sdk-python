@@ -143,6 +143,9 @@ class PollingManager(object):
         return False
 
     def replace_device_id(self, url, channel_id):
+        """
+        If {device_id} in url to replace with real device_id
+        """
         device_id = self.db.get_device_id(channel_id)
         if device_id:
             url = url.format(device_id=device_id)
