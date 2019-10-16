@@ -22,6 +22,7 @@ class PollingManager(object):
         self.thread = None
         self.db = get_redis()
         self.implementer = implementer
+        self.pool = None
 
     def start(self):
         """
@@ -30,6 +31,7 @@ class PollingManager(object):
         try:
             if settings.config_polling.get('enabled') is True:
                 logger.info('[Polling] **** starting polling ****')
+                self.pool = ThreadPool(processes=DEFAULT_THREAD_MAX_WORKERS)
                 self.thread = threading.Thread(target=self.worker, args=[self.implementer.get_polling_conf()],
                                                name="Polling")
                 self.thread.daemon = True
@@ -115,9 +117,8 @@ class PollingManager(object):
                     continue
 
                 resp_list = []
-                pool = ThreadPool(processes=DEFAULT_THREAD_MAX_WORKERS)
-                results = pool.starmap(self.get_response, zip(conf_data, repeat(credentials), repeat(channel_id),
-                                                              repeat(cred_key)))
+                results = self.pool.starmap(self.get_response, zip(conf_data, repeat(credentials), repeat(channel_id),
+                                                                   repeat(cred_key)))
                 resp_list.extend([result for result in results if result])
 
                 if resp_list:
