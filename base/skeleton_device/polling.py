@@ -31,8 +31,12 @@ class PollingManager(object):
         try:
             if settings.config_polling.get('enabled') is True:
                 logger.info('[Polling] **** starting polling ****')
-                self.pool = ThreadPool(processes=DEFAULT_THREAD_MAX_WORKERS)
-                self.thread = threading.Thread(target=self.worker, args=[self.implementer.get_polling_conf()],
+                conf_data = self.implementer.get_polling_conf()
+                if type(conf_data) is not list:
+                    conf_data = [conf_data]
+                n_processes = DEFAULT_THREAD_MAX_WORKERS if len(conf_data) > 1 else 1
+                self.pool_requests = ThreadPool(processes=n_processes)
+                self.thread = threading.Thread(target=self.worker, args=[conf_data],
                                                name="Polling")
                 self.thread.daemon = True
                 self.thread.start()
@@ -67,9 +71,6 @@ class PollingManager(object):
     async def make_requests(self, conf_data: dict):
         try:
             logger.info(f"[Polling] {threading.currentThread().getName()} starting {datetime.datetime.now()}")
-
-            if type(conf_data) is not list:
-                conf_data = [conf_data]
 
             loop = asyncio.get_event_loop()
 
@@ -117,8 +118,8 @@ class PollingManager(object):
                     continue
 
                 resp_list = []
-                results = self.pool.starmap(self.get_response, zip(conf_data, repeat(credentials), repeat(channel_id),
-                                                                   repeat(cred_key)))
+                results = self.pool_requests.starmap(self.get_response, zip(conf_data, repeat(credentials),
+                                                                            repeat(channel_id), repeat(cred_key)))
                 resp_list.extend([result for result in results if result])
 
                 if resp_list:
