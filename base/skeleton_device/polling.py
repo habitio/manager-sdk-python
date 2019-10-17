@@ -22,7 +22,7 @@ class PollingManager(object):
         self.thread = None
         self.db = get_redis()
         self.implementer = implementer
-        self.pool = None
+        self.pool_requests = None
 
     def start(self):
         """
@@ -34,7 +34,7 @@ class PollingManager(object):
                 conf_data = self.implementer.get_polling_conf()
                 if type(conf_data) is not list:
                     conf_data = [conf_data]
-                n_processes = DEFAULT_THREAD_MAX_WORKERS if len(conf_data) > 1 else 1
+                n_processes = settings.config_polling.get('requests_pool', DEFAULT_THREAD_MAX_WORKERS)
                 self.pool_requests = ThreadPool(processes=n_processes)
                 self.thread = threading.Thread(target=self.worker, args=[conf_data],
                                                name="Polling")
