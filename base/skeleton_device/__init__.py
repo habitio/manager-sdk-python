@@ -226,6 +226,34 @@ class SkeletonDevice(SkeletonBase):
             logger.alert("Unexpected error get_channel_template: {}".format(traceback.format_exc(limit=5)))
         return ''
 
+    def get_channels_by_channeltemplate(self, channeltemplate_id):
+        """
+        Input :
+            channeltemplate_id - channeltemplate_id of the device.
+
+        Returns list of channels_id
+
+        """
+
+        url = f"{settings.api_server_full}/channels?page_size=9999&channeltemplate_id={channeltemplate_id}&fields=id"
+        headers = {
+            "Authorization": "Bearer {0}".format(settings.block["access_token"])
+        }
+        try:
+            resp = requests.get(url, headers=headers)
+            logger.verbose("Received response code[{}]".format(resp.status_code))
+
+            if int(resp.status_code) == 200:
+                return [channel["id"] for channel in resp.json().get("elements", [])]
+            else:
+                raise ChannelTemplateNotFound("Failed to retrieve channel_ids for {}".format(channeltemplate_id))
+
+        except (OSError, ChannelTemplateNotFound) as e:
+            logger.warning('get_channels_by_channeltemplate :: Error while making request to platform: {}'.format(e))
+        except Exception as ex:
+            logger.alert("Unexpected error get_channels_by_channeltemplate: {}".format(traceback.format_exc(limit=5)))
+        return ''
+
     def get_channel_by_owner(self, owner_id, channel_id):
         """
         Input :

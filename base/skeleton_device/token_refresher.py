@@ -21,6 +21,7 @@ class TokenRefresherManager(object):
         self.loop = asyncio.new_event_loop()
         self.before_expires = settings.config_refresh.get('before_expires_seconds', DEFAULT_BEFORE_EXPIRES)
         self.update_owners = settings.config_refresh.get('update_owners', False)
+        self.update_channels = settings.config_refresh.get('update_channels', False)
         self.thread = None
         self.db = get_redis()
         self.implementer = implementer
@@ -173,7 +174,9 @@ class TokenRefresherManager(object):
 
                     if self.update_owners:
                         self.db.update_all_owners(credentials, new_credentials, channel_id)
-                        self.db.update_all_channels(credentials, new_credentials, owner_id)
+                    if self.update_channels:
+                        channel_id_list = self.implementer.get_channels_by_channeltemplate(channel_template_id)
+                        self.db.update_all_channels(credentials, new_credentials, owner_id, channel_id_list)
                     return {
                         'channel_id': channel_id,
                         'credentials': new_credentials,

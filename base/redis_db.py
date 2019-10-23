@@ -344,14 +344,16 @@ class DBManager(Redis):
                 self.update_credentials(new_credentials, cred_dict, old_refresh_token,
                                         channel_id=channel_id, force=force)
 
-    def update_all_channels(self, old_credentials, new_credentials, owner_id, force=False):
+    def update_all_channels(self, old_credentials, new_credentials, owner_id, channel_id_list, force=False):
         if settings.config_refresh.get('update_channels', True):
             all_channels_credentials = self.full_query('credential-owners/{}/channels/*'.format(owner_id))
             old_refresh_token = old_credentials['refresh_token']
             logger.info('[TokenRefresher] update_all_channels: {} keys found'.format(len(all_channels_credentials)))
             for cred_dict in all_channels_credentials:
-                self.update_credentials(new_credentials, cred_dict, old_refresh_token,
-                                        owner_id=owner_id, force=force)
+                channel_id = cred_dict['key'].split('/')[-1]
+                if channel_id in channel_id_list:
+                    self.update_credentials(new_credentials, cred_dict, old_refresh_token,
+                                            owner_id=owner_id, force=force)
 
 
 def get_redis():
