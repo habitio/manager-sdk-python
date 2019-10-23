@@ -236,7 +236,7 @@ class SkeletonDevice(SkeletonBase):
         """
 
         url = f"{settings.api_server_full}/managers/{settings.client_id}/channels?" \
-              f"page_size=9999&channeltemplate_id={channeltemplate_id}&fields=id"
+              f"page_size=9999&channel.channeltemplate_id={channeltemplate_id}&fields=channel.id"
         headers = {
             "Authorization": "Bearer {0}".format(settings.block["access_token"])
         }
