@@ -235,16 +235,17 @@ class SkeletonDevice(SkeletonBase):
 
         """
 
-        url = f"{settings.api_server_full}/channels?page_size=9999&channeltemplate_id={channeltemplate_id}&fields=id"
+        url = f"{settings.api_server_full}/managers/{settings.client_id}/channels?" \
+              f"page_size=9999&channeltemplate_id={channeltemplate_id}&fields=id"
         headers = {
             "Authorization": "Bearer {0}".format(settings.block["access_token"])
         }
         try:
             resp = requests.get(url, headers=headers)
-            logger.verbose("Received response code[{}]".format(resp.status_code))
+            logger.verbose("[get_channels_by_channeltemplate] Received response code[{}]".format(resp.status_code))
 
             if int(resp.status_code) == 200:
-                return [channel["id"] for channel in resp.json().get("elements", [])]
+                return [channel.get("channel", {}).get("id") for channel in resp.json().get("elements", [])]
             else:
                 raise ChannelTemplateNotFound("Failed to retrieve channel_ids for {}".format(channeltemplate_id))
 
