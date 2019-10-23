@@ -155,7 +155,8 @@ class TokenRefresherManager(object):
                     "Authorization": "Bearer {}".format(settings.block["access_token"]),
                     "X-Client-ID": client_app_id,
                     "X-Owner-ID": owner_id,
-                    "X-Channel-ID": channel_id
+                    "X-Channel-ID": channel_id,
+                    "X-Refresh-Token": credentials["refresh_token"]
                 }
 
                 response = requests.request("POST", settings.refresh_token_url, json=data, headers=request_headers)
