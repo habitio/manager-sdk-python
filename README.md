@@ -382,7 +382,19 @@ This section is optional, when an automatic token refresh process needs to be en
 
 *see token_refresher section in [sample configuration file](sample-manager-sdk-python.conf)*
 
-*see token_refresher section in [sample configuration file](sample-manager-sdk-python.conf)*
+##### tcp_udp_server (optional)
+This section is optional, when manager needs to listen an specific tcp address this section gives the necessary 
+configuration params 
+
+* enabled: boolean value (true/false)
+* ip_address: Is the TCP socket HOST.
+* port: Is the TCP socket PORT
+* connection_timeout: This is the time in seconds that connection will wait for any received data before close. If not defined, default value is `DEFAULT_CONNECTION_TIMEOUT` (constants.py).
+* thread_pool_limit: This is max number of threads to run in same pool. If not defined, default value is `DEFAULT_THREAD_POOL_LIMIT` (constants.py).
+* data_length: This is the size in bytes of each chunk to be read by tcp socket. If not defined, default value is `DEFAULT_DATA_LENGTH` (constants.py).
+
+*see tcp_udp_server section in [sample configuration file](sample-manager-sdk-python.conf)*
+
 
 #### Application Manager configurations
 

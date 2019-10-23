@@ -274,11 +274,13 @@ class SkeletonDevice(SkeletonBase):
     def get_polling_conf(self):
         """
         Required configuration if polling is enabled
-        Returns a dictionary
-            url - polling manufacturer url
-            method - HTTP method to use: GET / POST
-            params - URL parameters to append to the URL (used by requests)
-            data - the body to attach to the request (used by requests)
+        Returns a dictionary or a list of dictionaries:
+            {
+                url (required): polling manufacturer url
+                method (required): HTTP method to use: GET / POST
+                params: URL parameters to append to the URL (used by requests)
+                data: the body to attach to the request (used by requests)
+            }
         """
         raise NotImplementedError('polling ENABLED but conf NOT DEFINED')
 

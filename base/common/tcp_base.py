@@ -9,6 +9,7 @@ from base import settings
 from base import logger
 from base.exceptions import TCPServerNotFoundException, TCPWrongMessageException
 from base.solid import get_implementer
+from base.constants import DEFAULT_CONNECTION_TIMEOUT, DEFAULT_DATA_LENGTH, DEFAULT_THREAD_POOL_LIMIT
 
 
 class TCPBase:
@@ -45,13 +46,14 @@ class TCPBase:
     def handle_connection(self, connection, client_address):
         logger.debug("[TCP] HANDLE_CONNECTION")
         try:
-            conn_timeout = self.tcp_settings.get('connection_timeout', 60)
+            conn_timeout = self.tcp_settings.get('connection_timeout', DEFAULT_CONNECTION_TIMEOUT)
+            data_length = self.tcp_settings.get('data_length', DEFAULT_DATA_LENGTH)
             logger.debug(f'Connection from: {client_address}')
 
             # Receive the data in small chunks and retransmit it
             while True:
                 connection.settimeout(int(conn_timeout))
-                data = connection.recv(1024)
+                data = connection.recv(data_length)
                 logger.debug(f'TCP DATA received "{data}"')
                 if data:
                     result = self.handle_data(data)
@@ -102,7 +104,7 @@ class TCPBase:
 
             thread_list = []
             while True:
-                if len(thread_list) >= self.tcp_settings.get('thread_pool_limit', 10):
+                if len(thread_list) >= self.tcp_settings.get('thread_pool_limit', DEFAULT_THREAD_POOL_LIMIT):
                     self._clear_threads(thread_list)
                 # Wait for a connection
                 logger.info('Waiting for connection')
