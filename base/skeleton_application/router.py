@@ -1,4 +1,4 @@
-from flask import request
+from flask import request, Response
 from base.common.router_base import RouterBase
 from base import settings, logger
 
@@ -19,7 +19,8 @@ class RouterApplication(RouterBase):
         app.add_url_rule("/{}/receive-token".format(settings.api_version), view_func=self.receive_token, methods=['POST'])
 
         for _service in settings.services:
-            app.add_url_rule("/{}/services/{}/authorize".format(settings.api_version, _service['id']), view_func=self.service_authorize, methods=['GET', 'POST'])
+            app.add_url_rule("/{}/services/{}/authorize".format(settings.api_version, _service['id']),
+                             view_func=self.service_authorize, methods=['GET', 'POST'])
 
         app.add_url_rule("/{}/users/activate".format(settings.api_version), view_func=self.activate, methods=['POST'])
         app.add_url_rule("/{}/inbox".format(settings.api_version), view_func=self.inbox, methods=['POST'])

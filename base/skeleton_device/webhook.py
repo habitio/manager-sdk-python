@@ -21,7 +21,6 @@ class WebhookHubDevice(WebhookHubBase):
 
     def __init__(self, queue=None, implementer=None):
         super(WebhookHubDevice, self).__init__(queue, implementer)
-        self.confirmation_hash = ""
 
         try:
             self.refresher = TokenRefresherManager(implementer=self.implementer)

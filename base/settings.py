@@ -99,7 +99,7 @@ class Settings:
             self.mqtt_topic = 'managers'
         elif APPLICATION_SCOPE in parts:
             self.implementor_type = 'application'
-            self.webhook_url = None
+            self.webhook_url = f"{self.api_server_full}/applications/{self.client_id}"
             self.mqtt_topic = 'applications'
         else:
             raise ImplementorTypeNotFoundException('Error to find the implementor type in credentials, not device or '

@@ -2,6 +2,8 @@ import json
 import threading
 import time
 from functools import wraps
+from uuid import UUID
+from typing import AnyStr
 
 
 def format_response(resp):
@@ -90,21 +92,9 @@ def get_real_logger_level(level) -> int:
     return 100 + 9 - level
 
 
-class GlobalLogLevel:
-    singleton = None
-
-    def __new__(cls, *args, **kwargs):
-        if not cls.singleton:
-            cls.singleton = object.__new__(GlobalLogLevel)
-        return cls.singleton
-
-    def __init__(self, level=None):
-        assert type(level) is int or level is None
-        if level:
-            self._level = level
-        elif not hasattr(self, '_level'):
-            self._level = 0
-
-    @property
-    def level(self) -> int:
-        return self._level
+def is_valid_uuid(uuid_: AnyStr):
+    try:
+        uuid_obj = UUID(uuid_)
+        return str(uuid_obj) == uuid_
+    except ValueError:
+        return False
