@@ -4,6 +4,7 @@ import time
 from functools import wraps
 from uuid import UUID
 from typing import AnyStr
+from base.exceptions import ValidationException
 
 
 def format_response(resp):

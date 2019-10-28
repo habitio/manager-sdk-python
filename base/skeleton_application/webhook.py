@@ -9,17 +9,11 @@ from flask import Response
 from base import settings, logger
 from base.common.webhook_base import WebhookHubBase
 from base.constants import DEFAULT_RETRY_WAIT
+from base.exceptions import InvalidRequestException, UnauthorizedException
+from base.utils import is_valid_uuid
 
 
 class WebhookHubApplication(WebhookHubBase):
-
-    def __init__(self, queue=None, implementer=None):
-        super().__init__(queue, implementer)
-        self.patch_quotesimulate()
-        application = self.get_application()
-        if "confirmation_hash" in application:
-            self.confirmation_hash = application['confirmation_hash']
-            logger.notice("Confirmation Hash : {}".format(self.confirmation_hash))
 
     def activate(self, request):
 
@@ -96,6 +90,12 @@ class WebhookHubApplication(WebhookHubBase):
                     logger.alert("Failed to set service!\n{}".format(ex))
                     os._exit(1)
 
+            self.patch_quotesimulate()
+            application = self.get_application()
+            if "confirmation_hash" in application:
+                self.confirmation_hash = application['confirmation_hash']
+                logger.notice("Confirmation Hash : {}".format(self.confirmation_hash))
+
         except Exception as e:
             logger.alert("Failed at patch endpoints! {}".format(traceback.format_exc(limit=5)))
             raise
@@ -143,6 +143,40 @@ class WebhookHubApplication(WebhookHubBase):
             logger.alert("Failed while get application! {}".format(traceback.format_exc(limit=5)))
             raise
 
+    def quote_simulate(self, request):
+        logger.debug("\n\n\n\n\n\t\t\t\t\t*******************QUOTE_SIMULATE****************************")
+        logger.debug(f"Received {request.method} - {request.path}")
+        logger.verbose(f"headers: {request.headers}")
+
+        try:
+            received_hash = request.headers.get("Authorization", "").replace("Bearer ", "")
+            if received_hash == self.confirmation_hash:
+                data = request.json
+                if not data:
+                    raise InvalidRequestException("Missing Payload")
+                service_id = data.get('service_id')
+                quote_id = data.get('quote_id')
+                if not service_id or \
+                        service_id not in [_service['id'] for _service in settings.services] or \
+                        not is_valid_uuid(service_id):
+                    raise InvalidRequestException("Invalid Service")
+                if not quote_id or not is_valid_uuid(quote_id):
+                    raise InvalidRequestException("Invalid Quote")
+
+                result = self.implementer.quote_simulate(service_id, quote_id)
+
+                return Response(status=200, response=json.dumps(result), mimetype="application/json")
+            else:
+                logger.debug("Provided invalid confirmation hash!")
+                raise UnauthorizedException("Invalid token!")
+        except InvalidRequestException as e:
+            return Response(status=412, response=json.dumps({'text': str(e), 'code': 0}), mimetype="application/json")
+        except UnauthorizedException as e:
+            return Response(status=403, response=json.dumps({'text': str(e), 'code': 0}), mimetype="application/json")
+        except Exception:
+            logger.error("Couldn't complete processing request, {}".format(traceback.format_exc(limit=5)))
+            return Response(status=500, response=json.dumps({'text': "Error processing request", 'code': 0}),
+                            mimetype="application/json")
 
     def webhook_registration(self):
         try:
