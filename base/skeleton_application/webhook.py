@@ -9,7 +9,7 @@ from flask import Response
 from base import settings, logger
 from base.common.webhook_base import WebhookHubBase
 from base.constants import DEFAULT_RETRY_WAIT
-from base.exceptions import InvalidRequestException, UnauthorizedException
+from base.exceptions import InvalidRequestException, UnauthorizedException, ValidationException
 from base.utils import is_valid_uuid
 
 
@@ -165,10 +165,16 @@ class WebhookHubApplication(WebhookHubBase):
 
                 result = self.implementer.quote_simulate(service_id, quote_id)
 
+                if result:
+                    logger.debug("Changing quote status to simulated")
+                    self.implementer.update_quote_state(quote_id, 'simulated')
+
                 return Response(status=200, response=json.dumps(result), mimetype="application/json")
             else:
                 logger.debug("Provided invalid confirmation hash!")
                 raise UnauthorizedException("Invalid token!")
+        except ValidationException as e:
+            return Response(status=412, response=json.dumps({'text': str(e), 'code': 0}), mimetype="application/json")
         except InvalidRequestException as e:
             return Response(status=412, response=json.dumps({'text': str(e), 'code': 0}), mimetype="application/json")
         except UnauthorizedException as e:
