@@ -167,7 +167,7 @@ class WebhookHubApplication(WebhookHubBase):
 
                 if result:
                     logger.debug("Changing quote status to simulated")
-                    self.implementer.update_quote_state(quote_id, 'simulated')
+                    self.implementer.update_quote_state(quote_id, 'simulated', False)
 
                 return Response(status=200, response=json.dumps(result), mimetype="application/json")
             else:

@@ -40,7 +40,7 @@ class SkeletonApplication(SkeletonBase):
 
         return properties
 
-    def _patch_property(self, quote_id, property_id, data):
+    def _patch_property(self, quote_id, property_id, data, return_property=False):
         self.log(f"Patch property: {property_id}; Data: {data}", 7)
         url = f"{QUOTE_PROPERTIES_URI.format(quote_id=quote_id)}/{property_id}"
 
@@ -51,14 +51,15 @@ class SkeletonApplication(SkeletonBase):
                                       f"property: {property_id}; data: {data}; Response: {format_response(resp)}")
 
         # GET property
-        resp = requests.get(url=url, headers=self.platform_header)
-        if not resp or resp.status_code != 200:
-            raise ValidationException(f"[PATCH_PROPERTY]Error while get updated property: {quote_id}; "
-                                      f"property: {property_id}; data: {data}; Response: {format_response(resp)}")
+        if return_property:
+            resp = requests.get(url=url, headers=self.platform_header)
+            if not resp or resp.status_code != 200:
+                raise ValidationException(f"[PATCH_PROPERTY]Error while get updated property: {quote_id}; "
+                                          f"property: {property_id}; data: {data}; Response: {format_response(resp)}")
 
         return resp.json()
 
-    def _patch_quote(self, quote_id, data):
+    def _patch_quote(self, quote_id, data, return_quote=False):
         self.log(f"Patch quote: {quote_id}; Data: {data}", 7)
         url = QUOTE_URI.format(quote_id=quote_id)
 
@@ -68,22 +69,23 @@ class SkeletonApplication(SkeletonBase):
             raise ValidationException(f"[PATCH_QUOTE]Error while patching quote: {quote_id}; "
                                       f"data: {data}; Response: {format_response(resp)}")
 
-        # GET quote
-        resp = requests.get(url=url, headers=self.platform_header)
-        if not resp or resp.status_code != 200:
-            raise ValidationException(f"[PATCH_QUOTE]Error while get updated quote: {quote_id}; "
-                                      f"data: {data}; Response: {format_response(resp)}")
+        if return_quote:
+            # GET quote
+            resp = requests.get(url=url, headers=self.platform_header)
+            if not resp or resp.status_code != 200:
+                raise ValidationException(f"[PATCH_QUOTE]Error while get updated quote: {quote_id}; "
+                                          f"data: {data}; Response: {format_response(resp)}")
 
         return resp.json()
 
-    def update_quote_state(self, quote_id, state: str):
+    def update_quote_state(self, quote_id, state: str, return_quote):
         state = state.lower()
         if state not in VALID_QUOTE_STATES:
             logger.error(f"Invalid quote state: {state}")
             raise ValidationException(f"Invalid quote state: {state}")
 
         data = {'state': 'simulated'}
-        quote = self._patch_quote(quote_id, data)
+        quote = self._patch_quote(quote_id, data, return_quote)
         return quote
 
     def quote_simulate(self, service_id, quote_id):
