@@ -106,6 +106,15 @@ class SkeletonApplication(SkeletonBase):
 
     def _patch_coverage_property(self, quote_id: str, coverage_id: str, property_id: str, data: dict,
                                  return_property: bool = False) -> dict:
+        """
+        Make PATCH request to update quote/<quote_id>/properties/<property_id>
+        :param quote_id: UUID
+        :param coverage_id: UUID
+        :param property_id: UUID
+        :param data: Dict - Payload to be patched to property
+        :param return_property: bool - True return full updated property / False return just patch response
+        :return: Dict with full updated property or PATCH response
+        """
         self.log(f"Patch coverage: {coverage_id}; property: {property_id}; Data: {data}", 7)
         url = f"{COVERAGES_URI.format(quote_id=quote_id)}/{coverage_id}/properties/{property_id}"
 
@@ -166,61 +175,52 @@ class SkeletonApplication(SkeletonBase):
         quote = self._patch_quote(quote_id, data, return_quote)
         return quote
 
-    def update_quote_property(self, quote_id: str, property_: dict, new_value: str, return_property: bool) -> dict:
+    def update_quote_property(self, quote_id: str, property_id: str, new_value: str,
+                              return_property: bool) -> dict:
         """
         Update quote property data according to received value
         :param quote_id: UUID
-        :param property_: dict -> complete property object
+        :param property_id: UUID
         :param new_value: str -> new value to property data
         :param return_property: bool - True return full updated quote property /
-                                       False return object with property data, id and namespace
-        :return:
+                                       False return True if Patched
         """
-        self.log(f"Update property value for {property_.get('id')}; New value: {new_value}", 7)
-        ret = {
-            "data": property_.get('data'),
-            "id": property_.get('id'),
-            "namespace": property_.get('namespace'),
+        self.log(f"Update property value for {property_id}; New value: {new_value}", 7)
+        if not (is_valid_uuid(quote_id) and is_valid_uuid(property_id)):
+            raise ValidationException(f"[update_quote_property] Invalid quote or property")
+        data = {
+            'data': new_value
         }
-        if property_.get('data') != new_value:
-            data = {
-                'data': new_value
-            }
-            property_id = property_.get('id')
 
-            # try to patch property with new data
-            new_property = self._patch_property(quote_id, property_id, data, return_property)
-            if return_property:
-                ret = new_property
-            else:
-                ret['data'] = new_value
+        # try to patch property with new data
+        new_property = self._patch_property(quote_id, property_id, data, return_property)
 
-        return ret
+        return new_property if return_property else True
 
-    def update_quote_coverage_property(self, quote_id: str, coverage_id: str, property_: dict, new_value: str,
+    def update_quote_coverage_property(self, quote_id: str, coverage_id: str, property_id: str, new_value: str,
                                        return_property: bool) -> dict:
+        """
+        Update quote property data according to received value
+        :param quote_id: UUID
+        :param coverage_id: UUID
+        :param property_id: UUID
+        :param new_value: str -> new value to property data
+        :param return_property: bool - True return full updated quote property /
+                                       False return True if Patched
+        """
 
-        self.log(f"Update quote coverage property value for {property_.get('id')}; New value: {new_value}", 7)
-        ret = {
-            "data": property_.get('data'),
-            'coverage_id': coverage_id,
-            "id": property_.get('id'),
-            "namespace": property_.get('namespace'),
+        self.log(f"Update quote coverage property value for {property_id}; New value: {new_value}", 7)
+
+        if not (is_valid_uuid(quote_id) and is_valid_uuid(coverage_id) and is_valid_uuid(property_id)):
+            raise ValidationException(f"[update_quote_property] Invalid quote, coverage or property")
+
+        data = {
+            'data': new_value
         }
-        if property_.get('data') != new_value:
-            data = {
-                'data': new_value
-            }
-            property_id = property_.get('id')
+        # try to patch property with new data
+        new_property = self._patch_coverage_property(quote_id, coverage_id, property_id, data, return_property)
 
-            # try to patch property with new data
-            new_property = self._patch_coverage_property(quote_id, coverage_id, property_id, data, return_property)
-            if return_property:
-                ret = new_property
-            else:
-                ret['data'] = new_value
-
-        return ret
+        return new_property if return_property else True
 
     def quote_simulate(self, service_id: str, quote_id: str):
         """
