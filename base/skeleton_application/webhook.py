@@ -41,7 +41,7 @@ class WebhookHubApplication(WebhookHubBase):
                     response=json.dumps({
                         "location": {
                             "id": _service["id"],
-                            "url": _service["url"]
+                            "url": _service.get("url")
                         }
                     }),
                     content_type='application/json'
@@ -71,7 +71,7 @@ class WebhookHubApplication(WebhookHubBase):
                                                                                     _service['id'])
                     }
 
-                    logger.debug("Initiated PATCH - {}".format(_service['url']))
+                    logger.debug("Initiated PATCH - {}".format(_service.get('url')))
                     logger.verbose("\n{}\n".format(json.dumps(data, indent=4, sort_keys=True)))
 
                     resp = requests.patch('{}/services/{}'.format(settings.api_server_full, _service['id']),
