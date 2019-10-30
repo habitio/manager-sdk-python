@@ -165,7 +165,7 @@ class WebhookHubApplication(WebhookHubBase):
 
                 result = self.implementer.quote_simulate(service_id, quote_id)
 
-                if result:
+                if result and (result.get('quote_properties') or result.get('coverage_properties')):
                     logger.debug("Changing quote status to simulated")
                     self.implementer.update_quote_state(quote_id, 'simulated', False)
 

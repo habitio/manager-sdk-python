@@ -3,10 +3,9 @@ from base.utils import format_response
 from .router import *
 from .webhook import *
 
-NAMESPACES_FILTER = ['rate_chunk', 'rate_base']
-VALID_QUOTE_STATES = ['draft', 'open', 'simulated', 'closed']
 QUOTE_URI = "%s/applications/%s/quotes/{quote_id}" % (settings.api_server_full, settings.client_id)
 QUOTE_PROPERTIES_URI = "%s/properties" % QUOTE_URI
+COVERAGES_URI = "%s/coverages" % QUOTE_URI
 
 
 class SkeletonApplication(SkeletonBase):
@@ -24,20 +23,57 @@ class SkeletonApplication(SkeletonBase):
         self.log(f"Try to get quote: {_url}", 7)
         resp = requests.get(url=_url, headers=self.platform_header)
         if resp.status_code != 200:
-            raise InvalidRequestException("Invalid quote")
+            raise InvalidRequestException("_check_quote: Invalid quote")
 
-    def _get_properties_by_quote(self, quote_id):
+    def get_properties_by_quote(self, quote_id, params=None):
+        params = params or {}
         # get properties using quote_id
         _url = QUOTE_PROPERTIES_URI.format(quote_id=quote_id)
-        _params = {
-            "namespace": f"in/{NAMESPACES_FILTER}/j"
-        }
+
         self.log(f"Try to get properties: {_url}", 7)
-        resp = requests.get(url=_url, headers=self.platform_header, params=_params)
+        resp = requests.get(url=_url, headers=self.platform_header, params=params)
         if resp.status_code != 200:
-            raise InvalidRequestException("Invalid quote")
+            raise InvalidRequestException("get_properties_by_quote: Invalid quote")
         properties = resp.json().get('elements', [])
         self.log(f"Properties found: {properties}", 7)
+
+        return properties
+
+    def get_coverages_by_quote(self, quote_id, params=None):
+        params = params or {}
+        # get properties using quote_id
+        _url = COVERAGES_URI.format(quote_id=quote_id)
+
+        self.log(f"Try to get properties: {_url}", 7)
+        resp = requests.get(url=_url, headers=self.platform_header, params=params)
+        if resp.status_code not in [200, 204]:
+            raise InvalidRequestException("get_coverages_by_quote: Invalid quote")
+
+        if resp.status_code == 200:
+            coverages = resp.json().get('elements', [])
+            self.log(f"Coverages found: {coverages}", 7)
+        else:
+            coverages = []
+            self.log(f"Coverages not found: {coverages}", 7)
+
+        return coverages
+
+    def get_coverage_properties(self, quote_id, coverage_id, params=None):
+        params = params or {}
+        # get properties using quote_id
+        _url = f"{COVERAGES_URI.format(quote_id=quote_id)}/{coverage_id}/properties"
+
+        self.log(f"Try to get coverage properties: {_url}", 7)
+        resp = requests.get(url=_url, headers=self.platform_header, params=params)
+        if resp.status_code not in [200, 204]:
+            raise InvalidRequestException("get_coverage_properties: Invalid quote or coverage")
+
+        if resp.status_code == 200:
+            properties = resp.json().get('elements', [])
+            self.log(f"Coverages found: {properties}", 7)
+        else:
+            properties = []
+            self.log(f"Coverages not found: {properties}", 7)
 
         return properties
 
@@ -65,6 +101,28 @@ class SkeletonApplication(SkeletonBase):
             if not resp or resp.status_code != 200:
                 raise ValidationException(f"[PATCH_PROPERTY]Error while get updated property: {quote_id}; "
                                           f"property: {property_id}; data: {data}; Response: {format_response(resp)}")
+
+        return resp.json()
+
+    def _patch_coverage_property(self, quote_id: str, coverage_id: str, property_id: str, data: dict,
+                                 return_property: bool = False) -> dict:
+        self.log(f"Patch coverage: {coverage_id}; property: {property_id}; Data: {data}", 7)
+        url = f"{COVERAGES_URI.format(quote_id=quote_id)}/{coverage_id}/properties/{property_id}"
+
+        # PATCH property
+        resp = requests.patch(url=url, headers=self.platform_header, json=data)
+        if not resp or resp.status_code != 200:
+            raise ValidationException(f"[PATCH_COVERAGE_PROPERTY]Error while patching property quote: {quote_id}; "
+                                      f"coverage: {coverage_id}; property: {property_id}; data: {data}; "
+                                      f"Response: {format_response(resp)}")
+
+        # GET property
+        if return_property:
+            resp = requests.get(url=url, headers=self.platform_header)
+            if not resp or resp.status_code != 200:
+                raise ValidationException(f"[PATCH_COVERAGE_PROPERTY]Error while get updated property: {quote_id}; "
+                                          f"coverage: {coverage_id}; property: {property_id}; data: {data}; "
+                                          f"Response: {format_response(resp)}")
 
         return resp.json()
 
@@ -103,11 +161,8 @@ class SkeletonApplication(SkeletonBase):
         :return:
         """
         state = state.lower()
-        if state not in VALID_QUOTE_STATES:
-            logger.error(f"Invalid quote state: {state}")
-            raise ValidationException(f"Invalid quote state: {state}")
 
-        data = {'state': 'simulated'}
+        data = {'state': state}
         quote = self._patch_quote(quote_id, data, return_quote)
         return quote
 
@@ -135,6 +190,31 @@ class SkeletonApplication(SkeletonBase):
 
             # try to patch property with new data
             new_property = self._patch_property(quote_id, property_id, data, return_property)
+            if return_property:
+                ret = new_property
+            else:
+                ret['data'] = new_value
+
+        return ret
+
+    def update_quote_coverage_property(self, quote_id: str, coverage_id: str, property_: dict, new_value: str,
+                                       return_property: bool) -> dict:
+
+        self.log(f"Update quote coverage property value for {property_.get('id')}; New value: {new_value}", 7)
+        ret = {
+            "data": property_.get('data'),
+            'coverage_id': coverage_id,
+            "id": property_.get('id'),
+            "namespace": property_.get('namespace'),
+        }
+        if property_.get('data') != new_value:
+            data = {
+                'data': new_value
+            }
+            property_id = property_.get('id')
+
+            # try to patch property with new data
+            new_property = self._patch_coverage_property(quote_id, coverage_id, property_id, data, return_property)
             if return_property:
                 ret = new_property
             else:
