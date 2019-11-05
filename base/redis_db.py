@@ -250,14 +250,9 @@ class DBManager(Redis):
 
             self.set_key(credentials_key, credentials)
 
-    def update_credentials(self, new_credentials, old_credentials, old_refresh_token, owner_id, channel_id,
-                           force=False):
-        refresh_token = old_credentials.get('refresh_token', old_credentials.get('data', {}).get('refresh_token', ''))
-
-        if force or refresh_token == old_refresh_token:
-            client_app_id = old_credentials.get('client_id', old_credentials.get('data', {}).get('client_id', ''))
-            new_credentials['client_id'] = client_app_id
-            self.set_credentials(new_credentials, client_app_id, owner_id, channel_id)
+    def update_credentials(self, new_credentials, client_id, owner_id, channel_id):
+        new_credentials['client_id'] = client_id
+        self.set_credentials(new_credentials, client_id, owner_id, channel_id)
 
     def get_device_id(self, channel_id):
         key = "/".join(['device-channels', channel_id])

@@ -208,11 +208,13 @@ class TokenRefresherManager(object):
                 key = cred_dict['key']
                 credentials = cred_dict['value']
                 owner_id = key.split('/')[1]
-                stored = self.implementer.store_credentials(owner_id, channeltemplate_id, credentials)
-
+                refresh_token = credentials.get('refresh_token')
+                client_id = credentials.get('client_id', credentials.get('data', {}).get('client_id', ''))
+                stored = False
+                if force or refresh_token == old_refresh_token:
+                    stored = self.implementer.store_credentials(owner_id, channeltemplate_id, credentials)
                 if stored:
-                    self.db.update_credentials(new_credentials, credentials, old_refresh_token, owner_id, channel_id,
-                                               force)
+                    self.db.set_credentials(new_credentials, client_id, owner_id, channel_id)
 
     def update_all_channels(self, old_credentials, new_credentials, owner_id, force=False):
         if settings.config_refresh.get('update_channels', True):
@@ -225,6 +227,9 @@ class TokenRefresherManager(object):
             for cred_dict in all_channels_credentials:
                 key = cred_dict['key']
                 credentials = cred_dict['value']
+                refresh_token = credentials.get('refresh_token')
+                client_id = credentials.get('client_id', credentials.get('data', {}).get('client_id', ''))
+                stored = False
                 if not channeltemplate_id or key.split('/')[-1] != channel_id:
                     channel_id = key.split('/')[-1]
                     channeltemplate_id = self.implementer.get_channel_template(channel_id)
@@ -232,7 +237,7 @@ class TokenRefresherManager(object):
                 else:
                     channel_id = key.split('/')[-1]
 
-                stored = self.implementer.store_credentials(owner_id, channeltemplate_id, credentials)
-                if stored and channel_id in channel_id_list:
-                    self.db.update_credentials(new_credentials, credentials, old_refresh_token, owner_id, channel_id,
-                                               force)
+                if (force or refresh_token == old_refresh_token) and channel_id in channel_id_list:
+                    stored = self.implementer.store_credentials(owner_id, channeltemplate_id, new_credentials)
+                if stored:
+                    self.db.set_credentials(new_credentials, client_id, owner_id, channel_id)
