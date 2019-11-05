@@ -217,7 +217,7 @@ class DBManager(Redis):
                     client_id, owner_id, channel_id)
                 if not data:
                     logger.warning("[DB] No credentials found!")
-                    return None
+                    return {}, credentials_key
                 else:
                     data = [data]
             elif channel_id:
@@ -249,6 +249,15 @@ class DBManager(Redis):
                                             owner_id, 'channels', channel_id])
 
             self.set_key(credentials_key, credentials)
+
+    def update_credentials(self, new_credentials, old_credentials, old_refresh_token, owner_id, channel_id,
+                           force=False):
+        refresh_token = old_credentials.get('refresh_token', old_credentials.get('data', {}).get('refresh_token', ''))
+
+        if force or refresh_token == old_refresh_token:
+            client_app_id = old_credentials.get('client_id', old_credentials.get('data', {}).get('client_id', ''))
+            new_credentials['client_id'] = client_app_id
+            self.set_credentials(new_credentials, client_app_id, owner_id, channel_id)
 
     def get_device_id(self, channel_id):
         key = "/".join(['device-channels', channel_id])
@@ -320,40 +329,6 @@ class DBManager(Redis):
         if not device_id:
             device_id = '*'
         return list(set(self.query('channel-devices/{}'.format(device_id))))
-
-    def update_credentials(self, new_credentials, cred_dict, old_refresh_token, **kwargs):
-        key = cred_dict['key']
-        credentials = cred_dict['value']
-
-        owner_id = kwargs.get('owner_id', key.split('/')[1])
-        channel_id = kwargs.get('channel_id', key.split('/')[-1])
-        force = kwargs.get('force', False)
-        refresh_token = credentials.get('refresh_token', credentials.get('data', {}).get('refresh_token', ''))
-
-        if force or refresh_token == old_refresh_token:
-            client_app_id = credentials.get('client_id', credentials.get('data', {}).get('client_id', ''))
-            new_credentials['client_id'] = client_app_id
-            self.set_credentials(new_credentials, client_app_id, owner_id, channel_id)
-
-    def update_all_owners(self, old_credentials, new_credentials, channel_id, force=False):
-        if settings.config_refresh.get('update_owners', True):
-            all_owners_credentials = self.full_query('credential-owners/*/channels/{}'.format(channel_id))
-            old_refresh_token = old_credentials['refresh_token']
-            logger.info('[TokenRefresher] update_all_owners: {} keys found'.format(len(all_owners_credentials)))
-            for cred_dict in all_owners_credentials:
-                self.update_credentials(new_credentials, cred_dict, old_refresh_token,
-                                        channel_id=channel_id, force=force)
-
-    def update_all_channels(self, old_credentials, new_credentials, owner_id, channel_id_list, force=False):
-        if settings.config_refresh.get('update_channels', True):
-            all_channels_credentials = self.full_query('credential-owners/{}/channels/*'.format(owner_id))
-            old_refresh_token = old_credentials['refresh_token']
-            logger.info('[TokenRefresher] update_all_channels: {} keys found'.format(len(all_channels_credentials)))
-            for cred_dict in all_channels_credentials:
-                channel_id = cred_dict['key'].split('/')[-1]
-                if channel_id in channel_id_list:
-                    self.update_credentials(new_credentials, cred_dict, old_refresh_token,
-                                            owner_id=owner_id, force=force)
 
 
 def get_redis():
