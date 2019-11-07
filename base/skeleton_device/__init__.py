@@ -347,10 +347,9 @@ class SkeletonDevice(SkeletonBase):
 
         return credentials
 
-    def store_credentials(self, owner_id, channeltemplate_id, credentials):
+    def store_credentials(self, owner_id, client_app_id, channeltemplate_id, credentials):
 
         try:
-            client_app_id = credentials.get('client_id', credentials.get('data', {}).get('client_id', ''))
             url = f"{settings.api_server_full}/managers/{settings.client_id}/store-credentials"
             payload = {
                 'client_id': client_app_id,

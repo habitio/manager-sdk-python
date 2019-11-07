@@ -207,7 +207,7 @@ class TokenRefresherManager(object):
                 client_id = check_credentials.get('client_id', check_credentials.get('data', {}).get('client_id', ''))
                 stored = False
                 if force or refresh_token == old_refresh_token:
-                    stored = self.implementer.store_credentials(owner_id, channeltemplate_id, new_credentials)
+                    stored = self.implementer.store_credentials(owner_id, client_id, channeltemplate_id, new_credentials)
                 if stored:
                     self.db.set_credentials(new_credentials, client_id, owner_id, channel_id)
 
@@ -233,6 +233,6 @@ class TokenRefresherManager(object):
                     channel_id = key.split('/')[-1]
 
                 if (force or refresh_token == old_refresh_token) and channel_id in channel_id_list:
-                    stored = self.implementer.store_credentials(owner_id, channeltemplate_id, new_credentials)
+                    stored = self.implementer.store_credentials(owner_id, client_id, channeltemplate_id, new_credentials)
                 if stored:
                     self.db.set_credentials(new_credentials, client_id, owner_id, channel_id)
