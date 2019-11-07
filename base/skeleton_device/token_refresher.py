@@ -206,13 +206,13 @@ class TokenRefresherManager(object):
             logger.info('[TokenRefresher] update_all_owners: {} keys found'.format(len(all_owners_credentials)))
             for cred_dict in all_owners_credentials:
                 key = cred_dict['key']
-                credentials = cred_dict['value']
+                check_credentials = cred_dict['value']
                 owner_id = key.split('/')[1]
-                refresh_token = credentials.get('refresh_token')
-                client_id = credentials.get('client_id', credentials.get('data', {}).get('client_id', ''))
+                refresh_token = check_credentials.get('refresh_token')
+                client_id = check_credentials.get('client_id', check_credentials.get('data', {}).get('client_id', ''))
                 stored = False
                 if force or refresh_token == old_refresh_token:
-                    stored = self.implementer.store_credentials(owner_id, channeltemplate_id, credentials)
+                    stored = self.implementer.store_credentials(owner_id, channeltemplate_id, new_credentials)
                 if stored:
                     self.db.set_credentials(new_credentials, client_id, owner_id, channel_id)
 
@@ -226,9 +226,9 @@ class TokenRefresherManager(object):
             logger.info('[TokenRefresher] update_all_channels: {} keys found'.format(len(all_channels_credentials)))
             for cred_dict in all_channels_credentials:
                 key = cred_dict['key']
-                credentials = cred_dict['value']
-                refresh_token = credentials.get('refresh_token')
-                client_id = credentials.get('client_id', credentials.get('data', {}).get('client_id', ''))
+                check_credentials = cred_dict['value']
+                refresh_token = check_credentials.get('refresh_token')
+                client_id = check_credentials.get('client_id', check_credentials.get('data', {}).get('client_id', ''))
                 stored = False
                 if not channeltemplate_id or key.split('/')[-1] != channel_id:
                     channel_id = key.split('/')[-1]
