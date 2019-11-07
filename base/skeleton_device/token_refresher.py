@@ -1,6 +1,7 @@
 import concurrent
 
 from base import settings, logger
+from base.helpers import validate_channel
 from base.redis_db import get_redis
 from base.utils import rate_limited
 from base.constants import DEFAULT_REFRESH_INTERVAL, DEFAULT_RATE_LIMIT, DEFAULT_THREAD_MAX_WORKERS, \
@@ -106,13 +107,7 @@ class TokenRefresherManager(object):
                 return
 
             # validate if channel exists
-            try:
-                channeltemplate_id = self.implementer.get_channel_template(channel_id)
-            except Exception as e:
-                logger.debug('[TokenRefresher] {}'.format(e))
-                channeltemplate_id = None
-
-            if not channeltemplate_id:
+            if not validate_channel(channel_id):
                 return
 
             # Validate if token is valid before the request

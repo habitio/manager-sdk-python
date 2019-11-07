@@ -3,6 +3,7 @@ import time
 from base.common.skeleton_base import SkeletonBase
 from base.constants import DEFAULT_BEFORE_EXPIRES
 from base.exceptions import ChannelTemplateNotFound
+from base.helpers import validate_channel
 from base.utils import format_response
 from typing import Dict
 
@@ -210,26 +211,11 @@ class SkeletonDevice(SkeletonBase):
         Returns channel_template_id
 
         """
-
-        try:
-            if not channel_id:
-                logger.warning(f"get_channel_template :: Invalid channel_id")
-                return ''
-            url = "{}/channels/{}?page_size=9999".format(settings.api_server_full, channel_id)
-
-            resp = requests.get(url, headers=self.header)
-            logger.verbose("Received response code[{}]".format(resp.status_code))
-
-            if int(resp.status_code) == 200:
-                return resp.json()["channeltemplate_id"]
-            else:
-                raise ChannelTemplateNotFound("Failed to retrieve channel_template_id for {}".format(channel_id))
-
-        except (OSError, ChannelTemplateNotFound) as e:
-            logger.warning('get_channel_template :: Error while making request to platform: {}'.format(e))
-        except Exception as ex:
-            logger.alert("Unexpected error get_channel_template: {}".format(traceback.format_exc(limit=5)))
-        return ''
+        channel = validate_channel(channel_id, return_channel=True)
+        if channel and 'channeltemplate_id' in channel:
+            return channel['channeltemplate_id']
+        else:
+            return ''
 
     def get_channels_by_channeltemplate(self, channeltemplate_id):
         """
@@ -380,8 +366,13 @@ class SkeletonDevice(SkeletonBase):
             resp = requests.post(url, headers=self.header, json=payload)
             logger.verbose(f"[store_credentials] Received response code[{resp.status_code}]")
 
-            if int(resp.status_code) == 200:
+            if int(resp.status_code) == 200 and resp.json().get('n_updated'):
                 return True
+            elif int(resp.status_code) == 200 and resp.json().get('n_updated', 0) == 0:
+                payload.pop('credentials', None)
+                logger.warning(f'store_credentials :: credentials not found to patch with requested data: '
+                               f'{payload}')
+                return False
             else:
                 logger.warning(f'store_credentials :: Error while making request to platform: {format_response(resp)}')
                 return False
