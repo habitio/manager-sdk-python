@@ -211,7 +211,7 @@ class WebhookHubDevice(WebhookHubBase):
                 logger.verbose(format_str(data, is_json=True))
 
                 resp_app = self.session.post(url, json=data)
-                logger.debug("Received response code[{}]".format(resp_app.status_code))
+                logger.debug("[channels_grant] Received response code[{}]".format(resp_app.status_code))
 
                 if resp_app.status_code == 412 and resp_app.json().get('code') == 2000:
                     raise UnauthorizedException(resp_app.json().get('text'))
@@ -242,7 +242,7 @@ class WebhookHubDevice(WebhookHubBase):
                 logger.verbose(format_str(data, is_json=True))
 
                 resp_user = self.session.post(url, json=data)
-                logger.verbose("Received response code[{}]".format(resp_user.status_code))
+                logger.verbose("[channels_grant] Received response code[{}]".format(resp_user.status_code))
 
                 if resp_app.status_code == 412 and resp_app.json().get('code') == 2000:
                     raise UnauthorizedException(resp_app.json().get('text'))
@@ -314,7 +314,7 @@ class WebhookHubDevice(WebhookHubBase):
 
         resp = self.session.post("{}/managers/self/channels".format(settings.api_server_full), json=data)
 
-        logger.debug("Received response code[{}]".format(resp.status_code))
+        logger.debug("[create_channel_id] Received response code[{}]".format(resp.status_code))
 
         if resp.status_code == 412 and resp.json().get('code') == 2000:
             raise UnauthorizedException(resp.json().get('text'))
@@ -343,7 +343,7 @@ class WebhookHubDevice(WebhookHubBase):
 
             resp = requests.patch(url, data=json.dumps(data), headers=self.session.headers)
 
-            logger.verbose("Received response code[{}]".format(resp.status_code))
+            logger.verbose("[patch_endpoints] Received response code[{}]".format(resp.status_code))
             logger.verbose(format_str(resp.json(), is_json=True))
 
             if "confirmation_hash" in resp.json():

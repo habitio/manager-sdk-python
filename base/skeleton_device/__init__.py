@@ -261,13 +261,14 @@ class SkeletonDevice(SkeletonBase):
 
         try:
             resp = requests.get(url, headers=self.header)
-            logger.verbose("Received response code[{}]".format(resp.status_code))
 
             if int(resp.status_code) == 200:
                 return resp.json()['elements'][0]['channel']["channeltemplate_id"]
             elif int(resp.status_code) == 204:  # No content
+                logger.verbose("[get_channel_by_owner] Received response code[{}]".format(resp.status_code))
                 return False
             else:
+                logger.verbose("[get_channel_by_owner] Received response code[{}]".format(resp.status_code))
                 raise ChannelTemplateNotFound("Failed to retrieve channel_template_id for {}".format(channel_id))
 
         except (OSError, ChannelTemplateNotFound) as e:

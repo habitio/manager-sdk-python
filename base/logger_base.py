@@ -25,6 +25,13 @@ class LoggerBase(logging.Logger):
     def log_type(self, value: str):
         self._log_type = value
 
+    def makeRecord(self, name, level, fn, lno, msg, args, exc_info,
+                   func=None, extra=None, sinfo=None):
+        fn = extra.pop('fn', fn)
+        lno = extra.pop('lno', lno)
+        func = extra.pop('func', func)
+        return super().makeRecord(name, level, fn, lno, msg, args, exc_info, func, extra, sinfo)
+
 
 log_level = get_real_logger_level(int(settings.config_log["level"]))
 try:

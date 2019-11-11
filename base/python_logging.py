@@ -6,6 +6,7 @@ import json
 import logging.handlers
 import time
 from functools import wraps
+from logging import currentframe
 
 
 log_levels = {
@@ -74,8 +75,14 @@ def format_message(func):
 
 
 def get_log_kwargs(log_level: int) -> dict:
+    cf = currentframe()
     kwargs = {
-        'extra': {'zptLogLevel': 109 - log_level},
+        'extra': {
+            'zptLogLevel': 109 - log_level,
+            'fn': cf.f_back.f_back.f_code.co_filename,
+            'lno': cf.f_back.f_back.f_lineno,
+            'func': cf.f_back.f_back.f_code.co_name,
+        },
         'exc_info': True if log_level == 101 else None
     }
     return kwargs
@@ -156,7 +163,6 @@ def error(self, message, *args, **kws) -> None:
     if self.isEnabledFor(log_level):
         kws = get_log_kwargs(log_level)
         self._log(log_level, message, args, **kws)
-
 
 @update_log_level
 @format_message

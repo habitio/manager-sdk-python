@@ -258,17 +258,17 @@ class SkeletonBase(ABC):
         }
         try:
             resp = requests.get(url, headers=headers)
-            self.log("Received response code[{}]".format(resp.status_code), 9)
 
             if int(resp.status_code) == 200:
                 return resp.json()
             else:
+                self.log("[get_channeltemplate_data] Received response code[{}]".format(resp.status_code), 9)
                 raise ChannelTemplateNotFound("Failed to retrieve channeltemplate_data {}".format(channeltemplate_id))
 
         except (OSError, ChannelTemplateNotFound) as e:
-            self.log('Error while making request to platform: {}'.format(e), 3)
+            self.log('[get_channeltemplate_data] Error while making request to platform: {}'.format(e), 3)
         except Exception as ex:
-            self.log("Unexpected error get_channeltemplate_data: {}".format(traceback.format_exc(limit=5)), 3)
+            self.log("[get_channeltemplate_data] Unexpected error get_channeltemplate_data: {}".format(traceback.format_exc(limit=5)), 3)
         return {}
 
     def get_latest_property_value(self, channel_id, component, property):
@@ -281,17 +281,18 @@ class SkeletonBase(ABC):
         }
         try:
             resp = requests.get(url, headers=headers)
-            self.log("Received response code[{}]".format(resp.status_code), 9)
 
             if int(resp.status_code) == 200:
                 return resp.json()["elements"][0]["value"]
             else:
+                self.log("[get_latest_property_value] Received response code[{}]".format(resp.status_code), 9)
                 raise PropertyHistoryNotFoundException("Failed to retrieve latest_property_value")
 
         except (OSError, PropertyHistoryNotFoundException) as e:
-            self.log('Error while making request to platform: {}'.format(e), 3)
+            self.log('[get_latest_property_value] Error while making request to platform: {}'.format(e), 3)
         except Exception as ex:
-            self.log("Unexpected error get_latest_property_value: {}".format(traceback.format_exc(limit=5)), 3)
+            self.log("[get_latest_property_value] Unexpected error get_latest_property_value: {}".format(
+                traceback.format_exc(limit=5)), 3)
         return {}
 
     # -------------

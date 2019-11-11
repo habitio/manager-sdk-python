@@ -77,7 +77,7 @@ class WebhookHubApplication(WebhookHubBase):
                     resp = requests.patch('{}/services/{}'.format(settings.api_server_full, _service['id']),
                                           data=json.dumps(data), headers=self.session.headers)
 
-                    logger.verbose("Received response code[{}]".format(resp.status_code))
+                    logger.verbose("[patch_endpoints] Received response code[{}]".format(resp.status_code))
                     logger.verbose("\n{}\n".format(json.dumps(resp.json(), indent=4, sort_keys=True)))
 
                     if int(resp.status_code) == 200:
@@ -114,7 +114,7 @@ class WebhookHubApplication(WebhookHubBase):
 
             resp = requests.patch(url, data=json.dumps(data), headers=self.session.headers)
 
-            logger.verbose("Received response code[{}]".format(resp.status_code))
+            logger.verbose("[patch_quotesimulate] Received response code[{}]".format(resp.status_code))
             logger.verbose("\n{}\n".format(json.dumps(resp.json(), indent=4, sort_keys=True)))
 
             if int(resp.status_code) == 200:
@@ -131,7 +131,7 @@ class WebhookHubApplication(WebhookHubBase):
         try:
             logger.debug(f"Trying to get application data - {settings.webhook_url}")
             resp = requests.get(settings.webhook_url, headers=self.session.headers)
-            logger.verbose("Received response code[{}]".format(resp.status_code))
+            logger.verbose("[get_application] Received response code[{}]".format(resp.status_code))
 
             if int(resp.status_code) == 200:
                 logger.notice("Get application successful!")
