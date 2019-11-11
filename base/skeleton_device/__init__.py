@@ -3,6 +3,8 @@ import time
 from base.common.skeleton_base import SkeletonBase
 from base.constants import DEFAULT_BEFORE_EXPIRES
 from base.exceptions import ChannelTemplateNotFound
+from base.helpers import validate_channel
+from base.utils import format_response
 from typing import Dict
 
 from .router import *
@@ -25,6 +27,13 @@ class SkeletonDevice(SkeletonBase):
         url = '{}/{}/managers/{}/swap-credentials'.format(server, version, client_id)
         return url
 
+    @property
+    def header(self):
+        return {
+            "Authorization": "Bearer {0}".format(settings.block["access_token"]),
+            "Accept": "application/json",
+        }
+
     @staticmethod
     def _refresh_token_kwargs(credentials, sender, case=None):
         credentials_dict = {
@@ -40,10 +49,6 @@ class SkeletonDevice(SkeletonBase):
 
     def swap_credentials(self, credentials, sender, token_key='access_token') -> Dict:
         url = self._swap_url
-        header = {
-            "Authorization": "Bearer {}".format(settings.block["access_token"]),
-            "Content-Type": "application/json"
-        }
 
         response = None
         payload = {}
@@ -58,7 +63,7 @@ class SkeletonDevice(SkeletonBase):
                         token_key: credentials.get(token_key, '')
                     }
                 }
-                response = requests.request('POST', url, headers=header, json=payload)
+                response = requests.request('POST', url, headers=self.header, json=payload)
                 if response.status_code == 204:
                     now = int(time.time())
                     credentials['expiration_date'] = now - 1
@@ -206,25 +211,11 @@ class SkeletonDevice(SkeletonBase):
         Returns channel_template_id
 
         """
-
-        url = "{}/channels/{}".format(settings.api_server_full, channel_id)
-        headers = {
-            "Authorization": "Bearer {0}".format(settings.block["access_token"])
-        }
-        try:
-            resp = requests.get(url, headers=headers)
-            logger.verbose("Received response code[{}]".format(resp.status_code))
-
-            if int(resp.status_code) == 200:
-                return resp.json()["channeltemplate_id"]
-            else:
-                raise ChannelTemplateNotFound("Failed to retrieve channel_template_id for {}".format(channel_id))
-
-        except (OSError, ChannelTemplateNotFound) as e:
-            logger.warning('get_channel_template :: Error while making request to platform: {}'.format(e))
-        except Exception as ex:
-            logger.alert("Unexpected error get_channel_template: {}".format(traceback.format_exc(limit=5)))
-        return ''
+        channel = validate_channel(channel_id, return_channel=True)
+        if channel and 'channeltemplate_id' in channel:
+            return channel['channeltemplate_id']
+        else:
+            return ''
 
     def get_channels_by_channeltemplate(self, channeltemplate_id):
         """
@@ -234,18 +225,19 @@ class SkeletonDevice(SkeletonBase):
         Returns list of channels_id
 
         """
-
-        url = f"{settings.api_server_full}/managers/{settings.client_id}/channels?" \
-              f"page_size=9999&channel.channeltemplate_id={channeltemplate_id}&fields=channel.id"
-        headers = {
-            "Authorization": "Bearer {0}".format(settings.block["access_token"])
-        }
         try:
-            resp = requests.get(url, headers=headers)
+            if not channeltemplate_id:
+                logger.warning(f"get_channels_by_channeltemplate :: Invalid channeltemplate_id")
+                return ''
+            url = f"{settings.api_server_full}/managers/{settings.client_id}/channels?" \
+                  f"page_size=9999&channel.channeltemplate_id={channeltemplate_id}&fields=channel.id"
+
+            resp = requests.get(url, headers=self.header)
             logger.verbose("[get_channels_by_channeltemplate] Received response code[{}]".format(resp.status_code))
 
             if int(resp.status_code) == 200:
-                return [channel.get("channel", {}).get("id") for channel in resp.json().get("elements", [])]
+                return [client_channel.get('channel', {}).get("id") for client_channel in
+                        resp.json().get("elements", [])]
             else:
                 raise ChannelTemplateNotFound("Failed to retrieve channel_ids for {}".format(channeltemplate_id))
 
@@ -266,11 +258,9 @@ class SkeletonDevice(SkeletonBase):
         """
 
         url = "{}/users/{}/channels?channel_id={}".format(settings.api_server_full, owner_id, channel_id)
-        headers = {
-            "Authorization": "Bearer {0}".format(settings.block["access_token"])
-        }
+
         try:
-            resp = requests.get(url, headers=headers)
+            resp = requests.get(url, headers=self.header)
             logger.verbose("Received response code[{}]".format(resp.status_code))
 
             if int(resp.status_code) == 200:
@@ -356,6 +346,39 @@ class SkeletonDevice(SkeletonBase):
         credentials['expiration_date'] = expiration_date
 
         return credentials
+
+    def store_credentials(self, owner_id, client_app_id, channeltemplate_id, credentials):
+
+        try:
+            url = f"{settings.api_server_full}/managers/{settings.client_id}/store-credentials"
+            payload = {
+                'client_id': client_app_id,
+                'owner_id': owner_id,
+                'channeltemplate_id': channeltemplate_id,
+                'credentials': credentials
+            }
+            if not (client_app_id and owner_id and channeltemplate_id and credentials):
+                logger.warning(f'store_credentials :: Invalid payload request client_id: {client_app_id}; '
+                               f'owner_id: {owner_id}; channeltemplate_id: {channeltemplate_id}')
+                return False
+            logger.verbose(f"[store_credentials] Try to update credentials for channeltemplate_id {channeltemplate_id}")
+            resp = requests.post(url, headers=self.header, json=payload)
+            logger.verbose(f"[store_credentials] Received response code[{resp.status_code}]")
+
+            if int(resp.status_code) == 200 and resp.json().get('n_updated'):
+                return True
+            elif int(resp.status_code) == 200 and resp.json().get('n_updated', 0) == 0:
+                payload.pop('credentials', None)
+                logger.warning(f'store_credentials :: credentials not found to patch with requested data: '
+                               f'{payload}')
+                return False
+            else:
+                logger.warning(f'store_credentials :: Error while making request to platform: {format_response(resp)}')
+                return False
+
+        except Exception:
+            logger.alert(f"Unexpected error store_credentials: {traceback.format_exc(limit=5)}")
+        return False
 
 
 SkeletonBase.register(SkeletonDevice)

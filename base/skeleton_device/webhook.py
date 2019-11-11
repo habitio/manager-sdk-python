@@ -264,9 +264,8 @@ class WebhookHubDevice(WebhookHubBase):
                 credentials = self.implementer.auth_response(credentials)
                 credentials = self.implementer.update_expiration_date(credentials)
                 if old_credentials and 'refresh_token' in credentials:
-                    self.db.update_all_owners(old_credentials, credentials, channel_id, force=True)
-                    channel_id_list = self.implementer.get_channels_by_channeltemplate(channel_template)
-                    self.db.update_all_channels(old_credentials, credentials, owner_id, channel_id_list, force=True)
+                    self.refresher.update_all_owners(old_credentials, credentials, channel_id, force=True)
+                    self.refresher.update_all_channels(old_credentials, credentials, owner_id, force=True)
 
             self.db.set_credentials(credentials, client_id, owner_id, channel_id)
             return channel_id
