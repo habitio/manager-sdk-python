@@ -35,17 +35,12 @@ class SkeletonDevice(SkeletonBase):
         }
 
     @staticmethod
-    def _refresh_token_kwargs(credentials, sender, case=None):
+    def _credentials_dict(credentials, sender):
         credentials_dict = {
             'key': sender['key'],
             'value': credentials
         }
-        kwargs = {
-            'owner_id': sender['owner_id'],
-        }
-        if case and isinstance(case, dict):
-            kwargs['channel_id'] = case.get('channel_id', '')
-        return credentials_dict, kwargs
+        return credentials_dict
 
     def swap_credentials(self, credentials, sender, token_key='access_token') -> Dict:
         url = self._swap_url
@@ -67,8 +62,8 @@ class SkeletonDevice(SkeletonBase):
                 if response.status_code == 204:
                     now = int(time.time())
                     credentials['expiration_date'] = now - 1
-                    credentials_dict, kwargs = self._refresh_token_kwargs(credentials, sender)
-                    credentials = self.refresh_token(credentials_dict, **kwargs)
+                    credentials_dict = self._credentials_dict(credentials, sender)
+                    credentials = self.refresh_token(credentials_dict)
                 else:
                     break
             else:
@@ -176,9 +171,9 @@ class SkeletonDevice(SkeletonBase):
 
             if 'key' in sender:
                 if now >= expiration_date:  # we should refresh the token
-                    self.log('token is expired trying to refresh {}'.format(sender['key']), 7)
-                    credentials_dict, kwargs = self._refresh_token_kwargs(credentials, sender, case)
-                    credentials = self.refresh_token(credentials_dict, **kwargs)
+                    self.log('[access_check] token is expired trying to refresh {}'.format(sender['key']), 7)
+                    credentials_dict = self._credentials_dict(credentials, sender)
+                    credentials = self.refresh_token(credentials_dict)
 
             return credentials
 
@@ -261,13 +256,14 @@ class SkeletonDevice(SkeletonBase):
 
         try:
             resp = requests.get(url, headers=self.header)
-            logger.verbose("Received response code[{}]".format(resp.status_code))
 
             if int(resp.status_code) == 200:
                 return resp.json()['elements'][0]['channel']["channeltemplate_id"]
             elif int(resp.status_code) == 204:  # No content
+                logger.verbose("[get_channel_by_owner] Received response code[{}]".format(resp.status_code))
                 return False
             else:
+                logger.verbose("[get_channel_by_owner] Received response code[{}]".format(resp.status_code))
                 raise ChannelTemplateNotFound("Failed to retrieve channel_template_id for {}".format(channel_id))
 
         except (OSError, ChannelTemplateNotFound) as e:
@@ -316,11 +312,14 @@ class SkeletonDevice(SkeletonBase):
         """
         raise NotImplementedError('token refresher ENABLED but conf NOT DEFINED')
 
-    def refresh_token(self, credentials_dict, **kwargs):
+    def refresh_token(self, credentials_dict):
+        refresh_token = credentials_dict.get('value', {}).get('refresh_token', '')
         refresher = TokenRefresherManager(implementer=self)
+        credentials = refresher.get_credentials_by_refresh_token(refresh_token_return=refresh_token)
+        credentials_list = credentials.get(refresh_token, [])
         conf = self.get_refresh_token_conf()
 
-        response = refresher.send_request(credentials_dict, conf, **kwargs)
+        response = refresher.send_request(refresh_token, credentials_list, conf)
         self.log('refresh_token response {}'.format(response), 7)
 
         if type(response) is dict and 'credentials' in response:

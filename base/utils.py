@@ -2,6 +2,9 @@ import json
 import threading
 import time
 from functools import wraps
+from uuid import UUID
+from typing import AnyStr
+from base.exceptions import ValidationException
 
 
 def format_response(resp):
@@ -88,3 +91,11 @@ def synchronized(lock):
 
 def get_real_logger_level(level) -> int:
     return 100 + 9 - level
+
+
+def is_valid_uuid(uuid_: AnyStr):
+    try:
+        uuid_obj = UUID(uuid_)
+        return str(uuid_obj) == uuid_
+    except ValueError:
+        return False

@@ -13,6 +13,7 @@ class WebhookHubBase:
     def __init__(self, queue=None, implementer=None):
         self.implementer = implementer
         self.queue = queue
+        self.confirmation_hash = ""
 
         try:
             self.watchdog_monitor = Watchdog()

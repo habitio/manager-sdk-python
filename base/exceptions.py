@@ -49,6 +49,10 @@ class PropertyHistoryNotFoundException(Exception):
     pass
 
 
+class ValidationException(Exception):
+    pass
+
+
 class InvalidUsage(Exception):
     status_code = 400
 
