@@ -24,8 +24,10 @@ class DBManager(Redis):
             self.hset(settings.redis_db, key, value)
 
             logger.debug("[DB] Key {} added/updated in database".format(key))
+            return True
         except Exception as e:
             logger.error("[DB] Failed to set the key at hash. {}".format(traceback.format_exc(limit=5)))
+            return False
 
     def has_key(self, key):
         try:
@@ -52,6 +54,34 @@ class DBManager(Redis):
                 logger.info("[DB] Key {} not found in database.".format(key))
         except Exception as e:
             logger.error("[DB] get_key error, {}".format(e))
+
+    def delete_key(self, key):
+        try:
+            result = self.hdel(settings.redis_db, key)
+            return result == 1
+        except Exception as e:
+            logger.error("[DB] Failed to delete hash key. {}".format(traceback.format_exc(limit=5)))
+
+    def rename_key(self, new_key, old_key):
+        try:
+            value = self.get_key(old_key)
+            if not value:
+                logger.warning(f"[DB] Key {old_key} not found in database.")
+            created = False
+            deleted = False
+            if value:
+                created = self.set_key(new_key, value)
+                if not created:
+                    logger.warning(f"[DB] error while creating {new_key} to database.")
+            if created:
+                deleted = self.delete_key(old_key)
+                if not deleted:
+                    logger.warning(f"[DB] error while deleting {old_key} from database.")
+            if created and deleted:
+                logger.info(f"[DB] Key {old_key} renamed to {new_key} successfully.")
+            return created and deleted
+        except Exception:
+            logger.error(f"[DB] Failed to rename key {old_key} to {new_key}. {traceback.format_exc(limit=5)}")
 
     def query(self, regex):
         logger.debug("[DB] query regex={}".format(regex))

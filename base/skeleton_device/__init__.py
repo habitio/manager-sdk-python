@@ -318,10 +318,11 @@ class SkeletonDevice(SkeletonBase):
         raise NotImplementedError('token refresher ENABLED but conf NOT DEFINED')
 
     def refresh_token(self, credentials_dict, **kwargs):
+        refresh_token = credentials_dict.get('refresh_token', '')
         refresher = TokenRefresherManager(implementer=self)
         conf = self.get_refresh_token_conf()
 
-        response = refresher.send_request(credentials_dict, conf, **kwargs)
+        response = refresher.send_request(refresh_token, credentials_dict, conf, **kwargs)
         self.log('refresh_token response {}'.format(response), 7)
 
         if type(response) is dict and 'credentials' in response:

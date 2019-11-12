@@ -205,7 +205,7 @@ def setup_logger_handler(log_path, log_level, log_type, host_pub) -> logging.han
     # Create a Formatter for formatting the log messages
     if log_type == 'pretty':
         logger_formatter = CustomFormatter("%(levelname)s | \x1B[1;37m%(asctime)s\x1B[0m | %(message)s | "
-                                           "%(processName)s:%(process)d %(filename)s:%(lineno)d ",
+                                           "%(processName)s:%(process)d %(filename)s.%(funcName)s:%(lineno)d ",
                                            datefmt="%Y-%m-%d %H:%M:%S",
                                            log_type=log_type)
     else:
