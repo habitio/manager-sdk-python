@@ -64,7 +64,7 @@ class TokenRefresherManager(object):
             else:
                 credentials[refresh_token].append(cred_dict)
         return credentials if not refresh_token_return else \
-            (refresh_token_return, credentials.get(refresh_token_return, []))
+            {refresh_token_return: credentials.get(refresh_token_return, [])}
 
     async def make_requests(self, conf_data: dict):
         try:
@@ -92,7 +92,7 @@ class TokenRefresherManager(object):
             logger.error("[TokenRefresher] Error on make_requests: {}".format(e))
 
     @rate_limited(settings.config_refresh.get('rate_limit', DEFAULT_RATE_LIMIT))
-    def send_request(self, refresh_token, credentials_list, conf, **kwargs):
+    def send_request(self, refresh_token, credentials_list, conf):
         try:
             if type(credentials_list) is not list:
                 credentials_list = [credentials_list]
@@ -115,8 +115,8 @@ class TokenRefresherManager(object):
             # try refresh with all credentials in credentials_list until find a valid one
             for credentials_dict in credentials_list:
                 key = credentials_dict['key']  # credential-owners/[owner_id]/channels/[channel_id]
-                channel_id = key.split('/')[-1] if 'channel_id' not in kwargs else kwargs['channel_id']
-                owner_id = key.split('/')[1] if 'owner_id' not in kwargs else kwargs['owner_id']
+                channel_id = key.split('/')[-1]
+                owner_id = key.split('/')[1]
                 credentials = credentials_dict['value']
 
                 try:
@@ -183,12 +183,17 @@ class TokenRefresherManager(object):
                         logger.warning(f'[TokenRefresher] Error in refresh token request {channel_id} {response}')
                 else:
                     logger.debug(f"[TokenRefresher] access token hasn't expired yet {key}")
-                    return {
-                        'channel_id': channel_id,
-                        'credentials': credentials,
-                        'old_credentials': credentials,
-                        'new': False
-                    }
+                if credentials_list.index(credentials_dict) + 1 < len(credentials_list):
+                    logger.debug(f"[TokenRefresher] Will try next credentials in list")
+                    continue
+
+                return {
+                    'channel_id': channel_id,
+                    'credentials': credentials,
+                    'old_credentials': credentials,
+                    'new': False
+                }
+
         except Exception as e:
             logger.error(f'[TokenRefresher] Unexpected error on send_request for refresh token, {e}')
 
