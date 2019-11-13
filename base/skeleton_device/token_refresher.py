@@ -168,6 +168,10 @@ class TokenRefresherManager(object):
 
                         if 'refresh_token' not in new_credentials:  # we need to keep same refresh_token always
                             new_credentials['refresh_token'] = refresh_token
+                        new_credentials['client_man_id'] = credentials.get('client_man_id')
+                        if len(credentials_list) == 1:
+                            credentials_list = self.get_credentials_by_refresh_token(
+                                credentials['refresh_token']).get(credentials['refresh_token'])
 
                         self.update_credentials(new_credentials, credentials_list)
 
@@ -200,6 +204,8 @@ class TokenRefresherManager(object):
     def update_all_owners(self, new_credentials, channel_id):
         all_owners_credentials = self.validate_credentials_channel(
             self.db.full_query(f'credential-owners/*/channels/{channel_id}'))
+        all_owners_credentials = self.check_credentials_man_id(all_owners_credentials)
+        all_owners_credentials = self.filter_credentials(all_owners_credentials, new_credentials.get('client_man_id'))
         logger.info(f'[TokenRefresher] update_all_owners: {len(all_owners_credentials)} keys found')
         if all_owners_credentials:
             self.update_credentials(new_credentials, all_owners_credentials)
@@ -237,17 +243,41 @@ class TokenRefresherManager(object):
             'value': :credential_dict
         }, ...]
         """
+        old_credentials_list = self.check_credentials_man_id(old_credentials_list)
+        old_credentials_list = self.filter_credentials(old_credentials_list, new_credentials.get('client_man_id'))
         for cred_ in old_credentials_list:
             key = cred_['key']
             credentials = cred_['value']
             channel_id = key.split('/')[-1]
             owner_id = key.split('/')[1]
+
             client_app_id = credentials.get('client_id', credentials.get('data', {}).get('client_id', ''))
-            # replace client_id in new credentials with current client_id to keep consistence with different apps
+            client_man_id = credentials.get('client_man_id')
+            # replace client_id in new credentials with current client_app_id and client_man_id
+            # to keep consistence with different apps
             new_credentials['client_id'] = client_app_id
+            new_credentials['client_man_id'] = client_man_id
             channeltemplate_id = self.implementer.get_channel_template(channel_id)
 
             logger.debug(f'[TokenRefresher] new credentials {key}')
             stored = self.implementer.store_credentials(owner_id, client_app_id, channeltemplate_id, new_credentials)
             if stored:
                 self.db.set_credentials(new_credentials, client_app_id, owner_id, channel_id)
+
+    def check_credentials_man_id(self, credentials):
+        if type(credentials) is not list:
+            credentials = [credentials]
+        for cred_ in credentials:
+            key = cred_['key']
+            cred_value = cred_['value']
+            channel_id = key.split('/')[-1]
+            owner_id = key.split('/')[1]
+
+            cred_ = self.implementer.check_manager_client_id(owner_id, channel_id, cred_value)
+        return credentials
+
+    def filter_credentials(self, credentials_list, value, attr='client_man_id'):
+
+        credentials_list = list(filter(lambda x: x['value'].get(attr) == value, credentials_list))
+
+        return credentials_list
