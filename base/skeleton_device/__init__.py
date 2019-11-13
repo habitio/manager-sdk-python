@@ -57,12 +57,14 @@ class SkeletonDevice(SkeletonBase):
                 }
             }
             response = requests.request('POST', url, headers=self.header, json=payload)
+        else:
+            return {}
 
         if response and response.status_code == 200:
             return response.json()
         else:
-            self.log('Error on request swap credentials. Status code: {}.\n URL: {}'.format(response.status_code,
-                                                                                            url), 3)
+            self.log(f'Error on request swap credentials. Status code: {response.status_code}; URL: {url}; '
+                     f'Payload: {payload}', 3)
             return {}
 
     def check_manager_client_id(self, owner_id, channel_id, credentials):
