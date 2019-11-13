@@ -263,6 +263,8 @@ class WebhookHubDevice(WebhookHubBase):
             if settings.config_refresh.get('enabled') is True:
                 credentials = self.implementer.auth_response(credentials)
                 credentials = self.implementer.update_expiration_date(credentials)
+                credentials = self.implementer.check_manager_client_id(owner_id, channel_id, credentials)
+
                 if old_credentials and 'refresh_token' in credentials:
                     refresh_token = old_credentials['refresh_token']
                     credentials_list = self.refresher.get_credentials_by_refresh_token(

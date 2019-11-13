@@ -46,7 +46,6 @@ class SkeletonDevice(SkeletonBase):
         url = self._swap_url
 
         response = None
-        payload = {}
         credentials = credentials or {}
 
         for attempt in range(2):
@@ -75,6 +74,21 @@ class SkeletonDevice(SkeletonBase):
             self.log('Error on request swap credentials. Status code: {}.\n URL: {}'.format(response.status_code,
                                                                                             url), 3)
             return {}
+
+    def check_manager_client_id(self, owner_id, channel_id, credentials):
+        """
+        Check if credentials has manager_client_id. Update credentials calling swap credentials if not
+        """
+        if not credentials.get('client_man_id'):
+            sender = {
+                'client_id': credentials.get('client_id'),
+                'owner_id': owner_id,
+                'key': f"credential-owners/{owner_id}/channels/{channel_id}"
+            }
+            swap_credentials = self.swap_credentials(credentials, sender)
+            credentials['client_man_id'] = swap_credentials.get('client_id')
+
+        return credentials
 
     def auth_requests(self, sender):
         """
@@ -315,11 +329,9 @@ class SkeletonDevice(SkeletonBase):
     def refresh_token(self, credentials_dict):
         refresh_token = credentials_dict.get('value', {}).get('refresh_token', '')
         refresher = TokenRefresherManager(implementer=self)
-        credentials = refresher.get_credentials_by_refresh_token(refresh_token_return=refresh_token)
-        credentials_list = credentials.get(refresh_token, [])
         conf = self.get_refresh_token_conf()
 
-        response = refresher.send_request(refresh_token, credentials_list, conf)
+        response = refresher.send_request(refresh_token, credentials_dict, conf)
         self.log('refresh_token response {}'.format(response), 7)
 
         if type(response) is dict and 'credentials' in response:
