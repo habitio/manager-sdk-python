@@ -270,10 +270,12 @@ class WebhookHubDevice(WebhookHubBase):
                     credentials_list = self.refresher.get_credentials_by_refresh_token(
                         refresh_token).get(refresh_token, [])
                     credentials_list = self.refresher.validate_credentials_channel(credentials_list)
-                    self.refresher.update_credentials(credentials, credentials_list)
-
-                    self.refresher.update_all_owners(credentials, channel_id)
-                    self.refresher.update_all_channels(credentials, owner_id)
+                    logger.debug("[channels_grant] Starting update by token_refresher")
+                    updated_cred = self.refresher.update_credentials(credentials, credentials_list)
+                    logger.debug("[channels_grant] Starting update all owners")
+                    self.refresher.update_all_owners(credentials, channel_id, updated_cred)
+                    logger.debug("[channels_grant] Starting update all channels")
+                    self.refresher.update_all_channels(credentials, owner_id, updated_cred)
 
             self.db.set_credentials(credentials, client_id, owner_id, channel_id)
             return channel_id
