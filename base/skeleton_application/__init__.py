@@ -175,25 +175,22 @@ class SkeletonApplication(SkeletonBase):
         quote = self._patch_quote(quote_id, data, return_quote)
         return quote
 
-    def update_quote_property(self, quote_id: str, property_id: str, new_value: str,
+    def update_quote_property(self, quote_id: str, property_id: str, payload: dict,
                               return_property: bool) -> dict:
         """
         Update quote property data according to received value
         :param quote_id: UUID
         :param property_id: UUID
-        :param new_value: str -> new value to property data
+        :param payload: dict -> payload data to update
         :param return_property: bool - True return full updated quote property /
                                        False return True if Patched
         """
-        self.log(f"Update property value for {property_id}; New value: {new_value}", 7)
+        self.log(f"Update property value for {property_id}; With payload: {payload}", 7)
         if not (is_valid_uuid(quote_id) and is_valid_uuid(property_id)):
             raise ValidationException(f"[update_quote_property] Invalid quote or property")
-        data = {
-            'data': new_value
-        }
 
         # try to patch property with new data
-        new_property = self._patch_property(quote_id, property_id, data, return_property)
+        new_property = self._patch_property(quote_id, property_id, payload, return_property)
 
         return new_property if return_property else True
 
@@ -244,15 +241,41 @@ class SkeletonApplication(SkeletonBase):
                 "coverage_properties": [
                     {
                         "data" : ":data",
-                        "coverage_id": ":uuid",
                         "id" : ":uuid",
-                        "namespace": ":namespace"
+                        "namespace": ":namespace",
+                        "coverage_id": ":uuid",
+                        "coverage": {
+                            "id": ":uuid",
+                            "namespace": ":namespace"
+                        }
                     },
                     ...
                 ]
             }
         """
-        raise NotImplementedError('No polling handler implemented')
+        raise NotImplementedError('No quote simulate implemented')
+
+    def quote_customize(self, service_id: str, quote_id: str):
+        """
+        Invoked when application receives a quote_customize call
+
+        Receives:
+            service_id - unique service id. Must be set in configuration file
+            quote_id - UUID of quote
+
+        Returns:
+            list of modified properties
+            [
+                {
+                    "data" : ":data",
+                    "id" : ":uuid",
+                    "namespace": ":namespace"
+                },
+                ...
+
+            ]
+        """
+        return []
 
 
 SkeletonBase.register(SkeletonApplication)

@@ -184,6 +184,43 @@ class WebhookHubApplication(WebhookHubBase):
             return Response(status=500, response=json.dumps({'text': "Error processing request", 'code': 0}),
                             mimetype="application/json")
 
+    def quote_customize(self, request):
+        logger.debug("\n\n\n\n\n\t\t\t\t\t*******************QUOTE_CUSTOMIZE****************************")
+        logger.debug(f"Received {request.method} - {request.path}")
+        logger.verbose(f"headers: {request.headers}")
+
+        try:
+            received_hash = request.headers.get("Authorization", "").replace("Bearer ", "")
+            if received_hash == self.confirmation_hash:
+                data = request.json
+                if not data:
+                    raise InvalidRequestException("Missing Payload")
+                service_id = data.get('service_id')
+                quote_id = data.get('quote_id')
+                if not service_id or \
+                        service_id not in [_service['id'] for _service in settings.services] or \
+                        not is_valid_uuid(service_id):
+                    raise InvalidRequestException("Invalid Service")
+                if not quote_id or not is_valid_uuid(quote_id):
+                    raise InvalidRequestException("Invalid Quote")
+
+                result = self.implementer.quote_customize(service_id, quote_id)
+
+                return Response(status=200, response=json.dumps(result), mimetype="application/json")
+            else:
+                logger.debug("Provided invalid confirmation hash!")
+                raise UnauthorizedException("Invalid token!")
+        except ValidationException as e:
+            return Response(status=412, response=json.dumps({'text': str(e), 'code': 0}), mimetype="application/json")
+        except InvalidRequestException as e:
+            return Response(status=412, response=json.dumps({'text': str(e), 'code': 0}), mimetype="application/json")
+        except UnauthorizedException as e:
+            return Response(status=403, response=json.dumps({'text': str(e), 'code': 0}), mimetype="application/json")
+        except Exception:
+            logger.error("Couldn't complete processing request, {}".format(traceback.format_exc(limit=5)))
+            return Response(status=500, response=json.dumps({'text': "Error processing request", 'code': 0}),
+                            mimetype="application/json")
+
     def webhook_registration(self):
         try:
             if self.watchdog_monitor:
