@@ -54,7 +54,7 @@ class TokenRefresherManager(object):
             loop.run_until_complete(self.make_requests(conf_data))
             time.sleep(self.interval)
 
-    def get_credentials_by_refresh_token(self, refresh_token_return=None):
+    def get_credentials_by_refresh_token(self):
         credentials_redis = self.db.full_query('credential-owners/*/channels/*')
         credentials = {}
         for cred_dict in credentials_redis:
@@ -63,8 +63,7 @@ class TokenRefresherManager(object):
                 credentials[refresh_token] = [cred_dict]
             else:
                 credentials[refresh_token].append(cred_dict)
-        return credentials if not refresh_token_return else \
-            {refresh_token_return: credentials.get(refresh_token_return, [])}
+        return credentials
 
     async def make_requests(self, conf_data: dict):
         try:
@@ -169,9 +168,13 @@ class TokenRefresherManager(object):
                         if 'refresh_token' not in new_credentials:  # we need to keep same refresh_token always
                             new_credentials['refresh_token'] = refresh_token
                         new_credentials['client_man_id'] = credentials.get('client_man_id')
+                        logger.debug(f"[TokenRefresher] Update new credentials in DB")
+                        self.db.set_credentials(new_credentials, client_app_id, owner_id, channel_id)
                         if len(credentials_list) == 1:
-                            credentials_list = self.get_credentials_by_refresh_token(
-                                credentials['refresh_token']).get(credentials['refresh_token'])
+                            logger.debug(f"[TokenRefresher] Trying to find credentials using old refresh token")
+                            credentials_list = self.get_credentials_by_refresh_token().get(
+                                credentials['refresh_token'], [])
+                        credentials_list = [cred_ for cred_ in credentials_list if cred_['key'] != key]
 
                         self.update_credentials(new_credentials, credentials_list)
 
@@ -209,8 +212,10 @@ class TokenRefresherManager(object):
         all_owners_credentials = self.filter_credentials(all_owners_credentials, new_credentials.get('client_man_id'))
         all_owners_credentials = list(filter(lambda x: x['key'] not in ignore_keys, all_owners_credentials))
         logger.info(f'[TokenRefresher] update_all_owners: {len(all_owners_credentials)} keys to update')
+        updated_cred = []
         if all_owners_credentials:
-            self.update_credentials(new_credentials, all_owners_credentials)
+            updated_cred = self.update_credentials(new_credentials, all_owners_credentials)
+        return updated_cred
 
     def update_all_channels(self, new_credentials, owner_id, ignore_keys=None):
         ignore_keys = ignore_keys or []
@@ -218,8 +223,10 @@ class TokenRefresherManager(object):
             self.db.full_query(f'credential-owners/{owner_id}/channels/*'))
         all_channels_credentials = list(filter(lambda x: x['key'] not in ignore_keys, all_channels_credentials))
         logger.info(f'[TokenRefresher] update_all_channels: {len(all_channels_credentials)} keys to update')
+        updated_cred = []
         if all_channels_credentials:
-            self.update_credentials(new_credentials, all_channels_credentials)
+            updated_cred = self.update_credentials(new_credentials, all_channels_credentials)
+        return updated_cred
 
     def validate_credentials_channel(self, credentials_list):
         """
