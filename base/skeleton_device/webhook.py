@@ -195,6 +195,9 @@ class WebhookHubDevice(WebhookHubBase):
         try:
             channel_template = self.implementer.update_channel_template(device['id']) or channel_template
             channel_id = self.get_or_create_channel(device, channel_template, client_id)
+            if not channel_id:
+                logger.warning("[channels_grant] No channel found")
+                return False
 
             # Granting permission to intervenient with id X-Client-Id
             url = "{}/channels/{}/grant-access".format(settings.api_server_full, channel_id)
