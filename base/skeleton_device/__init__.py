@@ -45,7 +45,6 @@ class SkeletonDevice(SkeletonBase):
     def swap_credentials(self, credentials, sender, token_key='access_token') -> Dict:
         url = self._swap_url
 
-        response = None
         credentials = credentials or {}
 
         if credentials:
@@ -58,6 +57,7 @@ class SkeletonDevice(SkeletonBase):
             }
             response = requests.request('POST', url, headers=self.header, json=payload)
         else:
+            logger.warning("swap_credentials :: Credentials not sent")
             return {}
 
         if response and response.status_code == 200:
@@ -77,8 +77,12 @@ class SkeletonDevice(SkeletonBase):
                 'owner_id': owner_id,
                 'key': f"credential-owners/{owner_id}/channels/{channel_id}"
             }
+            logger.debug(f"check_manager_client_id :: Will try to swap credentials for sender: {sender}")
             swap_credentials = self.swap_credentials(credentials, sender)
-            credentials['client_man_id'] = swap_credentials.get('client_id')
+            if swap_credentials:
+                credentials['client_man_id'] = swap_credentials.get('client_id')
+            else:
+                logger.warning("check_manager_client_id :: Invalid swap credentials return")
 
         return credentials
 

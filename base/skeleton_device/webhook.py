@@ -267,6 +267,7 @@ class WebhookHubDevice(WebhookHubBase):
                 credentials = self.implementer.auth_response(credentials)
                 credentials = self.implementer.update_expiration_date(credentials)
                 credentials = self.implementer.check_manager_client_id(owner_id, channel_id, credentials)
+                self.db.set_credentials(credentials, client_id, owner_id, channel_id)
 
                 if old_credentials and 'refresh_token' in credentials:
                     refresh_token = old_credentials['refresh_token']
@@ -286,8 +287,8 @@ class WebhookHubDevice(WebhookHubBase):
                     updated_cred.extend(self.refresher.update_all_channels(credentials, owner_id, updated_cred))
 
                     logger.debug(f"[channels_grant] Updated keys: {updated_cred}")
-
-            self.db.set_credentials(credentials, client_id, owner_id, channel_id)
+            else:
+                self.db.set_credentials(credentials, client_id, owner_id, channel_id)
             return channel_id
 
         except Exception as e:

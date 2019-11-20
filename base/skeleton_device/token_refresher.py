@@ -113,6 +113,7 @@ class TokenRefresherManager(object):
 
             # try refresh with all credentials in credentials_list until find a valid one
             for credentials_dict in credentials_list:
+                has_errors = False
                 key = credentials_dict['key']  # credential-owners/[owner_id]/channels/[channel_id]
                 channel_id = key.split('/')[-1]
                 owner_id = key.split('/')[1]
@@ -167,9 +168,13 @@ class TokenRefresherManager(object):
 
                         if 'refresh_token' not in new_credentials:  # we need to keep same refresh_token always
                             new_credentials['refresh_token'] = refresh_token
+                        if not credentials.get('client_man_id'):
+                            credentials = self.implementer.check_manager_client_id(owner_id, channel_id, credentials)
                         new_credentials['client_man_id'] = credentials.get('client_man_id')
                         logger.debug(f"[TokenRefresher] Update new credentials in DB")
                         self.db.set_credentials(new_credentials, client_app_id, owner_id, channel_id)
+
+                        # Check list size because this could be called from implementer.access_check
                         if len(credentials_list) == 1:
                             logger.debug(f"[TokenRefresher] Trying to find credentials using old refresh token")
                             credentials_list = self.get_credentials_by_refresh_token().get(
@@ -186,20 +191,22 @@ class TokenRefresherManager(object):
                         }
                     elif response.status_code == requests.codes.bad_request and "text" in response.json():
                         logger.warning(f"[TokenRefresher] channel_id: {channel_id}, {response.json()['text']}")
+                        has_errors = True
                     else:
                         logger.warning(f'[TokenRefresher] Error in refresh token request {channel_id} {response}')
+                        has_errors = True
                 else:
                     logger.debug(f"[TokenRefresher] access token hasn't expired yet {key}")
                 if credentials_list.index(credentials_dict) + 1 < len(credentials_list):
                     logger.debug(f"[TokenRefresher] Will try next credentials in list")
                     continue
-
-                return {
-                    'channel_id': channel_id,
-                    'credentials': credentials,
-                    'old_credentials': credentials,
-                    'new': False
-                }
+                if not has_errors:
+                    return {
+                        'channel_id': channel_id,
+                        'credentials': credentials,
+                        'old_credentials': credentials,
+                        'new': False
+                    }
 
         except Exception as e:
             logger.error(f'[TokenRefresher] Unexpected error on send_request for refresh token, {e}')
@@ -243,7 +250,9 @@ class TokenRefresherManager(object):
             if not validate_channel(channel_id):
                 self.db.rename_key(f"INVALID/{key}", key)
                 cred_['key'] = f"INVALID/{key}"
-        return [cred_ for cred_ in credentials_list if "INVALID/" not in cred_['key']]
+        valid_credentials = [cred_ for cred_ in credentials_list if "INVALID/" not in cred_['key']]
+        logger.info(f'validate_credentials_channel :: {len(valid_credentials)} valid credentials')
+        return valid_credentials
 
     def update_credentials(self, new_credentials, old_credentials_list):
         """
@@ -289,10 +298,12 @@ class TokenRefresherManager(object):
             owner_id = key.split('/')[1]
 
             cred_ = self.implementer.check_manager_client_id(owner_id, channel_id, cred_value)
+        logger.info(f'check_credentials_man_id :: checked manager id in {len(credentials)} credentials')
         return credentials
 
     def filter_credentials(self, credentials_list, value, attr='client_man_id'):
 
         credentials_list = list(filter(lambda x: x['value'].get(attr) == value, credentials_list))
+        logger.info(f'filter_credentials :: attribute: {attr}; value: {value}; total filtered {len(credentials_list)}')
 
         return credentials_list
