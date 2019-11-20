@@ -139,6 +139,8 @@ class TokenRefresherManager(object):
 
                 if now >= (token_expiration_date - self.before_expires):
                     logger.info(f"[TokenRefresher] Refreshing token {key}")
+                    logger.info(f"[TokenRefresher] client_app_id: {client_app_id}; owner_id: {owner_id}; "
+                                f"channel_id: {channel_id}")
                     params = "grant_type=refresh_token&client_id={client_id}&client_secret={client_secret}" \
                              "&refresh_token=" + refresh_token
 
@@ -281,7 +283,9 @@ class TokenRefresherManager(object):
             new_credentials['client_man_id'] = client_man_id
             channeltemplate_id = self.implementer.get_channel_template(channel_id)
 
-            logger.debug(f'[TokenRefresher] new credentials {key}')
+            logger.debug(f'update_credentials :: new credentials {key}')
+            logger.info(f"update_credentials :: client_app_id: {client_app_id}; owner_id: {owner_id}; "
+                        f"channel_id: {channel_id}; channeltemplate_id: {channeltemplate_id}")
             stored = self.implementer.store_credentials(owner_id, client_app_id, channeltemplate_id, new_credentials)
             if stored:
                 self.db.set_credentials(new_credentials, client_app_id, owner_id, channel_id)
