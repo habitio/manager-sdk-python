@@ -292,7 +292,7 @@ class WebhookHubDevice(WebhookHubBase):
             return channel_id
 
         except Exception as e:
-            logger.error('Error while requesting grant: {}'.format(e))
+            logger.error('Error while requesting grant: {}'.format(traceback.format_exc(limit=5)))
 
         return None
 
