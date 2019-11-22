@@ -161,7 +161,7 @@ class SkeletonApplication(SkeletonBase):
 
         return resp.json()
 
-    def update_quote_state(self, quote_id: str, state: str, return_quote: bool):
+    def update_quote_state(self, quote_id: str, state: str, return_quote: bool, **kwargs):
         """
         Update quote state according to received state
         :param quote_id: UUID
@@ -172,6 +172,7 @@ class SkeletonApplication(SkeletonBase):
         state = state.lower()
 
         data = {'state': state}
+        data.update(kwargs)
         quote = self._patch_quote(quote_id, data, return_quote)
         return quote
 

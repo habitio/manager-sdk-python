@@ -1,3 +1,4 @@
+import datetime
 import sys
 import traceback
 import json
@@ -165,9 +166,10 @@ class WebhookHubApplication(WebhookHubBase):
 
                 result = self.implementer.quote_simulate(service_id, quote_id)
 
+                date = '+'.join([datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3], '0000'])
                 if result and (result.get('quote_properties') or result.get('coverage_properties')):
                     logger.debug("Changing quote status to simulated")
-                    self.implementer.update_quote_state(quote_id, 'simulated', False)
+                    self.implementer.update_quote_state(quote_id, 'simulated', False, simulated_ts=date)
 
                 return Response(status=200, response=json.dumps(result), mimetype="application/json")
             else:
