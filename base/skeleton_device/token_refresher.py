@@ -58,6 +58,7 @@ class TokenRefresherManager(object):
         credentials_redis = self.db.full_query('credential-owners/*/channels/*')
         credentials = {}
         for cred_dict in credentials_redis:
+            cred_dict['value'] = self.implementer.auth_response(cred_dict['value'])
             refresh_token = cred_dict['value'].get('refresh_token')
             if refresh_token and refresh_token not in credentials:
                 credentials[refresh_token] = [cred_dict]
