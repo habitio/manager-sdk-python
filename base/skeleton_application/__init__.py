@@ -35,7 +35,7 @@ class SkeletonApplication(SkeletonBase):
         if resp.status_code != 200:
             raise InvalidRequestException("get_properties_by_quote: Invalid quote")
         properties = resp.json().get('elements', [])
-        self.log(f"Properties found: {properties}", 7)
+        self.log(f"Properties found: {len(properties)}", 7)
 
         return properties
 
@@ -51,10 +51,10 @@ class SkeletonApplication(SkeletonBase):
 
         if resp.status_code == 200:
             coverages = resp.json().get('elements', [])
-            self.log(f"Coverages found: {coverages}", 7)
+            self.log(f"Coverages found: {len(coverages)}", 7)
         else:
             coverages = []
-            self.log(f"Coverages not found: {coverages}", 7)
+            self.log("Coverages not found", 7)
 
         return coverages
 
@@ -70,10 +70,10 @@ class SkeletonApplication(SkeletonBase):
 
         if resp.status_code == 200:
             properties = resp.json().get('elements', [])
-            self.log(f"Coverages found: {properties}", 7)
+            self.log(f"Coverages found: {len(properties)}", 7)
         else:
             properties = []
-            self.log(f"Coverages not found: {properties}", 7)
+            self.log("Coverages not found", 7)
 
         return properties
 
