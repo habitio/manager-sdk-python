@@ -1,7 +1,6 @@
 import concurrent
 
 from base import settings, logger
-from base.helpers import validate_channel
 from base.redis_db import get_redis
 from base.utils import rate_limited
 from base.constants import DEFAULT_REFRESH_INTERVAL, DEFAULT_RATE_LIMIT, DEFAULT_THREAD_MAX_WORKERS, \
@@ -94,11 +93,9 @@ class TokenRefresherManager(object):
     @rate_limited(settings.config_refresh.get('rate_limit', DEFAULT_RATE_LIMIT))
     def send_request(self, refresh_token, credentials_list, conf):
         try:
-            if type(credentials_list) is not list:
+            if credentials_list and type(credentials_list) is not list:
                 credentials_list = [credentials_list]
 
-            # validate if channels in credentials_list exists
-            credentials_list = self.validate_credentials_channel(credentials_list)
             if not credentials_list:
                 return
 
@@ -216,8 +213,7 @@ class TokenRefresherManager(object):
 
     def update_all_owners(self, new_credentials, channel_id, ignore_keys=None):
         ignore_keys = ignore_keys or []
-        all_owners_credentials = self.validate_credentials_channel(
-            self.db.full_query(f'credential-owners/*/channels/{channel_id}'))
+        all_owners_credentials = self.db.full_query(f'credential-owners/*/channels/{channel_id}')
         all_owners_credentials = self.check_credentials_man_id(all_owners_credentials)
         all_owners_credentials = self.filter_credentials(all_owners_credentials, new_credentials.get('client_man_id'))
         all_owners_credentials = list(filter(lambda x: x['key'] not in ignore_keys, all_owners_credentials))
@@ -229,33 +225,13 @@ class TokenRefresherManager(object):
 
     def update_all_channels(self, new_credentials, owner_id, ignore_keys=None):
         ignore_keys = ignore_keys or []
-        all_channels_credentials = self.validate_credentials_channel(
-            self.db.full_query(f'credential-owners/{owner_id}/channels/*'))
+        all_channels_credentials = self.db.full_query(f'credential-owners/{owner_id}/channels/*')
         all_channels_credentials = list(filter(lambda x: x['key'] not in ignore_keys, all_channels_credentials))
         logger.info(f'[TokenRefresher] update_all_channels: {len(all_channels_credentials)} keys to update')
         updated_cred = []
         if all_channels_credentials:
             updated_cred = self.update_credentials(new_credentials, all_channels_credentials)
         return updated_cred
-
-    def validate_credentials_channel(self, credentials_list):
-        """
-        receive a list of credentials objects with key and value.
-        Return credentials_list with credentials with valid channels
-        :param credentials_list: [{
-            'key': ':credential_key',
-            'value': :credential_dict
-        }, ...]
-        """
-        for cred_ in credentials_list:
-            key = cred_['key']
-            channel_id = key.split('/')[-1]
-            if not validate_channel(channel_id):
-                self.db.rename_key(f"INVALID/{key}", key)
-                cred_['key'] = f"INVALID/{key}"
-        valid_credentials = [cred_ for cred_ in credentials_list if "INVALID/" not in cred_['key']]
-        logger.info(f'validate_credentials_channel :: {len(valid_credentials)} valid credentials')
-        return valid_credentials
 
     def update_credentials(self, new_credentials, old_credentials_list):
         """
@@ -287,10 +263,11 @@ class TokenRefresherManager(object):
             logger.debug(f'update_credentials :: new credentials {key}')
             logger.info(f"update_credentials :: client_app_id: {client_app_id}; owner_id: {owner_id}; "
                         f"channel_id: {channel_id}; channeltemplate_id: {channeltemplate_id}")
-            stored = self.implementer.store_credentials(owner_id, client_app_id, channeltemplate_id, new_credentials)
-            if stored:
-                self.db.set_credentials(new_credentials, client_app_id, owner_id, channel_id)
-                updated_credentials.append(key)
+            if channeltemplate_id:
+                stored = self.implementer.store_credentials(owner_id, client_app_id, channeltemplate_id, new_credentials)
+                if stored:
+                    self.db.set_credentials(new_credentials, client_app_id, owner_id, channel_id)
+                    updated_credentials.append(key)
         return updated_credentials
 
     def check_credentials_man_id(self, credentials):

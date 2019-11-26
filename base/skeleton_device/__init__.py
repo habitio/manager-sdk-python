@@ -216,11 +216,8 @@ class SkeletonDevice(SkeletonBase):
         Returns channel_template_id
 
         """
-        channel = validate_channel(channel_id, return_channel=True)
-        if channel and 'channeltemplate_id' in channel:
-            return channel['channeltemplate_id']
-        else:
-            return ''
+        channel = validate_channel(channel_id)
+        return channel['channeltemplate_id'] if (channel and 'channeltemplate_id' in channel) else ''
 
     def get_channels_by_channeltemplate(self, channeltemplate_id):
         """
@@ -247,9 +244,9 @@ class SkeletonDevice(SkeletonBase):
                 raise ChannelTemplateNotFound("Failed to retrieve channel_ids for {}".format(channeltemplate_id))
 
         except (OSError, ChannelTemplateNotFound) as e:
-            logger.warning('get_channels_by_channeltemplate :: Error while making request to platform: {}'.format(e))
+            logger.warning('[get_channels_by_channeltemplate] Error while making request to platform: {}'.format(e))
         except Exception as ex:
-            logger.alert("Unexpected error get_channels_by_channeltemplate: {}".format(traceback.format_exc(limit=5)))
+            logger.alert("[get_channels_by_channeltemplate] Unexpected error: {}".format(traceback.format_exc(limit=5)))
         return ''
 
     def get_channel_by_owner(self, owner_id, channel_id):
@@ -274,12 +271,13 @@ class SkeletonDevice(SkeletonBase):
                 return False
             else:
                 logger.verbose("[get_channel_by_owner] Received response code[{}]".format(resp.status_code))
-                raise ChannelTemplateNotFound("Failed to retrieve channel_template_id for {}".format(channel_id))
+                raise ChannelTemplateNotFound(f"[get_channel_by_owner] Failed to retrieve channel_template_id "
+                                              f"for {channel_id}")
 
         except (OSError, ChannelTemplateNotFound) as e:
-            logger.warning('get_channel_by_owner :: Error while making request to platform: {}'.format(e))
+            logger.warning('[get_channel_by_owner] Error while making request to platform: {}'.format(e))
         except Exception as ex:
-            logger.alert("Unexpected error get_channel_by_owner: {}".format(traceback.format_exc(limit=5)))
+            logger.alert("[get_channel_by_owner] Unexpected error: {}".format(traceback.format_exc(limit=5)))
         return ''
 
     def get_device_id(self, channel_id):

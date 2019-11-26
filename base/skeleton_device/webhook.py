@@ -272,7 +272,6 @@ class WebhookHubDevice(WebhookHubBase):
                 if old_credentials and 'refresh_token' in credentials:
                     refresh_token = old_credentials['refresh_token']
                     credentials_list = self.refresher.get_credentials_by_refresh_token().get(refresh_token, [])
-                    credentials_list = self.refresher.validate_credentials_channel(credentials_list)
                     # remove current key from credential list
                     key = f'credential-owners/{owner_id}/channels/{channel_id}'
                     credentials_list = [cred_ for cred_ in credentials_list if cred_['key'] != key]
