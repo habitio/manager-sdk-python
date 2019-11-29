@@ -91,7 +91,7 @@ class WebhookHubApplication(WebhookHubBase):
                     logger.alert("Failed to set service!\n{}".format(ex))
                     os._exit(1)
 
-            self.patch_quotesimulate()
+            self.patch_custom_endpoints()
             application = self.get_application()
             if "confirmation_hash" in application:
                 self.confirmation_hash = application['confirmation_hash']
@@ -102,29 +102,33 @@ class WebhookHubApplication(WebhookHubBase):
             raise
 
     @retry(wait=wait_fixed(DEFAULT_RETRY_WAIT))
-    def patch_quotesimulate(self):
+    def patch_custom_endpoints(self):
         try:
+            custom_endpoints = settings.custom_endpoints
             url = settings.webhook_url
-            data = {
-                'quotesimulate_uri': f'{settings.schema_pub}://{settings.host_pub}/'
-                                     f'{settings.api_version}/quote-simulate'
-            }
 
-            logger.debug(f"Initiated PATCH - {url}")
-            logger.verbose("\n{}\n".format(json.dumps(data, indent=4, sort_keys=True)))
+            for endpoint in custom_endpoints:
 
-            resp = requests.patch(url, data=json.dumps(data), headers=self.session.headers)
+                data = {
+                    endpoint['namespace']: f"{settings.schema_pub}://{settings.host_pub}/"
+                                         f"{settings.api_version}{endpoint['uri']}"
+                }
 
-            logger.verbose("[patch_quotesimulate] Received response code[{}]".format(resp.status_code))
-            logger.verbose("\n{}\n".format(json.dumps(resp.json(), indent=4, sort_keys=True)))
+                logger.debug(f"Initiated PATCH - {url}")
+                logger.verbose("\n{}\n".format(json.dumps(data, indent=4, sort_keys=True)))
 
-            if int(resp.status_code) == 200:
-                logger.notice("Quote simulate setup successful!")
-            else:
-                raise Exception('Quote simulate setup not successful!')
+                resp = requests.patch(url, data=json.dumps(data), headers=self.session.headers)
+
+                logger.verbose("[patch_{}] Received response code[{}]".format(endpoint['namespace'], resp.status_code))
+                logger.verbose("\n{}\n".format(json.dumps(resp.json(), indent=4, sort_keys=True)))
+
+                if int(resp.status_code) == 200:
+                    logger.notice(f"{endpoint['namespace']} setup successful!")
+                else:
+                    raise Exception(f"{endpoint['namespace']} setup not successful!")
 
         except Exception as e:
-            logger.alert("Failed at patch quote simulate! {}".format(traceback.format_exc(limit=5)))
+            logger.alert("Failed at patch endpoint! {}".format(traceback.format_exc(limit=5)))
             raise
 
     @retry(wait=wait_fixed(DEFAULT_RETRY_WAIT))
