@@ -195,6 +195,9 @@ class WebhookHubDevice(WebhookHubBase):
         try:
             channel_template = self.implementer.update_channel_template(device['id']) or channel_template
             channel_id = self.get_or_create_channel(device, channel_template, client_id)
+            if not channel_id:
+                logger.warning("[channels_grant] No channel found")
+                return False
 
             # Granting permission to intervenient with id X-Client-Id
             url = "{}/channels/{}/grant-access".format(settings.api_server_full, channel_id)
@@ -259,29 +262,39 @@ class WebhookHubDevice(WebhookHubBase):
                     traceback.format_exc(limit=5)))
                 return False
 
-            old_credentials = self.db.get_credentials(client_id, owner_id, channel_id)
+            old_credentials = self.db.get_credentials(client_id, owner_id, channel_id) or {}
             if settings.config_refresh.get('enabled') is True:
                 credentials = self.implementer.auth_response(credentials)
                 credentials = self.implementer.update_expiration_date(credentials)
                 credentials = self.implementer.check_manager_client_id(owner_id, channel_id, credentials)
+                self.db.set_credentials(credentials, client_id, owner_id, channel_id)
 
-                if old_credentials and 'refresh_token' in credentials:
+                if 'refresh_token' not in old_credentials:
+                    logger.error("[channels_grant] Refresh token not found in old credentials")
+                else:
                     refresh_token = old_credentials['refresh_token']
-                    credentials_list = self.refresher.get_credentials_by_refresh_token(
-                        refresh_token).get(refresh_token, [])
-                    credentials_list = self.refresher.validate_credentials_channel(credentials_list)
-                    logger.debug("[channels_grant] Starting update by token_refresher")
-                    updated_cred = self.refresher.update_credentials(credentials, credentials_list)
-                    logger.debug("[channels_grant] Starting update all owners")
-                    self.refresher.update_all_owners(credentials, channel_id, updated_cred)
-                    logger.debug("[channels_grant] Starting update all channels")
-                    self.refresher.update_all_channels(credentials, owner_id, updated_cred)
+                    credentials_list = self.refresher.get_credentials_by_refresh_token().get(refresh_token, [])
+                    # remove current key from credential list
+                    key = f'credential-owners/{owner_id}/channels/{channel_id}'
+                    credentials_list = [cred_ for cred_ in credentials_list if cred_['key'] != key]
 
-            self.db.set_credentials(credentials, client_id, owner_id, channel_id)
+                    logger.verbose(f"[channels_grant] Starting update by token_refresher for channel: {channel_id}")
+                    updated_cred = self.refresher.update_credentials(credentials, credentials_list)
+                    updated_cred.append(key)
+
+                    logger.debug(f"[channels_grant] Starting update all owners for channel: {channel_id}")
+                    updated_cred.extend(self.refresher.update_all_owners(credentials, channel_id, updated_cred))
+
+                    logger.debug("[channels_grant] Starting update all channels")
+                    updated_cred.extend(self.refresher.update_all_channels(credentials, owner_id, updated_cred))
+
+                    logger.debug(f"[channels_grant] Updated keys: {list(set(updated_cred))}")
+            else:
+                self.db.set_credentials(credentials, client_id, owner_id, channel_id)
             return channel_id
 
         except Exception as e:
-            logger.error('Error while requesting grant: {}'.format(e))
+            logger.error('Error while requesting grant: {}'.format(traceback.format_exc(limit=5)))
 
         return None
 

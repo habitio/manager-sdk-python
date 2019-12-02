@@ -58,6 +58,7 @@ class SkeletonDevice(SkeletonBase):
             }
             response = requests.request('POST', url, headers=self.header, json=payload)
         else:
+            logger.warning("[swap_credentials] Credentials not sent")
             return {}
 
         if response and response.status_code == 200:
@@ -77,8 +78,12 @@ class SkeletonDevice(SkeletonBase):
                 'owner_id': owner_id,
                 'key': f"credential-owners/{owner_id}/channels/{channel_id}"
             }
+            logger.debug(f"[check_manager_client_id] Will try to swap credentials for sender: {sender}")
             swap_credentials = self.swap_credentials(credentials, sender)
-            credentials['client_man_id'] = swap_credentials.get('client_id')
+            if swap_credentials:
+                credentials['client_man_id'] = swap_credentials.get('client_id')
+            else:
+                logger.warning("[check_manager_client_id] Invalid swap credentials return")
 
         return credentials
 
@@ -228,7 +233,7 @@ class SkeletonDevice(SkeletonBase):
         """
         try:
             if not channeltemplate_id:
-                logger.warning(f"get_channels_by_channeltemplate :: Invalid channeltemplate_id")
+                logger.warning(f"[get_channels_by_channeltemplate] Invalid channeltemplate_id")
                 return ''
             url = f"{settings.api_server_full}/managers/{settings.client_id}/channels?" \
                   f"page_size=9999&channel.channeltemplate_id={channeltemplate_id}&fields=channel.id"
@@ -361,7 +366,7 @@ class SkeletonDevice(SkeletonBase):
                 'credentials': credentials
             }
             if not (client_app_id and owner_id and channeltemplate_id and credentials):
-                logger.warning(f'store_credentials :: Invalid payload request client_id: {client_app_id}; '
+                logger.warning(f'[store_credentials] Invalid payload request client_id: {client_app_id}; '
                                f'owner_id: {owner_id}; channeltemplate_id: {channeltemplate_id}')
                 return False
             logger.verbose(f"[store_credentials] Try to update credentials for channeltemplate_id {channeltemplate_id}")
@@ -372,15 +377,15 @@ class SkeletonDevice(SkeletonBase):
                 return True
             elif int(resp.status_code) == 200 and resp.json().get('n_updated', 0) == 0:
                 payload.pop('credentials', None)
-                logger.warning(f'store_credentials :: credentials not found to patch with requested data: '
+                logger.warning(f'[store_credentials] credentials not found to patch with requested data: '
                                f'{payload}')
                 return False
             else:
-                logger.warning(f'store_credentials :: Error while making request to platform: {format_response(resp)}')
+                logger.warning(f'[store_credentials] Error while making request to platform: {format_response(resp)}')
                 return False
 
         except Exception:
-            logger.alert(f"Unexpected error store_credentials: {traceback.format_exc(limit=5)}")
+            logger.alert(f"[store_credentials] Unexpected error store_credentials: {traceback.format_exc(limit=5)}")
         return False
 
 
