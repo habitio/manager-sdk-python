@@ -108,6 +108,7 @@ class Settings:
         # Application specific conf
         self.services = self.config_boot.get('services', [])
         self.usecases = self.config_boot.get('usecases', [])
+        self.custom_endpoints = self.config_boot.get('custom_endpoints', [])
         self.channels_grant_access_to_user = self.config_boot.get('channels_grant_access_to_user', [])
 
         # The block stores all information obtained my manager through request to platform and
