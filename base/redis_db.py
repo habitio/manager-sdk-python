@@ -266,10 +266,6 @@ class DBManager(Redis):
 
         return credentials
 
-    def get_credentials_list(self, owner_id='*', channel_id='*'):
-        regex = '/'.join(['credential-owners', owner_id, 'channels', channel_id])
-        return self.full_query(regex)
-
     def set_credentials(self, credentials, client_id, owner_id, channel_id=None):
         if not client_id or not owner_id:
             raise Exception("[DB] Not enough keys (client or owner missing)")
