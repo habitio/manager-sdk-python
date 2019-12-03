@@ -97,8 +97,6 @@ class TokenRefresherManager(object):
             if type(credentials_list) is not list:
                 credentials_list = [credentials_list]
 
-            # validate if channels in credentials_list exists
-            credentials_list = self.validate_credentials_channel(credentials_list)
             if not credentials_list:
                 return
 
