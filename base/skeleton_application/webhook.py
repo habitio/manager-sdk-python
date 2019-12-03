@@ -1,3 +1,4 @@
+import datetime
 import sys
 import traceback
 import json
@@ -90,7 +91,7 @@ class WebhookHubApplication(WebhookHubBase):
                     logger.alert("Failed to set service!\n{}".format(ex))
                     os._exit(1)
 
-            self.patch_quotesimulate()
+            self.patch_custom_endpoints()
             application = self.get_application()
             if "confirmation_hash" in application:
                 self.confirmation_hash = application['confirmation_hash']
@@ -101,29 +102,33 @@ class WebhookHubApplication(WebhookHubBase):
             raise
 
     @retry(wait=wait_fixed(DEFAULT_RETRY_WAIT))
-    def patch_quotesimulate(self):
+    def patch_custom_endpoints(self):
         try:
+            custom_endpoints = settings.custom_endpoints
             url = settings.webhook_url
-            data = {
-                'quotesimulate_uri': f'{settings.schema_pub}://{settings.host_pub}/'
-                                     f'{settings.api_version}/quote-simulate'
-            }
 
-            logger.debug(f"Initiated PATCH - {url}")
-            logger.verbose("\n{}\n".format(json.dumps(data, indent=4, sort_keys=True)))
+            for endpoint in custom_endpoints:
 
-            resp = requests.patch(url, data=json.dumps(data), headers=self.session.headers)
+                data = {
+                    endpoint['namespace']: f"{settings.schema_pub}://{settings.host_pub}/"
+                                         f"{settings.api_version}{endpoint['uri']}"
+                }
 
-            logger.verbose("[patch_quotesimulate] Received response code[{}]".format(resp.status_code))
-            logger.verbose("\n{}\n".format(json.dumps(resp.json(), indent=4, sort_keys=True)))
+                logger.debug(f"Initiated PATCH - {url}")
+                logger.verbose("\n{}\n".format(json.dumps(data, indent=4, sort_keys=True)))
 
-            if int(resp.status_code) == 200:
-                logger.notice("Quote simulate setup successful!")
-            else:
-                raise Exception('Quote simulate setup not successful!')
+                resp = requests.patch(url, data=json.dumps(data), headers=self.session.headers)
+
+                logger.verbose("[patch_{}] Received response code[{}]".format(endpoint['namespace'], resp.status_code))
+                logger.verbose("\n{}\n".format(json.dumps(resp.json(), indent=4, sort_keys=True)))
+
+                if int(resp.status_code) == 200:
+                    logger.notice(f"{endpoint['namespace']} setup successful!")
+                else:
+                    raise Exception(f"{endpoint['namespace']} setup not successful!")
 
         except Exception as e:
-            logger.alert("Failed at patch quote simulate! {}".format(traceback.format_exc(limit=5)))
+            logger.alert("Failed at patch endpoint! {}".format(traceback.format_exc(limit=5)))
             raise
 
     @retry(wait=wait_fixed(DEFAULT_RETRY_WAIT))
@@ -165,9 +170,47 @@ class WebhookHubApplication(WebhookHubBase):
 
                 result = self.implementer.quote_simulate(service_id, quote_id)
 
+                date = '+'.join([datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3], '0000'])
                 if result and (result.get('quote_properties') or result.get('coverage_properties')):
                     logger.debug("Changing quote status to simulated")
-                    self.implementer.update_quote_state(quote_id, 'simulated', False)
+                    self.implementer.update_quote_state(quote_id, 'simulated', False, simulated_ts=date)
+
+                return Response(status=200, response=json.dumps(result), mimetype="application/json")
+            else:
+                logger.debug("Provided invalid confirmation hash!")
+                raise UnauthorizedException("Invalid token!")
+        except ValidationException as e:
+            return Response(status=412, response=json.dumps({'text': str(e), 'code': 0}), mimetype="application/json")
+        except InvalidRequestException as e:
+            return Response(status=412, response=json.dumps({'text': str(e), 'code': 0}), mimetype="application/json")
+        except UnauthorizedException as e:
+            return Response(status=403, response=json.dumps({'text': str(e), 'code': 0}), mimetype="application/json")
+        except Exception:
+            logger.error("Couldn't complete processing request, {}".format(traceback.format_exc(limit=5)))
+            return Response(status=500, response=json.dumps({'text': "Error processing request", 'code': 0}),
+                            mimetype="application/json")
+
+    def quote_customize(self, request):
+        logger.debug("\n\n\n\n\n\t\t\t\t\t*******************QUOTE_CUSTOMIZE****************************")
+        logger.debug(f"Received {request.method} - {request.path}")
+        logger.verbose(f"headers: {request.headers}")
+
+        try:
+            received_hash = request.headers.get("Authorization", "").replace("Bearer ", "")
+            if received_hash == self.confirmation_hash:
+                data = request.json
+                if not data:
+                    raise InvalidRequestException("Missing Payload")
+                service_id = data.get('service_id')
+                quote_id = data.get('quote_id')
+                if not service_id or \
+                        service_id not in [_service['id'] for _service in settings.services] or \
+                        not is_valid_uuid(service_id):
+                    raise InvalidRequestException("Invalid Service")
+                if not quote_id or not is_valid_uuid(quote_id):
+                    raise InvalidRequestException("Invalid Quote")
+
+                result = self.implementer.quote_customize(service_id, quote_id)
 
                 return Response(status=200, response=json.dumps(result), mimetype="application/json")
             else:
