@@ -1,7 +1,9 @@
+import requests
 from base.common.skeleton_base import SkeletonBase
-from base.utils import format_response
+from base.exceptions import InvalidRequestException, ValidationException
+from base.utils import format_response, is_valid_uuid
 from .router import *
-from .webhook import *
+from .webhook import WebhookHubApplication
 
 QUOTE_URI = "%s/applications/%s/quotes/{quote_id}" % (settings.api_server_full, settings.client_id)
 QUOTE_PROPERTIES_URI = "%s/properties" % QUOTE_URI
@@ -16,14 +18,6 @@ class SkeletonApplication(SkeletonBase):
             "Content-Type": "application/json",
             "Authorization": "Bearer {0}".format(settings.block["access_token"])
         }
-
-    def _check_quote(self, quote_id):
-        # Check if quote exists
-        _url = QUOTE_URI.format(quote_id=quote_id)
-        self.log(f"Try to get quote: {_url}", 7)
-        resp = requests.get(url=_url, headers=self.platform_header)
-        if resp.status_code != 200:
-            raise InvalidRequestException("_check_quote: Invalid quote")
 
     def get_properties_by_quote(self, quote_id, params=None):
         params = params or {}
