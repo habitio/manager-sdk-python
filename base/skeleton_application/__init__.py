@@ -227,56 +227,28 @@ class SkeletonApplication(SkeletonBase):
         Receives:
             service_id - unique service id. Must be set in configuration file
             quote_id - UUID of quote
-
-        Returns:
-            {
-                "quote_properties": [
-                    {
-                        "data" : ":data",
-                        "id" : ":uuid",
-                        "namespace": ":namespace"
-                    },
-                    ...
-
-                ],
-                "coverage_properties": [
-                    {
-                        "data" : ":data",
-                        "id" : ":uuid",
-                        "namespace": ":namespace",
-                        "coverage_id": ":uuid",
-                        "coverage": {
-                            "id": ":uuid",
-                            "namespace": ":namespace"
-                        }
-                    },
-                    ...
-                ]
-            }
         """
         raise NotImplementedError('No quote simulate implemented')
 
-    def quote_customize(self, service_id: str, quote_id: str):
+    def quote_setup(self, service_id: str, quote_id: str):
         """
-        Invoked when application receives a quote_customize call
+        Invoked when application receives a quote_setup call
 
         Receives:
             service_id - unique service id. Must be set in configuration file
             quote_id - UUID of quote
-
-        Returns:
-            list of modified properties
-            [
-                {
-                    "data" : ":data",
-                    "id" : ":uuid",
-                    "namespace": ":namespace"
-                },
-                ...
-
-            ]
         """
-        return []
+        return NotImplementedError('No quote setup implemented')
+
+    def quote_checkout(self, service_id: str, quote_id: str):
+        """
+        Invoked when application receives a quote_checkout call
+
+        Receives:
+            service_id - unique service id. Must be set in configuration file
+            quote_id - UUID of quote
+        """
+        raise NotImplementedError('No quote checkout implemented')
 
 
 SkeletonBase.register(SkeletonApplication)

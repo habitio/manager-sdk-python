@@ -14,8 +14,11 @@ class RouterApplication(RouterBase):
     def quote_simulate(self):
         return self.webhook.quote_simulate(request)
 
-    def quote_customize(self):
-        return self.webhook.quote_customize(request)
+    def quote_setup(self):
+        return self.webhook.quote_setup(request)
+
+    def quote_checkout(self):
+        return self.webhook.quote_checkout(request)
 
     def route_setup(self, app):
         logger.debug("App {}".format(app))
@@ -32,6 +35,7 @@ class RouterApplication(RouterBase):
         app.add_url_rule("/{}/inbox".format(settings.api_version), view_func=self.inbox, methods=['POST'])
 
         app.add_url_rule(f"/{settings.api_version}/quote-simulate", view_func=self.quote_simulate, methods=['POST'])
-        app.add_url_rule(f"/{settings.api_version}/quote-customize", view_func=self.quote_customize, methods=['POST'])
+        app.add_url_rule(f"/{settings.api_version}/quote-setup", view_func=self.quote_setup, methods=['POST'])
+        app.add_url_rule(f"/{settings.api_version}/quote-checkout", view_func=self.quote_checkout, methods=['POST'])
 
         app.after_request_funcs.setdefault(app.name, []).append(self.after)
