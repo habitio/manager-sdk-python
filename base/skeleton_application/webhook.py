@@ -107,14 +107,15 @@ class WebhookHubApplication(WebhookHubBase):
         try:
             custom_endpoints = settings.custom_endpoints
             url = settings.webhook_url
+            data = {'quote_actions': {}}
 
             for endpoint in custom_endpoints:
-
-                data = {
+                data['quote_actions'].update({
                     endpoint['namespace']: f"{settings.schema_pub}://{settings.host_pub}/"
                                            f"{settings.api_version}{endpoint['uri']}"
-                }
+                })
 
+            if data['quote_actions']:
                 logger.debug(f"[patch_custom_endpoints] Initiated PATCH - {url}")
                 logger.verbose("\n{}\n".format(json.dumps(data, indent=4, sort_keys=True)))
 
