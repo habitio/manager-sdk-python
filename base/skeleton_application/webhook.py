@@ -193,7 +193,7 @@ class WebhookHubApplication(WebhookHubBase):
         logger.debug("\n\n\n\n\n\t\t\t\t\t*******************QUOTE_CHECKOUT****************************")
         try:
             service_id, quote_id = self._basic_quote_validation(request)
-            result = self.implementer.quote_setup(service_id, quote_id)
+            result = self.implementer.quote_checkout(service_id, quote_id)
 
             return Response(status=200, response=json.dumps(result), mimetype="application/json")
 
