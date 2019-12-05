@@ -285,7 +285,8 @@ class WebhookHubDevice(WebhookHubBase):
             old_credentials = {}
             for channel in channels:
                 channel_id = channel['id']
-                old_credentials = self.db.get_credentials(client_id, owner_id, channel_id) or {}
+                old_credentials = self.implementer.auth_response(
+                    self.db.get_credentials(client_id, owner_id, channel_id)) or {}
                 credentials = self.implementer.check_manager_client_id(owner_id, channel_id, credentials)
                 self.db.set_credentials(credentials, client_id, owner_id, channel_id)
                 key = f'credential-owners/{owner_id}/channels/{channel_id}'
