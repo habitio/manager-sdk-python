@@ -45,7 +45,7 @@ class SkeletonDevice(SkeletonBase):
     def swap_credentials(self, credentials, sender, token_key='access_token') -> Dict:
         url = self._swap_url
 
-        credentials = credentials or {}
+        credentials = self.auth_response(credentials) or {}
 
         if credentials:
             payload = {
@@ -67,10 +67,11 @@ class SkeletonDevice(SkeletonBase):
                      f'Payload: {payload}', 3)
             return {}
 
-    def check_manager_client_id(self, owner_id, channel_id, credentials):
+    def check_manager_client_id(self, owner_id, channel_id, credentials, new_credentials=None):
         """
         Check if credentials has manager_client_id. Update credentials calling swap credentials if not
         """
+        new_credentials = new_credentials or {}
         if not credentials.get('client_man_id'):
             sender = {
                 'client_id': credentials.get('client_id'),
@@ -82,7 +83,13 @@ class SkeletonDevice(SkeletonBase):
             if swap_credentials:
                 credentials['client_man_id'] = swap_credentials.get('client_id')
             else:
-                logger.warning("[check_manager_client_id] Invalid swap credentials return")
+                logger.warning("[check_manager_client_id] Invalid swap credentials return with old credentials")
+                sender['client_id'] = new_credentials.get('client_id')
+                swap_credentials = self.swap_credentials(credentials, sender)
+                if swap_credentials:
+                    credentials['client_man_id'] = swap_credentials.get('client_id')
+                else:
+                    logger.warning("[check_manager_client_id] Invalid swap credentials return with new credentials")
 
         return credentials
 
