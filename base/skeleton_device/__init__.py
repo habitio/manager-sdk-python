@@ -49,7 +49,7 @@ class SkeletonDevice(SkeletonBase):
 
         if credentials:
             payload = {
-                "client_id": credentials.get('client_id', sender.get('client_id', '')),
+                "client_id": sender.get('client_id', credentials.get('client_id', '')),
                 "owner_id": sender.get('owner_id', ''),
                 "credentials": {
                     token_key: credentials.get(token_key, '')
@@ -67,11 +67,12 @@ class SkeletonDevice(SkeletonBase):
                      f'Payload: {payload}', 3)
             return {}
 
-    def check_manager_client_id(self, owner_id, channel_id, credentials, new_credentials=None):
+    def check_manager_client_id(self, owner_id, channel_id, main_credentials, second_credentials=None):
         """
         Check if credentials has manager_client_id. Update credentials calling swap credentials if not
         """
-        new_credentials = new_credentials or {}
+        second_credentials = second_credentials or {}
+        credentials = self.auth_response(main_credentials)
         if not credentials.get('client_man_id'):
             sender = {
                 'client_id': credentials.get('client_id'),
@@ -84,8 +85,8 @@ class SkeletonDevice(SkeletonBase):
                 credentials['client_man_id'] = swap_credentials.get('client_id')
             else:
                 logger.warning("[check_manager_client_id] Invalid swap credentials return with old credentials")
-                sender['client_id'] = new_credentials.get('client_id')
-                swap_credentials = self.swap_credentials(credentials, sender)
+                second_credentials = self.auth_response(second_credentials)
+                swap_credentials = self.swap_credentials(second_credentials, sender)
                 if swap_credentials:
                     credentials['client_man_id'] = swap_credentials.get('client_id')
                 else:

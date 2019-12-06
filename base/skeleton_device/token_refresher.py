@@ -169,8 +169,8 @@ class TokenRefresherManager(object):
                         if 'refresh_token' not in new_credentials:  # we need to keep same refresh_token always
                             new_credentials['refresh_token'] = refresh_token
                         if not credentials.get('client_man_id'):
-                            credentials = self.implementer.check_manager_client_id(owner_id, channel_id, credentials,
-                                                                                   new_credentials=new_credentials)
+                            credentials = self.implementer.check_manager_client_id(owner_id, channel_id,
+                                                                                   credentials, new_credentials)
                         new_credentials['client_man_id'] = credentials.get('client_man_id')
                         logger.debug(f"[TokenRefresher] Update new credentials in DB")
                         self.db.set_credentials(new_credentials, client_app_id, owner_id, channel_id)
@@ -225,7 +225,7 @@ class TokenRefresherManager(object):
             updated_cred.extend(ignore_keys)
             for owner_credentials in all_owners_credentials:
                 owner_id = owner_credentials['key'].split('/')[1]
-                logger.verbose(f'Trying to update all credentials for the owner: {owner_id}')
+                logger.verbose(f'[update_all_owners] Trying to update all credentials for the owner: {owner_id}')
                 updated_cred.extend(self.update_all_channels(new_credentials, owner_id, updated_cred))
         return list(set(updated_cred))
 
@@ -240,7 +240,7 @@ class TokenRefresherManager(object):
             updated_cred.extend(ignore_keys)
             for channel_credentials in all_channels_credentials:
                 channel_id = channel_credentials['key'].split('/')[-1]
-                logger.verbose(f'Trying to update all credentials for the channel: {channel_id}')
+                logger.verbose(f'[update_all_channels]  Trying to update all credentials for the channel: {channel_id}')
                 updated_cred.extend(self.update_all_owners(new_credentials, channel_id, updated_cred))
         return list(set(updated_cred))
 
@@ -292,7 +292,7 @@ class TokenRefresherManager(object):
             channel_id = key.split('/')[-1]
             owner_id = key.split('/')[1]
 
-            cred_ = self.implementer.check_manager_client_id(owner_id, channel_id, cred_value, new_credentials)
+            cred_['value'] = self.implementer.check_manager_client_id(owner_id, channel_id, cred_value, new_credentials)
         return credentials_check
 
     def filter_credentials(self, credentials_list, value, attr='client_man_id'):
