@@ -73,7 +73,8 @@ class SkeletonDevice(SkeletonBase):
         """
         second_credentials = second_credentials or {}
         credentials = self.auth_response(main_credentials)
-        if not credentials.get('client_man_id'):
+        has_error = False
+        if 'client_man_id' not in credentials:
             sender = {
                 'client_id': credentials.get('client_id'),
                 'owner_id': owner_id,
@@ -84,15 +85,16 @@ class SkeletonDevice(SkeletonBase):
             if swap_credentials:
                 credentials['client_man_id'] = swap_credentials.get('client_id')
             else:
-                logger.warning("[check_manager_client_id] Invalid swap credentials return with old credentials")
+                logger.warning("[check_manager_client_id] Invalid swap credentials return with main credentials")
                 second_credentials = self.auth_response(second_credentials)
                 swap_credentials = self.swap_credentials(second_credentials, sender)
                 if swap_credentials:
                     credentials['client_man_id'] = swap_credentials.get('client_id')
                 else:
-                    logger.warning("[check_manager_client_id] Invalid swap credentials return with new credentials")
+                    logger.warning("[check_manager_client_id] Invalid swap credentials return with secondary credentials")
+                    has_error = True
 
-        return credentials
+        return credentials, has_error
 
     def auth_requests(self, sender):
         """
