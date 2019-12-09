@@ -1,4 +1,4 @@
 # Table of contents
 
-* [Initial page](README.md)
+* [What is the Habit Analytics Platform?](README.md)
 
