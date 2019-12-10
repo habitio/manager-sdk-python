@@ -36,7 +36,7 @@ class TokenRefresherManager(object):
 
     @channel_relations.deleter
     def channel_relations(self):
-        self.channel_relations = {}
+        self.channel_relations.clear()
 
     def start(self):
         """
