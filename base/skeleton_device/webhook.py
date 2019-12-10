@@ -286,8 +286,12 @@ class WebhookHubDevice(WebhookHubBase):
             for channel in channels:
                 channel_id = channel['id']
                 old_credentials = self.implementer.auth_response(
-                    self.db.get_credentials(client_id, owner_id, channel_id)) or {}
-                credentials = self.implementer.check_manager_client_id(owner_id, channel_id, credentials)
+                    self.db.get_credentials(client_id, owner_id, channel_id))
+                if 'client_man_id' not in old_credentials:
+                    credentials, has_error = self.implementer.check_manager_client_id(
+                        owner_id, channel_id, credentials, old_credentials)
+                else:
+                    credentials['client_man_id'] = old_credentials['client_man_id']
                 self.db.set_credentials(credentials, client_id, owner_id, channel_id)
                 key = f'credential-owners/{owner_id}/channels/{channel_id}'
                 ignore_keys.append(key)
@@ -299,22 +303,31 @@ class WebhookHubDevice(WebhookHubBase):
                 logger.error("[handle_credentials] Refresh token not found in old credentials")
                 return
             else:
+                updated_cred = []
+                updated_cred.extend(ignore_keys)
                 refresh_token = old_credentials['refresh_token']
-                credentials_list = self.refresher.get_credentials_by_refresh_token().get(refresh_token, [])
+                credentials_list = self.refresher.get_credentials_by_refresh_token(refresh_token) or []
                 # remove updated keys from credentials list
                 credentials_list = [cred_ for cred_ in credentials_list if cred_['key'] not in ignore_keys]
 
                 logger.verbose(f"[handle_credentials] Starting update by token_refresher for channel: {channel_id}")
-                updated_cred = self.refresher.update_credentials(credentials, credentials_list)
-                updated_cred.extend(ignore_keys)
+                updated_, error_keys = self.refresher.update_credentials(credentials, credentials_list)
+                ignore_keys.extend(updated_)
+                ignore_keys.extend(error_keys)
+                updated_cred.extend(updated_)
 
                 logger.debug(f"[handle_credentials] Starting update all owners for channel: {channel_id}")
-                updated_cred.extend(self.refresher.update_all_owners(credentials, channel_id, updated_cred))
+                updated_, error_keys = self.refresher.update_all_owners(credentials, channel_id, ignore_keys)
+                ignore_keys.extend(updated_)
+                ignore_keys.extend(error_keys)
+                updated_cred.extend(updated_)
 
                 logger.debug("[handle_credentials] Starting update all channels")
-                updated_cred.extend(self.refresher.update_all_channels(credentials, owner_id, updated_cred))
+                updated_cred.extend(self.refresher.update_all_channels(credentials, owner_id, ignore_keys))
 
                 logger.debug(f"[handle_credentials] Updated keys: {list(set(updated_cred))}")
+
+                del self.refresher.channel_relations
         else:
             for channel in channels:
                 self.db.set_credentials(credentials, client_id, owner_id, channel['id'])
