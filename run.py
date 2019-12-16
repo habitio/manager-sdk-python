@@ -2,6 +2,14 @@ from base import settings
 from base import logger
 from flask import Flask
 from flask_cors import CORS
+from base.thread_pool import ThreadPool
+from base.constants import DEFAULT_THREAD_POOL_LIMIT
+if settings.config_thread_pool.get('enabled', True):
+    thread_pool = ThreadPool(settings.config_thread_pool.get('num_threads', DEFAULT_THREAD_POOL_LIMIT))
+    thread_pool.start()
+else:
+    thread_pool = None
+
 from base import views
 from base.common.tcp_base import TCPBase
 
@@ -14,7 +22,7 @@ try:
         app.config.from_object("flask_config")
         if settings.enable_cors is True:
             CORS(app, supports_credentials=True)
-        views = views.Views(app)
+        views = views.Views(app, thread_pool)
         logger.info("[Boot]: Flask object successfully created!")
         if settings.config_tcp.get('enabled', False):
             tcp_ = TCPBase(webhook=views.webhook)
