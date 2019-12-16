@@ -1,11 +1,16 @@
 import sys
 import json
 import threading
+import traceback
 from time import sleep
 from functools import wraps
+from base import logger, settings
 from base.redis_db import get_redis
+from base.constants import DEFAULT_THREAD_POOL_NAME, DEFAULT_THREAD_KEY_NAME, DEFAULT_SLEEP_TIME
 
-DEFAULT_THREAD_NAME = "CustomPoolThread"
+SLEEP_TIME = settings.config_thread_pool.get('sleep_time', DEFAULT_SLEEP_TIME)
+THREAD_NAME = settings.config_thread_pool.get('thread_name', DEFAULT_THREAD_POOL_NAME)
+KEY_NAME = f"{DEFAULT_THREAD_KEY_NAME}{THREAD_NAME.lower()}"
 
 
 class CustomPoolThread(threading.Thread):
@@ -16,7 +21,7 @@ class CustomPoolThread(threading.Thread):
         self.daemon = True
         self.tasks = tasks
         self.thread_num = thread_num
-        self.name = f"{DEFAULT_THREAD_NAME}-{thread_num}"
+        self.name = f"{THREAD_NAME}-{thread_num}"
         self.lock = threading.Lock()
         self.db = get_redis()
 
@@ -51,42 +56,33 @@ class CustomPoolThread(threading.Thread):
         })
 
     def get_function(self):
-        self.lock.acquire()
-        pool_queue = self.db.get_key('poolthread/queues/main-async')
         json_obj = {}
+        self.lock.acquire()
+        pool_queue = self.db.get_key(KEY_NAME)
         if pool_queue:
             json_obj = pool_queue.pop(0)
-            self.db.set_key('poolthread/queues/main-async', pool_queue)
+            self.db.set_key(KEY_NAME, pool_queue)
         self.lock.release()
-        if json_obj:
-            print(f"found object {json_obj}")
-            return json_obj
-        else:
-            print("sleeping for (%d)sec" % 5)
-            sleep(5)
+
+        return json_obj
 
     def run(self):
         while True:
-            # func, args, kargs = self.tasks.get()
             json_obj = self.get_function()
-            print(f"TASKS: {self.tasks}")
             try:
-                print("Trying to get obj")
                 obj = json.loads(json_obj)
-                print(f"OBJ: {obj}")
+                logger.debug(f"Found object to be executed: {obj}")
                 _func = obj.get('func')
                 _args = obj.get('args', [])
                 _kwargs = obj.get('kwargs', {})
                 if _func and _func in self.tasks:
-                    print(f"function found: {_func}")
+                    logger.debug(f"Running function {_func} with args: {_args}; kwargs: {_kwargs}")
                     self.tasks[_func](*_args, **_kwargs)
-                sleep(5)
-            except Exception as e:
-                # An exception happened in this thread
-                print(e)
-            # finally:
-                # Mark this task as done, whether an exception happened or not
-                # self.tasks.task_done()
+                sleep(SLEEP_TIME)
+            except TypeError:
+                sleep(SLEEP_TIME)
+            except Exception:
+                logger.error(f"Unexpected error on thread pool: {traceback.format_exc(limit=5)}")
 
 
 class ThreadPool:
@@ -137,12 +133,12 @@ class ThreadPool:
             }
             self.lock.acquire()
             value = json.dumps(func_obj)
-            pool_queue = self.db.get_key('poolthread/queues/main-async')
+            pool_queue = self.db.get_key(KEY_NAME)
             if not pool_queue:
-                self.db.set_key('poolthread/queues/main-async', [value])
+                self.db.set_key(KEY_NAME, [value])
             else:
                 pool_queue.append(value)
-                self.db.set_key('poolthread/queues/main-async', [value])
+                self.db.set_key(KEY_NAME, [value])
             self.lock.release()
 
     def map(self, func, args_list):
@@ -158,7 +154,8 @@ class ThreadPool:
 def pool_task(func):
     @wraps(func)
     def register_pool_task(self) -> func:
-        threads = [t for t in threading.enumerate() if DEFAULT_THREAD_NAME in t.name]
+        thread_name = settings.config_thread_pool.get('thread_name', DEFAULT_THREAD_POOL_NAME)
+        threads = [t for t in threading.enumerate() if thread_name in t.name]
         if threads and hasattr(threads[0], 'register_task'):
             threads[0].register_task(self)
         return func

@@ -3,8 +3,9 @@ from base import logger
 from flask import Flask
 from flask_cors import CORS
 from base.thread_pool import ThreadPool
-if settings.enable_thread_pool:
-    thread_pool = ThreadPool(1)
+from base.constants import DEFAULT_THREAD_POOL_LIMIT
+if settings.config_thread_pool.get('enabled', True):
+    thread_pool = ThreadPool(settings.config_thread_pool.get('num_threads', DEFAULT_THREAD_POOL_LIMIT))
     thread_pool.start()
 else:
     thread_pool = None
