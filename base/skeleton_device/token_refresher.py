@@ -1,7 +1,6 @@
 import concurrent
 
 from base import settings, logger
-from base.helpers import validate_channel
 from base.redis_db import get_redis
 from base.utils import rate_limited
 from base.constants import DEFAULT_REFRESH_INTERVAL, DEFAULT_RATE_LIMIT, DEFAULT_THREAD_MAX_WORKERS, \
@@ -12,6 +11,7 @@ import threading
 import datetime
 import time
 import traceback
+from typing import Iterable
 
 
 class TokenRefresherManager(object):
@@ -24,6 +24,19 @@ class TokenRefresherManager(object):
         self.thread = None
         self.db = get_redis()
         self.implementer = implementer
+        self._channel_relations = {}
+
+    @property
+    def channel_relations(self):
+        return self._channel_relations
+
+    @channel_relations.setter
+    def channel_relations(self, value):
+        self._channel_relations = value
+
+    @channel_relations.deleter
+    def channel_relations(self):
+        self.channel_relations.clear()
 
     def start(self):
         """
@@ -53,18 +66,20 @@ class TokenRefresherManager(object):
             logger.info('[TokenRefresher] new refresh process {}'.format(datetime.datetime.now()))
             loop.run_until_complete(self.make_requests(conf_data))
             time.sleep(self.interval)
+            del self.channel_relations
 
-    def get_credentials_by_refresh_token(self, refresh_token_return=None):
+    def get_credentials_by_refresh_token(self, refresh_lookup=None):
         credentials_redis = self.db.full_query('credential-owners/*/channels/*')
         credentials = {}
         for cred_dict in credentials_redis:
+            cred_dict['value'] = self.implementer.auth_response(cred_dict['value'])
             refresh_token = cred_dict['value'].get('refresh_token')
-            if refresh_token and refresh_token not in credentials:
-                credentials[refresh_token] = [cred_dict]
-            else:
-                credentials[refresh_token].append(cred_dict)
-        return credentials if not refresh_token_return else \
-            {refresh_token_return: credentials.get(refresh_token_return, [])}
+            if not refresh_lookup or refresh_lookup == refresh_token:
+                try:
+                    credentials[refresh_token].append(cred_dict)
+                except KeyError:
+                    credentials[refresh_token] = [cred_dict]
+        return credentials if refresh_lookup not in credentials else credentials[refresh_lookup]
 
     async def make_requests(self, conf_data: dict):
         try:
@@ -94,7 +109,7 @@ class TokenRefresherManager(object):
     @rate_limited(settings.config_refresh.get('rate_limit', DEFAULT_RATE_LIMIT))
     def send_request(self, refresh_token, credentials_list, conf):
         try:
-            if type(credentials_list) is not list:
+            if credentials_list and type(credentials_list) is not list:
                 credentials_list = [credentials_list]
 
             if not credentials_list:
@@ -112,6 +127,7 @@ class TokenRefresherManager(object):
 
             # try refresh with all credentials in credentials_list until find a valid one
             for credentials_dict in credentials_list:
+                has_error = False
                 key = credentials_dict['key']  # credential-owners/[owner_id]/channels/[channel_id]
                 channel_id = key.split('/')[-1]
                 owner_id = key.split('/')[1]
@@ -137,6 +153,8 @@ class TokenRefresherManager(object):
 
                 if now >= (token_expiration_date - self.before_expires):
                     logger.info(f"[TokenRefresher] Refreshing token {key}")
+                    logger.info(f"[TokenRefresher] client_app_id: {client_app_id}; owner_id: {owner_id}; "
+                                f"channel_id: {channel_id}")
                     params = "grant_type=refresh_token&client_id={client_id}&client_secret={client_secret}" \
                              "&refresh_token=" + refresh_token
 
@@ -166,10 +184,18 @@ class TokenRefresherManager(object):
 
                         if 'refresh_token' not in new_credentials:  # we need to keep same refresh_token always
                             new_credentials['refresh_token'] = refresh_token
+                        if not credentials.get('client_man_id'):
+                            credentials, has_error = self.implementer.check_manager_client_id(
+                                owner_id, channel_id, credentials, new_credentials)
                         new_credentials['client_man_id'] = credentials.get('client_man_id')
+                        logger.debug(f"[TokenRefresher] Update new credentials in DB")
+                        self.db.set_credentials(new_credentials, client_app_id, owner_id, channel_id)
+
+                        # Check list size because this could be called from implementer.access_check
                         if len(credentials_list) == 1:
-                            credentials_list = self.get_credentials_by_refresh_token(
-                                credentials['refresh_token']).get(credentials['refresh_token'])
+                            logger.debug(f"[TokenRefresher] Trying to find credentials using old refresh token")
+                            credentials_list = self.get_credentials_by_refresh_token(credentials['refresh_token'])
+                        credentials_list = [cred_ for cred_ in credentials_list if cred_['key'] != key]
 
                         self.update_credentials(new_credentials, credentials_list)
 
@@ -181,20 +207,22 @@ class TokenRefresherManager(object):
                         }
                     elif response.status_code == requests.codes.bad_request and "text" in response.json():
                         logger.warning(f"[TokenRefresher] channel_id: {channel_id}, {response.json()['text']}")
+                        has_error = True
                     else:
                         logger.warning(f'[TokenRefresher] Error in refresh token request {channel_id} {response}')
+                        has_error = True
                 else:
                     logger.debug(f"[TokenRefresher] access token hasn't expired yet {key}")
                 if credentials_list.index(credentials_dict) + 1 < len(credentials_list):
                     logger.debug(f"[TokenRefresher] Will try next credentials in list")
                     continue
-
-                return {
-                    'channel_id': channel_id,
-                    'credentials': credentials,
-                    'old_credentials': credentials,
-                    'new': False
-                }
+                if not has_error:
+                    return {
+                        'channel_id': channel_id,
+                        'credentials': credentials,
+                        'old_credentials': credentials,
+                        'new': False
+                    }
 
         except Exception as e:
             logger.error(f'[TokenRefresher] Unexpected error on send_request for refresh token, {e}')
@@ -203,18 +231,21 @@ class TokenRefresherManager(object):
         ignore_keys = ignore_keys or []
         all_owners_credentials = self.db.full_query(f'credential-owners/*/channels/{channel_id}')
         all_owners_credentials = list(filter(lambda x: x['key'] not in ignore_keys, all_owners_credentials))
-        all_owners_credentials = self.check_credentials_man_id(all_owners_credentials)
+        all_owners_credentials = self.check_credentials_man_id(all_owners_credentials, new_credentials)
+        error_keys = [cred_['key'] for cred_ in all_owners_credentials if cred_.get('has_error', False) is True]
         all_owners_credentials = self.filter_credentials(all_owners_credentials, new_credentials.get('client_man_id'))
         logger.info(f'[update_all_owners] {len(all_owners_credentials)} keys to update for channel {channel_id}')
         updated_cred = []
         if all_owners_credentials:
-            updated_cred.extend(self.update_credentials(new_credentials, all_owners_credentials))
+            updated_, error_ = self.update_credentials(new_credentials, all_owners_credentials)
+            updated_cred.extend(updated_)
             updated_cred.extend(ignore_keys)
+            updated_cred.extend(error_)
             for owner_credentials in all_owners_credentials:
                 owner_id = owner_credentials['key'].split('/')[1]
-                logger.verbose(f'Trying to update all credentials for the owner: {owner_id}')
+                logger.verbose(f'[update_all_owners] Trying to update all credentials for the owner: {owner_id}')
                 updated_cred.extend(self.update_all_channels(new_credentials, owner_id, updated_cred))
-        return list(set(updated_cred))
+        return list(set(updated_cred)), list(set(error_keys))
 
     def update_all_channels(self, new_credentials, owner_id, ignore_keys=None):
         ignore_keys = ignore_keys or []
@@ -223,12 +254,16 @@ class TokenRefresherManager(object):
         logger.info(f'[update_all_channels] {len(all_channels_credentials)} keys to update for owner {owner_id}')
         updated_cred = []
         if all_channels_credentials:
-            updated_cred.extend(self.update_credentials(new_credentials, all_channels_credentials))
+            updated_, error_ = self.update_credentials(new_credentials, all_channels_credentials)
+            updated_cred.extend(updated_)
             updated_cred.extend(ignore_keys)
+            updated_cred.extend(error_)
             for channel_credentials in all_channels_credentials:
                 channel_id = channel_credentials['key'].split('/')[-1]
-                logger.verbose(f'Trying to update all credentials for the channel: {channel_id}')
-                updated_cred.extend(self.update_all_owners(new_credentials, channel_id, updated_cred))
+                logger.verbose(f'[update_all_channels]  Trying to update all credentials for the channel: {channel_id}')
+                updated_, error_keys = self.update_all_owners(new_credentials, channel_id, updated_cred)
+                updated_cred.extend(updated_)
+                updated_cred.extend(error_keys)
         return list(set(updated_cred))
 
     def update_credentials(self, new_credentials, old_credentials_list):
@@ -240,7 +275,8 @@ class TokenRefresherManager(object):
             'value': :credential_dict
         }, ...]
         """
-        old_credentials_list = self.check_credentials_man_id(old_credentials_list)
+        old_credentials_list = self.check_credentials_man_id(old_credentials_list, new_credentials)
+        error_keys = [cred_['key'] for cred_ in old_credentials_list if cred_['has_error'] is True]
         old_credentials_list = self.filter_credentials(old_credentials_list, new_credentials.get('client_man_id'))
         updated_credentials = []
         logger.info(f'[TokenRefresher] update_credentials: {len(old_credentials_list)} keys to update')
@@ -256,33 +292,40 @@ class TokenRefresherManager(object):
             # to keep consistence with different apps
             new_credentials['client_id'] = client_app_id
             new_credentials['client_man_id'] = client_man_id
-            channeltemplate_id = self.implementer.get_channel_template(channel_id)
+            try:
+                channeltemplate_id = self.channel_relations[channel_id]
+            except KeyError:
+                channeltemplate_id = self.implementer.get_channel_template(channel_id)
 
             logger.debug(f'[update_credentials] new credentials {key}')
             logger.info(f"[update_credentials] client_app_id: {client_app_id}; owner_id: {owner_id}; "
                         f"channel_id: {channel_id}; channeltemplate_id: {channeltemplate_id}")
             if channeltemplate_id:
+                self.channel_relations[channel_id] = channeltemplate_id
                 stored = self.implementer.store_credentials(owner_id, client_app_id, channeltemplate_id, new_credentials)
                 if stored:
                     self.db.set_credentials(new_credentials, client_app_id, owner_id, channel_id)
                     updated_credentials.append(key)
-        return list(set(updated_credentials))
+        return list(set(updated_credentials)), list(set(error_keys))
 
-    def check_credentials_man_id(self, credentials):
-        if type(credentials) is not list:
-            credentials = [credentials]
-        if not credentials:
-            return credentials
-        for cred_ in credentials:
+    def check_credentials_man_id(self, credentials_check, new_credentials):
+        if type(credentials_check) is not list:
+            credentials_check = [credentials_check]
+        if not credentials_check:
+            return credentials_check
+        for cred_ in credentials_check:
             key = cred_['key']
             cred_value = cred_['value']
             channel_id = key.split('/')[-1]
             owner_id = key.split('/')[1]
 
-            cred_ = self.implementer.check_manager_client_id(owner_id, channel_id, cred_value)
-        return credentials
+            cred_['value'], cred_['has_error'] = self.implementer.check_manager_client_id(
+                owner_id, channel_id, cred_value, new_credentials)
+        return credentials_check
 
-    def filter_credentials(self, credentials_list, value, attr='client_man_id'):
+    def filter_credentials(self, credentials_list, value, attr='client_man_id', remove_errors=True):
         credentials_list = list(filter(lambda x: x['value'].get(attr) == value, credentials_list))
+        if remove_errors:
+            credentials_list = list(filter(lambda x: x.get('has_error', False) is False, credentials_list))
 
         return credentials_list

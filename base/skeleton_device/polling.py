@@ -91,7 +91,7 @@ class PollingManager(object):
             logger.info("[Polling] {} finishing {}".format(threading.currentThread().getName(),
                                                            datetime.datetime.now()))
         except Exception as e:
-            logger.error("[Polling] Error on make_requests: {}".format(e))
+            logger.error("[Polling] Error on make_requests: {}".format(traceback.format_exc(limit=5)))
 
     @rate_limited(settings.config_polling.get('rate_limit', DEFAULT_RATE_LIMIT))
     def send_request(self, conf_data, channel_id):

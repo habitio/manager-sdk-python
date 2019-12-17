@@ -12,6 +12,8 @@ from base.common.webhook_base import WebhookHubBase
 from base.utils import format_str
 from base.constants import DEFAULT_RETRY_WAIT
 from base.exceptions import UnauthorizedException
+from base.skeleton_device.tasks import handle_credentials
+from base.thread_pool import pool_task
 
 from .polling import PollingManager
 from .token_refresher import TokenRefresherManager
@@ -19,8 +21,8 @@ from .token_refresher import TokenRefresherManager
 
 class WebhookHubDevice(WebhookHubBase):
 
-    def __init__(self, queue=None, implementer=None):
-        super(WebhookHubDevice, self).__init__(queue, implementer)
+    def __init__(self, queue=None, implementer=None, thread_pool=None):
+        super(WebhookHubDevice, self).__init__(queue, implementer, thread_pool)
 
         try:
             self.refresher = TokenRefresherManager(implementer=self.implementer)
@@ -166,18 +168,40 @@ class WebhookHubDevice(WebhookHubBase):
             responses = loop.run_until_complete(self.send_channel_requests(paired_devices,
                                                                            client_id,
                                                                            owner_id,
-                                                                           channel_template))
+                                                                           channel_template,
+                                                                           credentials))
             channels = [{"id": channel_id} for channel_id in responses]
             loop.close()
 
             if channels:
-                self.handle_credentials(credentials, client_id, owner_id, channels)
+                if settings.config_refresh.get('enabled') is True:
+                    ignore_keys = []
+                    old_credentials = {}
+                    channel_id = None
+                    for channel in channels:
+                        channel_id = channel['id']
+                        credentials = self.implementer.auth_response(credentials)
+                        credentials = self.implementer.update_expiration_date(credentials)
+                        old_credentials = self.implementer.auth_response(
+                            self.db.get_credentials(client_id, owner_id, channel_id))
+                        if 'client_man_id' not in old_credentials:
+                            credentials, has_error = self.implementer.check_manager_client_id(
+                                owner_id, channel_id, credentials, old_credentials)
+                        else:
+                            credentials['client_man_id'] = old_credentials['client_man_id']
+                        self.db.set_credentials(credentials, client_id, owner_id, channel_id)
+
+                        ignore_keys.append(f'credential-owners/{owner_id}/channels/{channel_id}')
+                    self.thread_pool.add_task(handle_credentials, credentials, old_credentials, client_id, owner_id, channel_id, ignore_keys)
+                else:
+                    for channel in channels:
+                        self.db.set_credentials(credentials, client_id, owner_id, channel['id'])
 
         logger.info(f"Channels: {channels}")
 
         return channels, credentials
 
-    async def send_channel_requests(self, devices, client_id, owner_id, channel_template):
+    async def send_channel_requests(self, devices, client_id, owner_id, channel_template, credentials):
         loop = asyncio.get_event_loop()
 
         with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -185,14 +209,14 @@ class WebhookHubDevice(WebhookHubBase):
                 loop.run_in_executor(
                     executor,
                     self.channels_grant,
-                    device, client_id, owner_id, channel_template
+                    device, client_id, owner_id, channel_template, credentials
                 )
                 for device in devices
             ]
 
             return await asyncio.gather(*futures)
 
-    def channels_grant(self, device, client_id, owner_id, channel_template):
+    def channels_grant(self, device, client_id, owner_id, channel_template, credentials):
 
         try:
             channel_template = self.implementer.update_channel_template(device['id']) or channel_template
@@ -271,26 +295,12 @@ class WebhookHubDevice(WebhookHubBase):
 
         return None
 
-    def handle_credentials(self, credentials, client_id, owner_id, channels):
+    @pool_task
+    def handle_credentials(self, credentials, old_credentials, client_id, owner_id, channel_id, ignore_keys=None):
+        ignore_keys = ignore_keys or []
         logger.debug("\n\n\n\n\n\t\t\t\t\t*******************HANDLE_CREDENTIALS****************************")
-        logger.info(f"Client_id {client_id}; Owner_id: {owner_id}; Channels: {channels}")
-        if not channels:
-            logger.warning(f"[handle_credentials] Channels not found: {channels}")
-            return
+        logger.info(f"Client_id {client_id}; Owner_id: {owner_id}; channel_id: {channel_id}")
         if settings.config_refresh.get('enabled') is True:
-            credentials = self.implementer.auth_response(credentials)
-            credentials = self.implementer.update_expiration_date(credentials)
-            ignore_keys = []
-            channel_id = ''
-            old_credentials = {}
-            for channel in channels:
-                channel_id = channel['id']
-                old_credentials = self.db.get_credentials(client_id, owner_id, channel_id) or {}
-                credentials = self.implementer.check_manager_client_id(owner_id, channel_id, credentials)
-                self.db.set_credentials(credentials, client_id, owner_id, channel_id)
-                key = f'credential-owners/{owner_id}/channels/{channel_id}'
-                ignore_keys.append(key)
-
             if not channel_id:
                 logger.warning(f"[handle_credentials] channel_id not set: {channel_id}")
                 return
@@ -298,25 +308,31 @@ class WebhookHubDevice(WebhookHubBase):
                 logger.error("[handle_credentials] Refresh token not found in old credentials")
                 return
             else:
+                updated_cred = []
+                updated_cred.extend(ignore_keys)
                 refresh_token = old_credentials['refresh_token']
-                credentials_list = self.refresher.get_credentials_by_refresh_token().get(refresh_token, [])
+                credentials_list = self.refresher.get_credentials_by_refresh_token(refresh_token) or []
                 # remove updated keys from credentials list
                 credentials_list = [cred_ for cred_ in credentials_list if cred_['key'] not in ignore_keys]
 
                 logger.verbose(f"[handle_credentials] Starting update by token_refresher for channel: {channel_id}")
-                updated_cred = self.refresher.update_credentials(credentials, credentials_list)
-                updated_cred.extend(ignore_keys)
+                updated_, error_keys = self.refresher.update_credentials(credentials, credentials_list)
+                ignore_keys.extend(updated_)
+                ignore_keys.extend(error_keys)
+                updated_cred.extend(updated_)
 
                 logger.debug(f"[handle_credentials] Starting update all owners for channel: {channel_id}")
-                updated_cred.extend(self.refresher.update_all_owners(credentials, channel_id, updated_cred))
+                updated_, error_keys = self.refresher.update_all_owners(credentials, channel_id, ignore_keys)
+                ignore_keys.extend(updated_)
+                ignore_keys.extend(error_keys)
+                updated_cred.extend(updated_)
 
                 logger.debug("[handle_credentials] Starting update all channels")
-                updated_cred.extend(self.refresher.update_all_channels(credentials, owner_id, updated_cred))
+                updated_cred.extend(self.refresher.update_all_channels(credentials, owner_id, ignore_keys))
 
                 logger.debug(f"[handle_credentials] Updated keys: {list(set(updated_cred))}")
-        else:
-            for channel in channels:
-                self.db.set_credentials(credentials, client_id, owner_id, channel['id'])
+
+                del self.refresher.channel_relations
 
     def get_or_create_channel(self, device, channel_template, client_id):
         try:

@@ -10,10 +10,11 @@ from .watchdog import Watchdog
 
 class WebhookHubBase:
 
-    def __init__(self, queue=None, implementer=None):
+    def __init__(self, queue=None, implementer=None, thread_pool=None):
         self.implementer = implementer
         self.queue = queue
         self.confirmation_hash = ""
+        self.thread_pool = thread_pool
 
         try:
             self.watchdog_monitor = Watchdog()

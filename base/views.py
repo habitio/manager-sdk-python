@@ -24,9 +24,10 @@ queue_pub = mp.Queue()
 
 class Views:
 
-    def __init__(self, _app=None):
+    def __init__(self, _app=None, thread_pool=None):
         self._implementer = None
         self._webhook = None
+        self._thread_pool = thread_pool
         self.kickoff(_app)
 
     @property
@@ -45,6 +46,10 @@ class Views:
     def webhook(self, value):
         self._webhook = value
 
+    @property
+    def thread_pool(self):
+        return self._thread_pool
+
     def kickoff(self, app):
         """
         Setting up manager before it starts serving
@@ -59,7 +64,7 @@ class Views:
             self.implementer = get_implementer()
             self.implementer.queue = queue_pub
 
-            webhook = Webhook(queue=queue_pub, implementer=self.implementer)
+            webhook = Webhook(queue=queue_pub, implementer=self.implementer, thread_pool=self.thread_pool)
             webhook.patch_endpoints()
             self.webhook = webhook
             self.implementer.confirmation_hash = self.webhook.confirmation_hash

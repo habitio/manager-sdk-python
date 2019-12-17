@@ -147,7 +147,7 @@ class WebhookHubApplication(WebhookHubBase):
                 raise Exception('[get_application] Error getting application!')
 
         except Exception as e:
-            logger.alert("[get_application] Failed while get application! {}".format(traceback.format_exc(limit=5)))
+            logger.alert("Failed while get application! {}".format(traceback.format_exc(limit=5)))
             raise
 
     def quote_simulate(self, request):

@@ -9,7 +9,7 @@ from base import settings
 from base import logger
 from base.exceptions import TCPServerNotFoundException, TCPWrongMessageException
 from base.solid import get_implementer
-from base.constants import DEFAULT_CONNECTION_TIMEOUT, DEFAULT_DATA_LENGTH, DEFAULT_THREAD_POOL_LIMIT
+from base.constants import DEFAULT_CONNECTION_TIMEOUT, DEFAULT_DATA_LENGTH, DEFAULT_TCP_POOL_LIMIT
 
 
 class TCPBase:
@@ -104,7 +104,7 @@ class TCPBase:
 
             thread_list = []
             while True:
-                if len(thread_list) >= self.tcp_settings.get('thread_pool_limit', DEFAULT_THREAD_POOL_LIMIT):
+                if len(thread_list) >= self.tcp_settings.get('thread_pool_limit', DEFAULT_TCP_POOL_LIMIT):
                     self._clear_threads(thread_list)
                 # Wait for a connection
                 logger.info('Waiting for connection')

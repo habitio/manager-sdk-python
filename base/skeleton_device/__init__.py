@@ -45,12 +45,11 @@ class SkeletonDevice(SkeletonBase):
     def swap_credentials(self, credentials, sender, token_key='access_token') -> Dict:
         url = self._swap_url
 
-        response = None
-        credentials = credentials or {}
+        credentials = self.auth_response(credentials) or {}
 
         if credentials:
             payload = {
-                "client_id": credentials.get('client_id', sender.get('client_id', '')),
+                "client_id": sender.get('client_id', credentials.get('client_id', '')),
                 "owner_id": sender.get('owner_id', ''),
                 "credentials": {
                     token_key: credentials.get(token_key, '')
@@ -68,11 +67,14 @@ class SkeletonDevice(SkeletonBase):
                      f'Payload: {payload}', 3)
             return {}
 
-    def check_manager_client_id(self, owner_id, channel_id, credentials):
+    def check_manager_client_id(self, owner_id, channel_id, main_credentials, second_credentials=None):
         """
         Check if credentials has manager_client_id. Update credentials calling swap credentials if not
         """
-        if not credentials.get('client_man_id'):
+        second_credentials = second_credentials or {}
+        credentials = self.auth_response(main_credentials)
+        has_error = False
+        if 'client_man_id' not in credentials:
             sender = {
                 'client_id': credentials.get('client_id'),
                 'owner_id': owner_id,
@@ -83,9 +85,16 @@ class SkeletonDevice(SkeletonBase):
             if swap_credentials:
                 credentials['client_man_id'] = swap_credentials.get('client_id')
             else:
-                logger.warning("[check_manager_client_id] Invalid swap credentials return")
+                logger.warning("[check_manager_client_id] Invalid swap credentials return with main credentials")
+                second_credentials = self.auth_response(second_credentials)
+                swap_credentials = self.swap_credentials(second_credentials, sender)
+                if swap_credentials:
+                    credentials['client_man_id'] = swap_credentials.get('client_id')
+                else:
+                    logger.warning("[check_manager_client_id] Invalid swap credentials return with secondary credentials")
+                    has_error = True
 
-        return credentials
+        return credentials, has_error
 
     def auth_requests(self, sender):
         """
@@ -217,11 +226,8 @@ class SkeletonDevice(SkeletonBase):
         Returns channel_template_id
 
         """
-        channel = validate_channel(channel_id, return_channel=True)
-        if channel and 'channeltemplate_id' in channel:
-            return channel['channeltemplate_id']
-        else:
-            return ''
+        channel = validate_channel(channel_id)
+        return channel['channeltemplate_id'] if (channel and 'channeltemplate_id' in channel) else ''
 
     def get_channels_by_channeltemplate(self, channeltemplate_id):
         """
@@ -248,9 +254,9 @@ class SkeletonDevice(SkeletonBase):
                 raise ChannelTemplateNotFound("Failed to retrieve channel_ids for {}".format(channeltemplate_id))
 
         except (OSError, ChannelTemplateNotFound) as e:
-            logger.warning('get_channels_by_channeltemplate :: Error while making request to platform: {}'.format(e))
+            logger.warning('[get_channels_by_channeltemplate] Error while making request to platform: {}'.format(e))
         except Exception as ex:
-            logger.alert("Unexpected error get_channels_by_channeltemplate: {}".format(traceback.format_exc(limit=5)))
+            logger.alert("[get_channels_by_channeltemplate] Unexpected error: {}".format(traceback.format_exc(limit=5)))
         return ''
 
     def get_channel_by_owner(self, owner_id, channel_id):
@@ -275,12 +281,13 @@ class SkeletonDevice(SkeletonBase):
                 return False
             else:
                 logger.verbose("[get_channel_by_owner] Received response code[{}]".format(resp.status_code))
-                raise ChannelTemplateNotFound("Failed to retrieve channel_template_id for {}".format(channel_id))
+                raise ChannelTemplateNotFound(f"[get_channel_by_owner] Failed to retrieve channel_template_id "
+                                              f"for {channel_id}")
 
         except (OSError, ChannelTemplateNotFound) as e:
-            logger.warning('get_channel_by_owner :: Error while making request to platform: {}'.format(e))
+            logger.warning('[get_channel_by_owner] Error while making request to platform: {}'.format(e))
         except Exception as ex:
-            logger.alert("Unexpected error get_channel_by_owner: {}".format(traceback.format_exc(limit=5)))
+            logger.alert("[get_channel_by_owner] Unexpected error: {}".format(traceback.format_exc(limit=5)))
         return ''
 
     def get_device_id(self, channel_id):
