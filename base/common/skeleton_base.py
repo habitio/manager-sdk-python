@@ -4,7 +4,7 @@ from datetime import timedelta
 
 from base import settings, logger
 from base.redis_db import get_redis
-from base.exceptions import ChannelTemplateNotFound, PropertyHistoryNotFoundException
+from base.exceptions import ChannelTemplateNotFound, PropertyHistoryNotFoundException, InvalidRequestException
 from base.logger_base import LOG_TABLE
 import requests
 import traceback
@@ -271,27 +271,62 @@ class SkeletonBase(ABC):
             self.log("[get_channeltemplate_data] Unexpected error get_channeltemplate_data: {}".format(traceback.format_exc(limit=5)), 3)
         return {}
 
-    def get_latest_property_value(self, channel_id, component, property):
+    def get_property_history(self, channel_id, component, property_, params=None):
+        params = params or {}
         url = "{}/channels/{channel_id}/components/{component}/properties/{property}/history".format(
-            settings.api_server_full, channel_id=channel_id, component=component, property=property
+            settings.api_server_full, channel_id=channel_id, component=component, property=property_
         )
 
         headers = {
             "Authorization": "Bearer {0}".format(settings.block["access_token"])
         }
         try:
-            resp = requests.get(url, headers=headers)
+            resp = requests.get(url, headers=headers, params=params)
 
             if int(resp.status_code) == 200:
-                return resp.json()["elements"][0]["value"]
+                return resp.json()["elements"]
             else:
-                self.log("[get_latest_property_value] Received response code[{}]".format(resp.status_code), 9)
-                raise PropertyHistoryNotFoundException("Failed to retrieve latest_property_value")
+                self.log("[get_property_history] Received response code[{}]".format(resp.status_code), 9)
+                raise PropertyHistoryNotFoundException("Failed to retrieve property_history")
+
+        except (OSError, PropertyHistoryNotFoundException) as e:
+            self.log('[get_property_history] Error while making request to platform: {}'.format(e), 3)
+        except Exception:
+            self.log("[get_property_history] Unexpected error get_property_history: {}".format(
+                traceback.format_exc(limit=5)), 3)
+        return {}
+
+    def get_latest_property_value(self, channel_id, component, property_):
+        try:
+            resp = self.get_property_history(channel_id, component, property_)
+            return resp[0]["value"]
 
         except (OSError, PropertyHistoryNotFoundException) as e:
             self.log('[get_latest_property_value] Error while making request to platform: {}'.format(e), 3)
-        except Exception as ex:
+        except Exception:
             self.log("[get_latest_property_value] Unexpected error get_latest_property_value: {}".format(
+                traceback.format_exc(limit=5)), 3)
+        return {}
+
+    def get_user_subscriptions(self, channel_id):
+        url = f"{settings.api_server_full}/channels/{channel_id}/retrieve-user-subscriptions"
+
+        headers = {
+            "Authorization": "Bearer {0}".format(settings.block["access_token"])
+        }
+        try:
+            resp = requests.post(url, headers=headers)
+
+            if int(resp.status_code) == 200:
+                return resp.json()["elements"]
+            else:
+                self.log("[get_user_subscriptions] Received response code[{}]".format(resp.status_code), 9)
+                raise InvalidRequestException("Failed to retrieve user subscriptions")
+
+        except (OSError, InvalidRequestException) as e:
+            self.log('[get_user_subscriptions] Error while making request to platform: {}'.format(e), 3)
+        except Exception:
+            self.log("[get_user_subscriptions] Unexpected error get_user_subscriptions: {}".format(
                 traceback.format_exc(limit=5)), 3)
         return {}
 

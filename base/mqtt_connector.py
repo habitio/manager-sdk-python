@@ -150,9 +150,9 @@ class MqttConnector:
 
                         elif payload["io"] == "w":
 
-                            if result == True:
+                            if result is True:
                                 self.queue_pub.put({"io": "iw", "data": data, "case": case})
-                            elif result == False:
+                            elif result is False:
                                 return
 
                     else:
@@ -208,6 +208,7 @@ class MqttConnector:
             }
 
             data = payload.get("data")
+            timestamp = payload.get("timestamp")
 
             sender = {
                 "client_id": payload.get("sender"),
@@ -219,7 +220,8 @@ class MqttConnector:
                 case=case,
                 credentials={},
                 sender=sender,
-                data=data
+                data=data,
+                timestamp=timestamp
             )
 
     def on_message(self, client, userdata, msg):
