@@ -43,7 +43,7 @@ class WebhookHubDevice(WebhookHubBase):
 
         try:
             received_hash = request.headers.get("Authorization", "").replace("Bearer ", "")
-            if received_hash == self.confirmation_hash:
+            if self._validate_confirmation_hash(received_hash):
                 sender = {
                     "channel_template_id": request.headers["X-Channeltemplate-Id"],
                     "client_id": request.headers["X-Client-Id"],
@@ -73,7 +73,7 @@ class WebhookHubDevice(WebhookHubBase):
 
         try:
             received_hash = request.headers.get("Authorization", "").replace("Bearer ", "")
-            if received_hash == self.confirmation_hash:
+            if self._validate_confirmation_hash(received_hash):
                 credentials = self.db.get_credentials(request.headers["X-Client-Id"], request.headers["X-Owner-Id"])
 
                 if not credentials:
@@ -114,7 +114,7 @@ class WebhookHubDevice(WebhookHubBase):
 
         try:
             received_hash = request.headers.get("Authorization", "").replace("Bearer ", "")
-            if received_hash == self.confirmation_hash:
+            if self._validate_confirmation_hash(received_hash):
 
                 if request.is_json:
                     payload = request.get_json()
@@ -405,11 +405,7 @@ class WebhookHubDevice(WebhookHubBase):
             logger.verbose("[patch_endpoints] Received response code[{}]".format(resp.status_code))
             logger.verbose(format_str(resp.json(), is_json=True))
 
-            if "confirmation_hash" in resp.json():
-                self.confirmation_hash = resp.json()["confirmation_hash"]
-                logger.notice("Confirmation Hash : {}".format(self.confirmation_hash))
-            else:
-                raise Exception
+            self.set_confirmation_hash()
 
         except Exception as e:
             logger.alert("Failed at patch endpoints! {}".format(traceback.format_exc(limit=5)))

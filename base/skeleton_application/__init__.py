@@ -64,10 +64,10 @@ class SkeletonApplication(SkeletonBase):
 
         if resp.status_code == 200:
             properties = resp.json().get('elements', [])
-            self.log(f"Coverages found: {len(properties)}", 7)
+            self.log(f"Coverage properties found: {len(properties)}", 7)
         else:
             properties = []
-            self.log("Coverages not found", 7)
+            self.log("Coverage properties not found", 7)
 
         return properties
 

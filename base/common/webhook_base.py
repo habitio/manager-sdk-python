@@ -1,10 +1,12 @@
 from flask import Response, jsonify
 import traceback
 import requests
+from tenacity import retry, wait_fixed
 
 from base.redis_db import get_redis
 from base import settings, logger
 from base.utils import format_str
+from base.constants import DEFAULT_RETRY_WAIT
 from .watchdog import Watchdog
 
 
@@ -43,7 +45,7 @@ class WebhookHubBase:
         logger.verbose("headers: {}".format(request.headers))
         try:
             received_hash = request.headers.get("Authorization").replace("Bearer ", "")
-            if received_hash == self.confirmation_hash:
+            if self._validate_confirmation_hash(received_hash):
                 if request.is_json:
                     received_data = request.get_json()
                     logger.debug(f'Authorize response data: {received_data}')
@@ -127,3 +129,35 @@ class WebhookHubBase:
             logger.info('Custom response disabled for multiple publish properties')
 
         return Response(status=status_code)
+
+    @retry(wait=wait_fixed(DEFAULT_RETRY_WAIT))
+    def get_webhook_data(self):
+        try:
+            logger.debug(f"[get_webhook_data] Trying to get webhook data - {settings.webhook_url}")
+            resp = requests.get(settings.webhook_url, headers=self.session.headers)
+            logger.verbose("[get_webhook_data] Received response code[{}]".format(resp.status_code))
+
+            if int(resp.status_code) == 200:
+                logger.notice("[get_webhook_data] Get webhook data successful!")
+                return resp.json()
+            else:
+                raise Exception('[get_webhook_data] Error getting webhook data!')
+
+        except Exception as e:
+            logger.alert("[get_webhook_data] Failed while get webhook! {}".format(traceback.format_exc(limit=5)))
+            raise
+
+    def set_confirmation_hash(self):
+        webhook_data = self.get_webhook_data()
+        if "confirmation_hash" in webhook_data:
+            self.confirmation_hash = webhook_data['confirmation_hash']
+            logger.notice("[set_confirmation_hash] Confirmation Hash : {}".format(self.confirmation_hash))
+        else:
+            raise Exception
+
+    def _validate_confirmation_hash(self, received_hash):
+        if self.confirmation_hash == received_hash:
+            return True
+        else:
+            self.set_confirmation_hash()
+            return self.confirmation_hash == received_hash

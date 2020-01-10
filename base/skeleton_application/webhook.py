@@ -93,10 +93,7 @@ class WebhookHubApplication(WebhookHubBase):
                     os._exit(1)
 
             self.patch_custom_endpoints()
-            application = self.get_application()
-            if "confirmation_hash" in application:
-                self.confirmation_hash = application['confirmation_hash']
-                logger.notice("Confirmation Hash : {}".format(self.confirmation_hash))
+            self.set_confirmation_hash()
 
         except Exception as e:
             logger.alert("[patch_endpoints] Failed at patch endpoints! {}".format(traceback.format_exc(limit=5)))
@@ -222,7 +219,7 @@ class WebhookHubApplication(WebhookHubBase):
         logger.debug(f"Received {request.method} - {request.path}")
         logger.verbose(f"headers: {request.headers}")
         received_hash = request.headers.get("Authorization", "").replace("Bearer ", "")
-        if received_hash == self.confirmation_hash:
+        if self._validate_confirmation_hash(received_hash):
             data = request.json
             if not data:
                 raise InvalidRequestException("Missing Payload")
