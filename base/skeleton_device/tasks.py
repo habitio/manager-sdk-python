@@ -1,6 +1,5 @@
 from base.thread_pool import pool_task
 from base import settings, logger
-# from base.solid import get_implementer
 from .token_refresher import TokenRefresherManager
 
 

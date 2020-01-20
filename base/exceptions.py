@@ -5,6 +5,10 @@ class ChannelTemplateNotFound(Exception):
     pass
 
 
+class ChannelNotFound(Exception):
+    pass
+
+
 class NoAccessDeviceException(Exception):
     pass
 

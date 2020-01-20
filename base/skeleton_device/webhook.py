@@ -192,7 +192,8 @@ class WebhookHubDevice(WebhookHubBase):
                         self.db.set_credentials(credentials, client_id, owner_id, channel_id)
 
                         ignore_keys.append(f'credential-owners/{owner_id}/channels/{channel_id}')
-                    self.thread_pool.add_task(handle_credentials, credentials, old_credentials, client_id, owner_id, channel_id, ignore_keys)
+                    self.thread_pool.add_task(handle_credentials, credentials, old_credentials, client_id, owner_id,
+                                              channel_id, ignore_keys)
                 else:
                     for channel in channels:
                         self.db.set_credentials(credentials, client_id, owner_id, channel['id'])
@@ -203,6 +204,8 @@ class WebhookHubDevice(WebhookHubBase):
 
     async def send_channel_requests(self, devices, client_id, owner_id, channel_template, credentials):
         loop = asyncio.get_event_loop()
+        if type(devices) is not list:
+            devices = [devices]
 
         with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = [

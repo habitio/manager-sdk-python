@@ -16,7 +16,7 @@ class WebhookHubBase:
         self.implementer = implementer
         self.queue = queue
         self.confirmation_hash = ""
-        self.thread_pool = thread_pool
+        self.thread_pool = thread_pool or getattr(implementer, 'thread_pool', None)
 
         try:
             self.watchdog_monitor = Watchdog()

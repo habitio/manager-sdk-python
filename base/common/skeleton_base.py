@@ -12,12 +12,20 @@ import traceback
 
 class SkeletonBase(ABC):
 
-    def __init__(self, queue=None):
+    def __init__(self, queue=None, thread_pool=None):
         super(SkeletonBase, self).__init__()
         self._type = settings.implementor_type
         self.db = get_redis()
         self.queue = queue
         self.confirmation_hash = ""
+        self.thread_pool = thread_pool
+
+    @property
+    def header(self):
+        return {
+            "Authorization": "Bearer {0}".format(settings.block["access_token"]),
+            "Accept": "application/json",
+        }
 
     @abstractmethod
     def start(self):
@@ -294,7 +302,7 @@ class SkeletonBase(ABC):
         except Exception:
             self.log("[get_property_history] Unexpected error get_property_history: {}".format(
                 traceback.format_exc(limit=5)), 3)
-        return {}
+        return []
 
     def get_latest_property_value(self, channel_id, component, property_):
         try:

@@ -63,6 +63,7 @@ class Views:
 
             self.implementer = get_implementer()
             self.implementer.queue = queue_pub
+            self.implementer.thread_pool = self.thread_pool
 
             webhook = Webhook(queue=queue_pub, implementer=self.implementer, thread_pool=self.thread_pool)
             webhook.patch_endpoints()

@@ -27,13 +27,6 @@ class SkeletonDevice(SkeletonBase):
         url = '{}/{}/managers/{}/swap-credentials'.format(server, version, client_id)
         return url
 
-    @property
-    def header(self):
-        return {
-            "Authorization": "Bearer {0}".format(settings.block["access_token"]),
-            "Accept": "application/json",
-        }
-
     @staticmethod
     def _credentials_dict(credentials, sender):
         credentials_dict = {

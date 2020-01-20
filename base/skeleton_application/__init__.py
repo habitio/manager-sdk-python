@@ -1,6 +1,7 @@
 import requests
+import traceback
 from base.common.skeleton_base import SkeletonBase
-from base.exceptions import InvalidRequestException, ValidationException
+from base.exceptions import InvalidRequestException, ValidationException, ChannelNotFound
 from base.utils import format_response, is_valid_uuid
 from .router import *
 from .webhook import WebhookHubApplication
@@ -32,6 +33,38 @@ class SkeletonApplication(SkeletonBase):
         self.log(f"Properties found: {len(properties)}", 7)
 
         return properties
+
+    def get_quotes_by_properties(self, entity, properties_filters):
+        url = f"{settings.api_server_full}/applications/{settings.client_id}/find-quotes-by-properties"
+        quotes = []
+        try:
+            if not (entity and properties_filters):
+                return quotes
+            if type(properties_filters) is not list:
+                properties_filters = [properties_filters]
+
+            json = {
+                'entity': entity,
+                'properties': {
+                    'filters': properties_filters
+                }
+            }
+            resp = requests.post(url, headers=self.header, json=json)
+
+            if int(resp.status_code) == 200:
+                quotes = resp.json()['elements']
+            elif int(resp.status_code) == 204:  # No content
+                logger.verbose(f"[get_quotes_by_properties] Received response code[{resp.status_code}]")
+            else:
+                logger.verbose(f"[get_quotes_by_properties] Received response code[{resp.status_code}]")
+                raise ChannelNotFound(f"[get_quotes_by_properties] Failed to retrieve quotes for entity: {entity}; "
+                                      f"filters: {properties_filters}")
+
+        except (OSError, ChannelNotFound) as e:
+            logger.warning('[get_quotes_by_properties] Error while making request to platform: {}'.format(e))
+        except Exception:
+            logger.alert("[get_quotes_by_properties] Unexpected error: {}".format(traceback.format_exc(limit=5)))
+        return quotes
 
     def get_coverages_by_quote(self, quote_id, params=None):
         params = params or {}
@@ -243,6 +276,36 @@ class SkeletonApplication(SkeletonBase):
             quote_id - UUID of quote
         """
         raise NotImplementedError('No quote checkout implemented')
+
+    def get_channel_by_owner(self, owner_id, channel_id):
+        """
+        Input :
+            owner_id
+            channel_id
+
+        Returns channeltemplate_id
+
+        """
+
+        url = "{}/users/{}/channels?channel_id={}".format(settings.api_server_full, owner_id, channel_id)
+
+        try:
+            resp = requests.get(url, headers=self.header)
+
+            if int(resp.status_code) == 200:
+                return resp.json()['elements'][0]['channel']
+            elif int(resp.status_code) == 204:  # No content
+                logger.verbose("[get_channel_by_owner] Received response code[{}]".format(resp.status_code))
+                return False
+            else:
+                logger.verbose("[get_channel_by_owner] Received response code[{}]".format(resp.status_code))
+                raise ChannelNotFound(f"[get_channel_by_owner] Failed to retrieve channel for {channel_id}")
+
+        except (OSError, ChannelNotFound) as e:
+            logger.warning('[get_channel_by_owner] Error while making request to platform: {}'.format(e))
+        except Exception as ex:
+            logger.alert("[get_channel_by_owner] Unexpected error: {}".format(traceback.format_exc(limit=5)))
+        return ''
 
 
 SkeletonBase.register(SkeletonApplication)

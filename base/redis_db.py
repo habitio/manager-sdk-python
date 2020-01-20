@@ -2,6 +2,7 @@ import ast
 import json
 import traceback
 import re
+from datetime import datetime
 
 from redis import Redis
 from base import settings, logger
@@ -358,6 +359,24 @@ class DBManager(Redis):
         if not device_id:
             device_id = '*'
         return list(set(self.query('channel-devices/{}'.format(device_id))))
+
+    def set_device_quotes(self, device_id, quotes):
+        key = "/".join(["device-quotes", device_id])
+        data = {
+            'quotes': quotes,
+            'timestamp': int(datetime.now().timestamp())
+        }
+        self.set_key(key, data)
+
+    def get_device_quotes(self, device_id):
+        key = "/".join(["device-quotes", device_id])
+        data = self.query(key)
+        if not data:
+            logger.warning("[DB] No quotes found for device {}".format(key))
+            return None
+
+        return data[0]
+
 
 
 def get_redis():
