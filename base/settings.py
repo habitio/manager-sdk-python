@@ -36,6 +36,7 @@ class Settings:
         self.config_tcp = self.config_boot.get("tcp_udp_server", {})
         self.enable_cors = self.config_boot.get("enable_cors", False)
         self.config_thread_pool = self.config_boot.get("thread_pool", {})
+        self.mqtt_channels = self.config_boot.get("mqtt_channels", [])
 
         self.client_id = self.config_cred["client_id"]
         self.client_secret = self.config_cred["client_secret"]

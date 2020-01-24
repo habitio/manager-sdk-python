@@ -378,7 +378,6 @@ class DBManager(Redis):
         return data[0]
 
 
-
 def get_redis():
     try:
         return DBManager(

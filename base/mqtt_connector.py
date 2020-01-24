@@ -51,19 +51,19 @@ class MqttConnector:
             if rc == 0:
                 logger.debug("Mqtt - Connected , result code {}".format(rc))
 
-                topic = "/{api_version}/{mqtt_topic}/{client_id}/channels/#".format(
-                    mqtt_topic=settings.mqtt_topic,
-                    api_version=settings.api_version,
-                    client_id=settings.client_id
-                )
+                if settings.mqtt_channels:
+                    topics = [f"/{settings.api_version}/{settings.mqtt_topic}/{settings.client_id}/channels/{channel}/#"
+                              for channel in settings.mqtt_channels]
+                else:
+                    topics = [f"/{settings.api_version}/{settings.mqtt_topic}/{settings.client_id}/channels/#"]
 
                 if self.subscribe:
+                    for topic in topics:
+                        logger.notice("Mqtt - Will subscribe to {}".format(topic))
+                        self.mqtt_client.subscribe(topic, qos=0)
 
-                    logger.notice("Mqtt - Will subscribe to {}".format(topic))
-                    self.mqtt_client.subscribe(topic, qos=0)
-
-                    if self._on_connect_callback:
-                        self._on_connect_callback.__call__(**self._on_connect_callback_params)
+                        if self._on_connect_callback:
+                            self._on_connect_callback.__call__(**self._on_connect_callback_params)
 
             elif 0 < rc < 6:
                 raise Exception(RC_LIST[rc])
