@@ -25,7 +25,7 @@ def validate_channel(channel_id):
 
     except (OSError, ChannelTemplateNotFound) as e:
         logger.warning(f'[validate_channel] Error while making request to platform: {e}')
-    except Exception as ex:
+    except Exception:
         logger.alert(f"[validate_channel] Unexpected error get_channel_template: {traceback.format_exc(limit=5)}")
     return {}
 

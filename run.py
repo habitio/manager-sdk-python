@@ -1,3 +1,5 @@
+import traceback
+
 from base import settings
 from base import logger
 from flask import Flask
@@ -31,9 +33,9 @@ try:
         app = views.Views()
         logger.info("[Boot]: Mqtt")
 
-except Exception as ex:
+except Exception:
     logger.emergency("[Boot]: Flask object creation failed!")
-    logger.trace(ex)
+    logger.trace(traceback.format_exc(limit=5))
     raise
 
 
@@ -46,4 +48,5 @@ if __name__ == "__main__":
         app.run(port=settings.port)
     except Exception:
         print("********* Unknown Error! *********")
+        print(traceback.format_exc(limit=5))
         raise

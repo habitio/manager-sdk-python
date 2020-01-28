@@ -24,11 +24,11 @@ class WebhookHubApplication(WebhookHubBase):
             return self.implementer.activate(request=request,
                                              client_id=settings.client_id, access_token=settings.block['access_token'])
 
-        except Exception as _e:
+        except Exception as e:
 
             traceback.print_exc(file=sys.stdout)
 
-            return Response(status=501, response=json.dumps({'text': str(_e)}))
+            return Response(status=501, response=json.dumps({'text': str(e)}))
 
     def service_authorize(self, request):
 
@@ -87,15 +87,15 @@ class WebhookHubApplication(WebhookHubBase):
                     else:
                         raise Exception('Service setup not successful!')
 
-                except Exception as ex:
+                except Exception as e:
 
-                    logger.alert("[patch_endpoints] Failed to set service!\n{}".format(ex))
+                    logger.alert("[patch_endpoints] Failed to set service!\n{}".format(e))
                     os._exit(1)
 
             self.patch_custom_endpoints()
             self.set_confirmation_hash()
 
-        except Exception as e:
+        except Exception:
             logger.alert("[patch_endpoints] Failed at patch endpoints! {}".format(traceback.format_exc(limit=5)))
             raise
 
@@ -126,7 +126,7 @@ class WebhookHubApplication(WebhookHubBase):
                 else:
                     raise Exception(f"[patch_custom_endpoints] {endpoint['namespace']} setup not successful!")
 
-        except Exception as e:
+        except Exception:
             logger.alert("Failed at patch endpoint! {}".format(traceback.format_exc(limit=5)))
             raise
 
@@ -143,7 +143,7 @@ class WebhookHubApplication(WebhookHubBase):
             else:
                 raise Exception('[get_application] Error getting application!')
 
-        except Exception as e:
+        except Exception:
             logger.alert("Failed while get application! {}".format(traceback.format_exc(limit=5)))
             raise
 
@@ -211,7 +211,7 @@ class WebhookHubApplication(WebhookHubBase):
 
             self.implementer.start()
 
-        except Exception as e:
+        except Exception:
             logger.alert("Unexpected exception {}".format(traceback.format_exc(limit=5)))
             os._exit(1)
 

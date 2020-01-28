@@ -69,7 +69,7 @@ class TCPBase:
             connection.sendall('Closing connection due to inactivity'.encode())
         except TCPWrongMessageException as e:
             connection.sendall(e.__str__().encode())
-        except Exception as e:
+        except Exception:
             logger.alert(f'Unexpected error from {connection}; address: {client_address}; '
                          f'{traceback.format_exc(limit=5)}')
         finally:

@@ -56,6 +56,7 @@ class SkeletonDevice(SkeletonBase):
         if response and response.status_code == 200:
             return response.json()
         else:
+            payload.pop('credentials', None)
             self.log(f'Error on request swap credentials. Status code: {response.status_code}; URL: {url}; '
                      f'Payload: {payload}', 3)
             return {}
@@ -195,8 +196,7 @@ class SkeletonDevice(SkeletonBase):
         except Exception:
             self.log('Unexpected error {}'.format(traceback.format_exc(limit=5)), 3)
 
-        self.log('Missing info in access_check: \nsender: {} \ncase:{} \ncredentials:{}'.format(sender, case,
-                                                                                                credentials), 4)
+        self.log(f'Missing info in access_check: \nsender: {sender} \ncase:{case}', 9)
 
         return None
 
@@ -248,7 +248,7 @@ class SkeletonDevice(SkeletonBase):
 
         except (OSError, ChannelTemplateNotFound) as e:
             logger.warning('[get_channels_by_channeltemplate] Error while making request to platform: {}'.format(e))
-        except Exception as ex:
+        except Exception:
             logger.alert("[get_channels_by_channeltemplate] Unexpected error: {}".format(traceback.format_exc(limit=5)))
         return ''
 
@@ -279,7 +279,7 @@ class SkeletonDevice(SkeletonBase):
 
         except (OSError, ChannelTemplateNotFound) as e:
             logger.warning('[get_channel_by_owner] Error while making request to platform: {}'.format(e))
-        except Exception as ex:
+        except Exception:
             logger.alert("[get_channel_by_owner] Unexpected error: {}".format(traceback.format_exc(limit=5)))
         return ''
 

@@ -303,7 +303,7 @@ class SkeletonApplication(SkeletonBase):
 
         except (OSError, ChannelNotFound) as e:
             logger.warning('[get_channel_by_owner] Error while making request to platform: {}'.format(e))
-        except Exception as ex:
+        except Exception:
             logger.alert("[get_channel_by_owner] Unexpected error: {}".format(traceback.format_exc(limit=5)))
         return ''
 

@@ -42,7 +42,8 @@ def get_implementer():
         raise ImplementorNotFound
 
     except Exception:
-        logger.critical("Failed to find Skeleton implementer class {}, check for missing abstract methods".format(traceback.format_exc(limit=5)))
+        logger.critical(f"Failed to find Skeleton implementer class {traceback.format_exc(limit=5)}, "
+                        f"check for missing abstract methods")
         os._exit(1)
 
 

@@ -55,8 +55,8 @@ class TokenRefresherManager(object):
                 logger.info('[TokenRefresher] **** token refresher is not enabled ****')
         except NotImplementedError as e:
             logger.error("[TokenRefresher] NotImplementedError: {}".format(e))
-        except Exception as e:
-            logger.alert("[TokenRefresher] Unexpected exception: {} {}".format(e, traceback.format_exc(limit=5)))
+        except Exception:
+            logger.alert("[TokenRefresher] Unexpected exception: {} {}".format(traceback.format_exc(limit=5)))
 
     def worker(self, conf_data):
         asyncio.set_event_loop(self.loop)
@@ -79,7 +79,7 @@ class TokenRefresherManager(object):
                     credentials[refresh_token].append(cred_dict)
                 except KeyError:
                     credentials[refresh_token] = [cred_dict]
-        return credentials if refresh_lookup not in credentials else credentials[refresh_lookup]
+        return credentials if not refresh_lookup or refresh_lookup not in credentials else credentials[refresh_lookup]
 
     async def make_requests(self, conf_data: dict):
         try:
@@ -103,8 +103,8 @@ class TokenRefresherManager(object):
 
             logger.info("[TokenRefresher] {} finishing {}".format(threading.currentThread().getName(),
                                                                   datetime.datetime.now()))
-        except Exception as e:
-            logger.error("[TokenRefresher] Error on make_requests: {}".format(e))
+        except Exception:
+            logger.error(f"[TokenRefresher] Error on make_requests: {traceback.format_exc(limit=5)}")
 
     @rate_limited(settings.config_refresh.get('rate_limit', DEFAULT_RATE_LIMIT))
     def send_request(self, refresh_token, credentials_list, conf):
@@ -224,8 +224,9 @@ class TokenRefresherManager(object):
                         'new': False
                     }
 
-        except Exception as e:
-            logger.error(f'[TokenRefresher] Unexpected error on send_request for refresh token, {e}')
+        except Exception:
+            logger.error(f'[TokenRefresher] Unexpected error on send_request for refresh token, '
+                         f'{traceback.format_exc(limit=5)}')
 
     def update_all_owners(self, new_credentials, channel_id, ignore_keys=None):
         ignore_keys = ignore_keys or []

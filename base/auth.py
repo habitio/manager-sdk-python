@@ -37,7 +37,7 @@ def get_access():
         else:
             error_msg = format_response(resp)
             raise Exception(error_msg)
-    except Exception as e:
+    except Exception:
         logger.alert("Unexpected error during authorization {}".format(traceback.format_exc(limit=5)))
         raise
 
@@ -64,7 +64,7 @@ def renew_token():
         else:
             error_msg = format_response(resp)
             raise Exception(error_msg)
-    except Exception as e:
+    except Exception:
         logger.alert("Unexpected error during token renewal: {}".format(traceback.format_exc(limit=5)))
         os._exit(1)
 
@@ -113,6 +113,6 @@ def start_refresher():
         timer = threading.Timer(refresh_after, renew_token)
         timer.daemon = True
         timer.start()
-    except Exception as e:
+    except Exception:
         logger.critical("Token expiry check - thread failed {}".format(traceback.format_exc(limit=5)))
         os._exit(1)
