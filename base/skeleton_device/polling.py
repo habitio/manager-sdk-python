@@ -69,7 +69,7 @@ class PollingManager(object):
                 logger.error(f'[Polling] Error on worker loop, {traceback.format_exc(limit=5)}')
             time.sleep(self.interval)
 
-    async def make_requests(self, conf_data: dict):
+    async def make_requests(self, conf_data):
         try:
             logger.info(f"[Polling] {threading.currentThread().getName()} starting {datetime.datetime.now()}")
 

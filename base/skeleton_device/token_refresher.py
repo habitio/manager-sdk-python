@@ -25,18 +25,27 @@ class TokenRefresherManager(object):
         self.db = get_redis()
         self.implementer = implementer
         self._channel_relations = {}
+        self._channel_template = None
 
     @property
     def channel_relations(self):
         return self._channel_relations
 
-    @channel_relations.setter
-    def channel_relations(self, value):
-        self._channel_relations = value
-
     @channel_relations.deleter
     def channel_relations(self):
         self.channel_relations.clear()
+
+    @property
+    def channel_template(self):
+        return self._channel_template
+
+    @channel_template.setter
+    def channel_template(self, value):
+        self._channel_template = value
+
+    @channel_template.deleter
+    def channel_template(self):
+        self._channel_template = None
 
     def start(self):
         """
@@ -257,14 +266,15 @@ class TokenRefresherManager(object):
         if all_channels_credentials:
             updated_, error_ = self.update_credentials(new_credentials, all_channels_credentials)
             updated_cred.extend(updated_)
-            updated_cred.extend(ignore_keys)
-            updated_cred.extend(error_)
+            ignore_keys.extend(updated_)
+            ignore_keys.extend(error_)
             for channel_credentials in all_channels_credentials:
                 channel_id = channel_credentials['key'].split('/')[-1]
                 logger.verbose(f'[update_all_channels]  Trying to update all credentials for the channel: {channel_id}')
-                updated_, error_keys = self.update_all_owners(new_credentials, channel_id, updated_cred)
+                updated_, error_keys = self.update_all_owners(new_credentials, channel_id, ignore_keys)
                 updated_cred.extend(updated_)
-                updated_cred.extend(error_keys)
+                ignore_keys.extend(updated_)
+                ignore_keys.extend(error_)
         return list(set(updated_cred))
 
     def update_credentials(self, new_credentials, old_credentials_list):
@@ -298,15 +308,25 @@ class TokenRefresherManager(object):
             except KeyError:
                 channeltemplate_id = self.implementer.get_channel_template(channel_id)
 
-            logger.debug(f'[update_credentials] new credentials {key}')
-            logger.info(f"[update_credentials] client_app_id: {client_app_id}; owner_id: {owner_id}; "
-                        f"channel_id: {channel_id}; channeltemplate_id: {channeltemplate_id}")
-            if channeltemplate_id:
+            if channeltemplate_id and \
+                    (settings.config_boot.get('on_pair', {}).get('update_all_channeltemplates', True)
+                     or channeltemplate_id == self.channel_template):
+                logger.debug(f'[update_credentials] new credentials {key}')
+                logger.info(f"[update_credentials] client_app_id: {client_app_id}; owner_id: {owner_id}; "
+                            f"channel_id: {channel_id}; channeltemplate_id: {channeltemplate_id}")
                 self.channel_relations[channel_id] = channeltemplate_id
-                stored = self.implementer.store_credentials(owner_id, client_app_id, channeltemplate_id, new_credentials)
+                stored = self.implementer.store_credentials(owner_id, client_app_id, channeltemplate_id,
+                                                            new_credentials)
                 if stored:
                     self.db.set_credentials(new_credentials, client_app_id, owner_id, channel_id)
                     updated_credentials.append(key)
+                else:
+                    logger.verbose(f'[update_credentials] Ignoring key {key}')
+                    error_keys.append(key)
+            else:
+                logger.verbose(f'[update_credentials] Ignoring key {key}')
+                error_keys.append(key)
+
         return list(set(updated_credentials)), list(set(error_keys))
 
     def check_credentials_man_id(self, credentials_check, new_credentials):
