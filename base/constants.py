@@ -44,3 +44,8 @@ DEFAULT_THREAD_POOL_LIMIT = 1
 DEFAULT_THREAD_POOL_NAME = "Main-Async"
 DEFAULT_THREAD_KEY_NAME = 'poolthread/queues/'
 DEFAULT_SLEEP_TIME = 5
+
+# Quotes
+QUOTE_URI = "{api_server_full}/applications/{client_id}/quotes/{quote_id}"
+QUOTE_PROPERTIES_URI = "%s/properties" % QUOTE_URI
+COVERAGES_URI = "%s/coverages" % QUOTE_URI

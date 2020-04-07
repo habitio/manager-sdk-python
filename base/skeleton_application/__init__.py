@@ -3,12 +3,9 @@ import traceback
 from base.common.skeleton_base import SkeletonBase
 from base.exceptions import InvalidRequestException, ValidationException, ChannelNotFound
 from base.utils import format_response, is_valid_uuid
+from base.constants import QUOTE_PROPERTIES_URI, QUOTE_URI, COVERAGES_URI
 from .router import *
 from .webhook import WebhookHubApplication
-
-QUOTE_URI = "%s/applications/%s/quotes/{quote_id}" % (settings.api_server_full, settings.client_id)
-QUOTE_PROPERTIES_URI = "%s/properties" % QUOTE_URI
-COVERAGES_URI = "%s/coverages" % QUOTE_URI
 
 
 class SkeletonApplication(SkeletonBase):
@@ -20,10 +17,25 @@ class SkeletonApplication(SkeletonBase):
             "Authorization": "Bearer {0}".format(settings.block["access_token"])
         }
 
-    def get_properties_by_quote(self, quote_id, params=None):
+    def get_quote(self, quote_id: str) -> dict:
+        self.log(f"Get quote: {quote_id}", 7)
+        _url = QUOTE_URI.format(api_server_full=settings.api_server_full, client_id=settings.client_id,
+                                quote_id=quote_id)
+
+        self.log(f"Try to get quote: {_url}", 7)
+        resp = requests.get(url=_url, headers=self.platform_header)
+        if resp.status_code != 200:
+            raise InvalidRequestException("get_quote: Invalid quote")
+        quote = resp.json()
+        self.log(f"Quote found: {len(quote)}", 7)
+
+        return quote
+
+    def get_properties_by_quote(self, quote_id: str, params: dict = None):
         params = params or {}
         # get properties using quote_id
-        _url = QUOTE_PROPERTIES_URI.format(quote_id=quote_id)
+        _url = QUOTE_PROPERTIES_URI.format(api_server_full=settings.api_server_full, client_id=settings.client_id,
+                                           quote_id=quote_id)
 
         self.log(f"Try to get properties: {_url}", 7)
         resp = requests.get(url=_url, headers=self.platform_header, params=params)
@@ -34,7 +46,7 @@ class SkeletonApplication(SkeletonBase):
 
         return properties
 
-    def get_quotes_by_properties(self, entity, properties_filters):
+    def get_quotes_by_properties(self, entity: str, properties_filters: list) -> list:
         url = f"{settings.api_server_full}/applications/{settings.client_id}/find-quotes-by-properties"
         quotes = []
         try:
@@ -66,10 +78,11 @@ class SkeletonApplication(SkeletonBase):
             logger.alert("[get_quotes_by_properties] Unexpected error: {}".format(traceback.format_exc(limit=5)))
         return quotes
 
-    def get_coverages_by_quote(self, quote_id, params=None):
+    def get_coverages_by_quote(self, quote_id: str, params: dict = None) -> list:
         params = params or {}
         # get properties using quote_id
-        _url = COVERAGES_URI.format(quote_id=quote_id)
+        _url = COVERAGES_URI.format(api_server_full=settings.api_server_full, client_id=settings.client_id,
+                                    quote_id=quote_id)
 
         self.log(f"Try to get properties: {_url}", 7)
         resp = requests.get(url=_url, headers=self.platform_header, params=params)
@@ -85,10 +98,11 @@ class SkeletonApplication(SkeletonBase):
 
         return coverages
 
-    def get_coverage_properties(self, quote_id, coverage_id, params=None):
+    def get_coverage_properties(self, quote_id: str, coverage_id: str, params: dict = None) -> list:
         params = params or {}
         # get properties using quote_id
-        _url = f"{COVERAGES_URI.format(quote_id=quote_id)}/{coverage_id}/properties"
+        _url = COVERAGES_URI.format(api_server_full=settings.api_server_full, client_id=settings.client_id,
+                                    quote_id=quote_id) + f"/{coverage_id}/properties"
 
         self.log(f"Try to get coverage properties: {_url}", 7)
         resp = requests.get(url=_url, headers=self.platform_header, params=params)
@@ -104,6 +118,44 @@ class SkeletonApplication(SkeletonBase):
 
         return properties
 
+    def protected_asset_search(self, namespace: str, quote_id: str) -> list:
+        url = f"{settings.api_server_full}/applications/{settings.client_id}/protected-assets-search"
+        _protected_assets = []
+        try:
+            if not namespace:
+                return _protected_assets
+
+            json = {
+                "properties": {
+                    "filters": [
+                        {
+                            "namespace": namespace,
+                            "type": "equals",
+                            "data": quote_id
+                        }
+                    ]
+
+                },
+                "page_start_index": 0,
+                "page_size": 1
+            }
+
+            resp = requests.post(url, headers=self.header, json=json)
+
+            if int(resp.status_code) == 200:
+                _protected_assets = resp.json()['elements']
+            elif int(resp.status_code) == 204:  # No content
+                self.log(f"[protected_asset_search] Received response code[{resp.status_code}]", 9)
+            else:
+                self.log(f"[protected_asset_search] Received response code[{resp.status_code}]", 9)
+                raise ChannelNotFound(f"[protected_asset_search] Failed to retrieve protected asset for quote: {quote_id}; ")
+
+        except (OSError, ChannelNotFound) as e:
+            self.log('[protected_asset_search] Error while making request to platform: {}'.format(e), 4)
+        except Exception:
+            self.log("[protected_asset_search] Unexpected error: {}".format(traceback.format_exc(limit=5)), 5)
+        return _protected_assets
+
     def _patch_property(self, quote_id: str, property_id: str, data: dict, return_property: bool = False) -> dict:
         """
         Make PATCH request to update quote/<quote_id>/properties/<property_id>
@@ -114,7 +166,8 @@ class SkeletonApplication(SkeletonBase):
         :return: Dict with full updated property or PATCH response
         """
         self.log(f"Patch property: {property_id}; Data: {data}", 7)
-        url = f"{QUOTE_PROPERTIES_URI.format(quote_id=quote_id)}/{property_id}"
+        url = QUOTE_PROPERTIES_URI.format(api_server_full=settings.api_server_full, client_id=settings.client_id,
+                                          quote_id=quote_id) + f"/{property_id}"
 
         # PATCH property
         resp = requests.patch(url=url, headers=self.platform_header, json=data)
@@ -143,7 +196,8 @@ class SkeletonApplication(SkeletonBase):
         :return: Dict with full updated property or PATCH response
         """
         self.log(f"Patch coverage: {coverage_id}; property: {property_id}; Data: {data}", 7)
-        url = f"{COVERAGES_URI.format(quote_id=quote_id)}/{coverage_id}/properties/{property_id}"
+        url = COVERAGES_URI.format(api_server_full=settings.api_server_full, client_id=settings.client_id,
+                                   quote_id=quote_id) + f"/{coverage_id}/properties/{property_id}"
 
         # PATCH property
         resp = requests.patch(url=url, headers=self.platform_header, json=data)
@@ -171,7 +225,8 @@ class SkeletonApplication(SkeletonBase):
         :return: Dict with full updated quote or PATCH response
         """
         self.log(f"Patch quote: {quote_id}; Data: {data}", 7)
-        url = QUOTE_URI.format(quote_id=quote_id)
+        url = QUOTE_URI.format(api_server_full=settings.api_server_full, client_id=settings.client_id,
+                               quote_id=quote_id)
 
         # PATCH quote
         resp = requests.patch(url=url, headers=self.platform_header, json=data)
@@ -307,5 +362,27 @@ class SkeletonApplication(SkeletonBase):
             logger.alert("[get_channel_by_owner] Unexpected error: {}".format(traceback.format_exc(limit=5)))
         return ''
 
+    def get_cards_by_owner(self, owner_id: str, **kwargs) -> list:
+        url = f"{settings.api_server_full}/users/{owner_id}/cards"
+        if 'page_size' not in kwargs:
+            kwargs['page_size'] = 20
+
+        try:
+            resp = requests.get(url, headers=self.header, params=kwargs)
+
+            if int(resp.status_code) == 200:
+                return resp.json()['elements']
+            elif int(resp.status_code) == 204:  # No content
+                logger.verbose("[get_cards_by_owner] Received response code[{}]".format(resp.status_code))
+                return []
+            else:
+                logger.verbose("[get_cards_by_owner] Received response code[{}]".format(resp.status_code))
+                raise InvalidRequestException(f"[get_channel_by_owner] Failed to retrieve cards for {owner_id}")
+
+        except (OSError, InvalidRequestException) as e:
+            logger.warning('[get_channel_by_owner] Error while making request to platform: {}'.format(e))
+        except Exception:
+            logger.alert("[get_channel_by_owner] Unexpected error: {}".format(traceback.format_exc(limit=5)))
+        return []
 
 SkeletonBase.register(SkeletonApplication)
