@@ -8,6 +8,8 @@ from .webhook import WebhookHubApplication
 
 QUOTE_URI = "%s/applications/%s/quotes/{quote_id}" % (settings.api_server_full, settings.client_id)
 QUOTE_PROPERTIES_URI = "%s/properties" % QUOTE_URI
+PROTECTED_ASSETS_URI = "%s/protected-assets/{protected_asset_id}" % QUOTE_URI
+PROTECTED_ASSETS_PROPS_URI = "%s/properties" % PROTECTED_ASSETS_URI
 COVERAGES_URI = "%s/coverages" % QUOTE_URI
 
 
@@ -29,6 +31,20 @@ class SkeletonApplication(SkeletonBase):
         resp = requests.get(url=_url, headers=self.platform_header, params=params)
         if resp.status_code != 200:
             raise InvalidRequestException("get_properties_by_quote: Invalid quote")
+        properties = resp.json().get('elements', [])
+        self.log(f"Properties found: {len(properties)}", 7)
+
+        return properties
+
+    def get_properties_by_protected_asset(self, quote_id, protected_asset_id, params=None):
+        params = params or {}
+        # get properties using quote_id and protected_asset_id
+        _url = PROTECTED_ASSETS_PROPS_URI.format(quote_id=quote_id, protected_asset_id=protected_asset_id)
+
+        self.log(f"Try to get properties: {_url}", 7)
+        resp = requests.get(url=_url, headers=self.platform_header, params=params)
+        if resp.status_code != 200:
+            raise InvalidRequestException("get_properties_by_protected_asset: Invalid protected asset")
         properties = resp.json().get('elements', [])
         self.log(f"Properties found: {len(properties)}", 7)
 
