@@ -11,6 +11,7 @@ import requests
 import threading
 import datetime
 import time
+import traceback
 
 
 class PollingManager(object):
@@ -44,8 +45,8 @@ class PollingManager(object):
                 logger.info('[Polling] **** polling is not enabled ****')
         except NotImplementedError as e:
             logger.error("[Polling] NotImplementedError: {}".format(e))
-        except Exception as e:
-            logger.alert("[Polling] Unexpected exception: {}".format(e))
+        except Exception:
+            logger.alert(f"[Polling] Unexpected exception: {traceback.format_exc(limit=5)}")
 
     def authorization(self, credentials):
         headers = {
@@ -64,11 +65,11 @@ class PollingManager(object):
             logger.info('[Polling] new polling request {}'.format(datetime.datetime.now()))
             try:
                 loop.run_until_complete(self.make_requests(conf_data))
-            except Exception as e:
-                logger.error('[Polling] Error on worker loop, {}'.format(e))
+            except Exception:
+                logger.error(f'[Polling] Error on worker loop, {traceback.format_exc(limit=5)}')
             time.sleep(self.interval)
 
-    async def make_requests(self, conf_data: dict):
+    async def make_requests(self, conf_data):
         try:
             logger.info(f"[Polling] {threading.currentThread().getName()} starting {datetime.datetime.now()}")
 
@@ -90,7 +91,7 @@ class PollingManager(object):
 
             logger.info("[Polling] {} finishing {}".format(threading.currentThread().getName(),
                                                            datetime.datetime.now()))
-        except Exception as e:
+        except Exception:
             logger.error("[Polling] Error on make_requests: {}".format(traceback.format_exc(limit=5)))
 
     @rate_limited(settings.config_polling.get('rate_limit', DEFAULT_RATE_LIMIT))
@@ -128,8 +129,8 @@ class PollingManager(object):
             logger.error('Request Error on polling.send_request {}'.format(e))
             return False
 
-        except Exception as e:
-            logger.error('[Polling] Unknown error on polling.send_request {}'.format(e))
+        except Exception:
+            logger.error(f'[Polling] Unknown error on polling.send_request {traceback.format_exc(limit=5)}')
         logger.notice('[Polling] No valid credentials found for channel {}'.format(channel_id))
         return False
 
@@ -139,8 +140,8 @@ class PollingManager(object):
             owner_id = credential_key.split('/')[1]
             channel_template_id = self.implementer.get_channel_by_owner(owner_id, channel_id)
             return channel_template_id
-        except Exception as e:
-            logger.debug('[Polling] {}'.format(e))
+        except Exception:
+            logger.debug(f'[Polling] Unexpected error: {traceback.format_exc(limit=5)}')
 
         return False
 

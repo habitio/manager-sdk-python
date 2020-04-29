@@ -19,6 +19,10 @@ def handle_credentials(credentials, old_credentials, client_id, owner_id, channe
             logger.error("[handle_credentials] Refresh token not found in old credentials")
             return
         else:
+            if not settings.config_boot.get('on_pair', {}).get('update_all_channeltemplates', True):
+                refresher.channel_template = implementer.get_channel_template(channel_id)
+                refresher.channel_relations[channel_id] = refresher.channel_template
+            
             updated_cred = []
             updated_cred.extend(ignore_keys)
             refresh_token = old_credentials['refresh_token']
@@ -43,4 +47,5 @@ def handle_credentials(credentials, old_credentials, client_id, owner_id, channe
 
             logger.debug(f"[handle_credentials] Updated keys: {list(set(updated_cred))}")
 
+            del refresher.channel_template
             del refresher.channel_relations

@@ -67,7 +67,7 @@ class MqttConnector:
 
             elif 0 < rc < 6:
                 raise Exception(RC_LIST[rc])
-        except Exception as e:
+        except Exception:
             logger.error("Mqtt Exception- {}".format(traceback.format_exc(limit=5)))
             os._exit(1)
 
@@ -193,7 +193,7 @@ class MqttConnector:
             logger.error('5. Access exception raised: {}, sending value: {}'.format(e, ACCESS_API_UNREACHABLE))
 
             self.queue_pub.put({"io": "ir", "data": ACCESS_API_UNREACHABLE, "case": case})
-        except Exception as e:
+        except Exception:
             logger.error("6. Mqtt - Failed to handle payload. {}".format(traceback.format_exc(limit=5)))
 
     def on_message_application(self, topic, payload):
@@ -244,7 +244,7 @@ class MqttConnector:
                 self.queue.put(data)
 
 
-        except Exception as e:
+        except Exception:
             logger.error("Mqtt - Failed to handle payload. {}".format(traceback.format_exc(limit=5)))
 
     def on_publish(self, client, userdata, mid):
@@ -264,8 +264,8 @@ class MqttConnector:
     def reconfig(self):
         try:
             self.mqtt_client.username_pw_set(username=self.client_id, password=self.access_token)
-        except Exception as e:
-            logger.error("Unexpected error reconfig: {}".format(e))
+        except Exception:
+            logger.error(f"Unexpected error reconfig: {traceback.format_exc(limit=5)}")
             raise
 
     @retry(wait=wait_fixed(DEFAULT_RETRY_WAIT))
@@ -288,15 +288,15 @@ class MqttConnector:
                     logger.debug("Will set tls")
                     self.mqtt_client.tls_set(ca_certs=settings.cert_path)
 
-            except Exception as e:
+            except Exception:
                 logger.alert("Mqtt - Failed to authenticate SSL certificate, {}".format(traceback.format_exc(limit=5)))
                 raise
 
             self.mqtt_client.connect(host, port)
             logger.debug( "Mqtt - Did start connect w/ host:{} and port:{}".format(host, port))
 
-        except Exception as e:
-            logger.emergency("Unexpected error: {}".format(e, traceback.format_exc(limit=5)))
+        except Exception:
+            logger.emergency("Unexpected error: {}".format(traceback.format_exc(limit=5)))
             raise
 
     def publisher(self, io, data, case=None):
@@ -361,6 +361,6 @@ class MqttConnector:
             self.mqtt_client.loop_stop()
             self.mqtt_client.disconnect()
             self.mqtt_client.disable_logger()
-        except Exception as e:
+        except Exception:
             logger.error("Mqtt - Failed to de-configure connection {}".format(traceback.format_exc(limit=5)))
             os._exit(1)

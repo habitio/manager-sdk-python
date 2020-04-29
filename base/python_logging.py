@@ -3,6 +3,7 @@ try:
 except ModuleNotFoundError:
     pass
 import json
+import re
 import logging.handlers
 import time
 from functools import wraps
@@ -62,9 +63,16 @@ def update_log_level(func):
 def format_message(func):
     @wraps(func)
     def message_replace(self, message, *args, **kwargs) -> func:
+        token_regex = r"[\'\"](refresh_token|access_token|token)[\'\"].{2}[\'\"]([^\'\"]*)"
         if hasattr(self, 'log_type') and self.log_type == 'json':
             if not type(message) is str:
                 message = json.dumps(message)
+            token_match = re.findall(token_regex, message)
+            for match_ in token_match:
+                if len(match_) == 2:
+                    token = match_[1]
+                    num_chars = int(len(token)/10)
+                    message = message.replace(token, f"{token[0:num_chars]}...{token[-num_chars:]}")
             message = message.replace('\n', '\\n')
             message = message.replace('\t', '\\t')
             message = message.replace('"', '\\"')

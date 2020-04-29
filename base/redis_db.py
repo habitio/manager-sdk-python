@@ -26,7 +26,7 @@ class DBManager(Redis):
 
             logger.debug("[DB] Key {} added/updated in database".format(key))
             return True
-        except Exception as e:
+        except Exception:
             logger.error("[DB] Failed to set the key at hash. {}".format(traceback.format_exc(limit=5)))
             return False
 
@@ -34,7 +34,7 @@ class DBManager(Redis):
         try:
             result = self.hexists(settings.redis_db, key)
             return result == 1
-        except Exception as e:
+        except Exception:
             logger.error("[DB] Failed to check if hash has key. {}".format(traceback.format_exc(limit=5)))
 
     def get_key(self, key):
@@ -60,7 +60,7 @@ class DBManager(Redis):
         try:
             result = self.hdel(settings.redis_db, key)
             return result == 1
-        except Exception as e:
+        except Exception:
             logger.error("[DB] Failed to delete hash key. {}".format(traceback.format_exc(limit=5)))
 
     def rename_key(self, new_key, old_key):
@@ -93,10 +93,10 @@ class DBManager(Redis):
                 str_element = element[1]
                 try:
                     value = json.loads(str_element)
-                except Exception as e:
+                except Exception:
                     try:
                         value = ast.literal_eval(str_element)
-                    except Exception as e:
+                    except Exception:
                         value = str_element
                     
                 results.append(value)
@@ -115,10 +115,10 @@ class DBManager(Redis):
                 str_element = element[1]
                 try:
                     value = json.loads(str_element)
-                except Exception as e:
+                except Exception:
                     try:
                         value = ast.literal_eval(str_element)
-                    except Exception as e:
+                    except Exception:
                         value = str_element
 
                 results.append({
@@ -135,7 +135,7 @@ class DBManager(Redis):
         try:
             self.delete(settings.redis_db)
             logger.notice("[DB] Redis database shutdown.")
-        except Exception as e:
+        except Exception:
             logger.error("[DB] Failed to clear redis database, {}".format(traceback.format_exc(limit=5)))
 
     def save_n_exit(self):
@@ -143,7 +143,7 @@ class DBManager(Redis):
         try:
             self.shutdown()
             logger.notice("[DB]  Redis database shutdown.")
-        except Exception as e:
+        except Exception:
             logger.error("[DB] Failed to shutdown redis database, {}".format(traceback.format_exc(limit=5)))
 
     def __get_credentials_old(self, client_id, owner_id, channel_id):

@@ -4,7 +4,7 @@ from base import settings, logger
 from base.constants import DEFAULT_MIN_TIMEOUT, DEFAULT_MAX_TIMEOUT
 from base.mqtt_connector import MqttConnector
 from base.skeleton import Webhook, Router
-from base.solid import get_implementer
+from base.solid import implementer
 import asyncio
 import multiprocessing as mp
 from queue import Empty
@@ -61,7 +61,7 @@ class Views:
 
         if settings.block["access_token"] != "":
 
-            self.implementer = get_implementer()
+            self.implementer = implementer
             self.implementer.queue = queue_pub
             self.implementer.thread_pool = self.thread_pool
 

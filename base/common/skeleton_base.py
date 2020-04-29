@@ -181,8 +181,8 @@ class SkeletonBase(ABC):
         """
         try:
             LOG_TABLE[level](message)
-        except IndexError as ex:
-            logger.error(str(ex))
+        except IndexError as e:
+            logger.error(str(e))
 
     def get_config(self):
         """
@@ -216,7 +216,7 @@ class SkeletonBase(ABC):
             self.db.set_credentials(
                 credentials, sender["client_id"], sender["owner_id"], channel_id)
             self.log("Credentials successfully renewed !", 6)
-        except Exception as ex:
+        except Exception:
             self.log("Renew credentials failed!!! {}".format(traceback.format_exc(limit=5)), 4)
 
     def get_type(self):
@@ -275,7 +275,7 @@ class SkeletonBase(ABC):
 
         except (OSError, ChannelTemplateNotFound) as e:
             self.log('[get_channeltemplate_data] Error while making request to platform: {}'.format(e), 3)
-        except Exception as ex:
+        except Exception:
             self.log("[get_channeltemplate_data] Unexpected error get_channeltemplate_data: {}".format(traceback.format_exc(limit=5)), 3)
         return {}
 

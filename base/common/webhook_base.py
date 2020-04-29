@@ -58,7 +58,7 @@ class WebhookHubBase:
             else:
                 logger.debug("Provided invalid confirmation hash!")
                 return Response(status=403)
-        except Exception as e:
+        except Exception:
             logger.error("Couldn't complete processing request, {}".format(traceback.format_exc(limit=5)))
 
     def handle_receive_token(self, received_data, client_id, owner_id):
@@ -143,7 +143,7 @@ class WebhookHubBase:
             else:
                 raise Exception('[get_webhook_data] Error getting webhook data!')
 
-        except Exception as e:
+        except Exception:
             logger.alert("[get_webhook_data] Failed while get webhook! {}".format(traceback.format_exc(limit=5)))
             raise
 
