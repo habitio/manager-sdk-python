@@ -75,7 +75,6 @@ class WebhookHubApplication(WebhookHubBase):
 
                     logger.debug("[patch_endpoints] Initiated PATCH - {}".format(_service.get('url')))
                     logger.verbose("\n{}\n".format(json.dumps(data, indent=4, sort_keys=True)))
-                    continue
 
                     resp = requests.patch('{}/services/{}'.format(settings.api_server_full, _service['id']),
                                           data=json.dumps(data), headers=self.session.headers)

@@ -3,12 +3,10 @@ import traceback
 from base.common.skeleton_base import SkeletonBase
 from base.exceptions import InvalidRequestException, ValidationException, ChannelNotFound
 from base.utils import format_response, is_valid_uuid
-from base.constants import QUOTE_PROPERTIES_URI, QUOTE_URI, COVERAGES_URI
+from base.constants import QUOTE_PROPERTIES_URI, QUOTE_URI, COVERAGES_URI, PROTECTED_ASSETS_URI, \
+    PROTECTED_ASSETS_PROPS_URI
 from .router import *
 from .webhook import WebhookHubApplication
-
-PROTECTED_ASSETS_URI = "%s/protected-assets/{protected_asset_id}" % QUOTE_URI
-PROTECTED_ASSETS_PROPS_URI = "%s/properties" % PROTECTED_ASSETS_URI
 
 class SkeletonApplication(SkeletonBase):
 
@@ -51,7 +49,8 @@ class SkeletonApplication(SkeletonBase):
     def get_properties_by_protected_asset(self, quote_id, protected_asset_id, params=None):
         params = params or {}
         # get properties using quote_id and protected_asset_id
-        _url = PROTECTED_ASSETS_PROPS_URI.format(quote_id=quote_id, protected_asset_id=protected_asset_id)
+        _url = PROTECTED_ASSETS_PROPS_URI.format(api_server_full=settings.api_server_full, client_id=settings.client_id,
+                                                 quote_id=quote_id, protected_asset_id=protected_asset_id)
 
         self.log(f"Try to get properties: {_url}", 7)
         resp = requests.get(url=_url, headers=self.platform_header, params=params)

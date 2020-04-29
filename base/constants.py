@@ -49,3 +49,5 @@ DEFAULT_SLEEP_TIME = 5
 QUOTE_URI = "{api_server_full}/applications/{client_id}/quotes/{quote_id}"
 QUOTE_PROPERTIES_URI = "%s/properties" % QUOTE_URI
 COVERAGES_URI = "%s/coverages" % QUOTE_URI
+PROTECTED_ASSETS_URI = "%s/protected-assets/{protected_asset_id}" % QUOTE_URI
+PROTECTED_ASSETS_PROPS_URI = "%s/properties" % PROTECTED_ASSETS_URI
