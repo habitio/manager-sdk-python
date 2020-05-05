@@ -17,6 +17,17 @@ class SkeletonApplication(SkeletonBase):
             "Authorization": "Bearer {0}".format(settings.block["access_token"])
         }
 
+    def api_request(self, url, method, params=None, json=None, headers=None):
+        params = params or {}
+        json = json or {}
+        headers = headers or self.platform_header
+        method = method.upper()
+        self.log(f"Try to make {method} api request to: {url}\nParams: {params}\nJson: {json}", 7)
+
+        resp = requests.request(method, url, params=params, json=json, headers=headers)
+
+        return resp
+
     def get_quote(self, quote_id: str) -> dict:
         self.log(f"Get quote: {quote_id}", 7)
         _url = QUOTE_URI.format(api_server_full=settings.api_server_full, client_id=settings.client_id,
