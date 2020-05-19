@@ -3,10 +3,10 @@ import traceback
 from base.common.skeleton_base import SkeletonBase
 from base.exceptions import InvalidRequestException, ValidationException, ChannelNotFound
 from base.utils import format_response, is_valid_uuid
-from base.constants import QUOTE_PROPERTIES_URI, QUOTE_URI, COVERAGES_URI
+from base.constants import QUOTE_PROPERTIES_URI, QUOTE_URI, COVERAGES_URI, PROTECTED_ASSETS_URI, \
+    PROTECTED_ASSETS_PROPS_URI
 from .router import *
 from .webhook import WebhookHubApplication
-
 
 class SkeletonApplication(SkeletonBase):
 
@@ -16,6 +16,17 @@ class SkeletonApplication(SkeletonBase):
             "Content-Type": "application/json",
             "Authorization": "Bearer {0}".format(settings.block["access_token"])
         }
+
+    def api_request(self, url, method, params=None, json=None, headers=None):
+        params = params or {}
+        json = json or {}
+        headers = headers or self.platform_header
+        method = method.upper()
+        self.log(f"Try to make {method} api request to: {url}\nParams: {params}\nJson: {json}", 7)
+
+        resp = requests.request(method, url, params=params, json=json, headers=headers)
+
+        return resp
 
     def get_quote(self, quote_id: str) -> dict:
         self.log(f"Get quote: {quote_id}", 7)
@@ -41,6 +52,21 @@ class SkeletonApplication(SkeletonBase):
         resp = requests.get(url=_url, headers=self.platform_header, params=params)
         if resp.status_code != 200:
             raise InvalidRequestException("get_properties_by_quote: Invalid quote")
+        properties = resp.json().get('elements', [])
+        self.log(f"Properties found: {len(properties)}", 7)
+
+        return properties
+
+    def get_properties_by_protected_asset(self, quote_id, protected_asset_id, params=None):
+        params = params or {}
+        # get properties using quote_id and protected_asset_id
+        _url = PROTECTED_ASSETS_PROPS_URI.format(api_server_full=settings.api_server_full, client_id=settings.client_id,
+                                                 quote_id=quote_id, protected_asset_id=protected_asset_id)
+
+        self.log(f"Try to get properties: {_url}", 7)
+        resp = requests.get(url=_url, headers=self.platform_header, params=params)
+        if resp.status_code != 200:
+            raise InvalidRequestException("get_properties_by_protected_asset: Invalid protected asset")
         properties = resp.json().get('elements', [])
         self.log(f"Properties found: {len(properties)}", 7)
 
