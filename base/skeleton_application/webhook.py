@@ -92,7 +92,7 @@ class WebhookHubApplication(WebhookHubBase):
                     logger.alert("[patch_endpoints] Failed to set service!\n{}".format(e))
                     os._exit(1)
 
-            # self.patch_custom_endpoints()
+            self.patch_custom_endpoints()
             self.set_confirmation_hash()
 
         except Exception:
