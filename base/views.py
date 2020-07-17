@@ -65,25 +65,31 @@ class Views:
             self.implementer.queue = queue_pub
             self.implementer.thread_pool = self.thread_pool
 
+            logger.debug("STARTING WEBHOOK")
             webhook = Webhook(queue=queue_pub, implementer=self.implementer, thread_pool=self.thread_pool)
             webhook.patch_endpoints()
             self.webhook = webhook
             self.implementer.confirmation_hash = self.webhook.confirmation_hash
 
+            logger.debug("STARTING MQTT_CONNECTOR")
             mqtt = MqttConnector(implementer=self.implementer, queue=queue_sub, queue_pub=queue_pub)
             mqtt.mqtt_config()
             mqtt.set_on_connect_callback(webhook.webhook_registration)
 
+            logger.debug("STARTING ROUTER")
             router = Router(webhook)
             router.route_setup(app)
 
+            logger.debug("STARTING WORKER_THREAD")
             for _ in range(max_tasks):
                 worker_thread = mp.Process(target=worker_sub, args=(mqtt,), name=f"onMessage_{_}")
                 worker_thread.start()
 
+            logger.debug("STARTING PUBLISHER_THREAD")
             publisher_thread = threading.Thread(target=worker_pub, args=(mqtt,), name='Publish', daemon=True)
             publisher_thread.start()
 
+            logger.debug("STARTING MQTT_LOOP")
             mqtt.mqtt_client.loop_start()
 
 
