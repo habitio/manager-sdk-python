@@ -66,26 +66,27 @@ class WebhookHubApplication(WebhookHubBase):
 
                 try:
 
-                    data = {
-                        'activation_uri': '{}://{}/{}/services/{}/authorize'.format(settings.schema_pub,
-                                                                                    settings.host_pub,
-                                                                                    settings.api_version,
-                                                                                    _service['id'])
-                    }
+                    if settings.config_boot.get('patch_services', True) is True:
+                        data = {
+                            'activation_uri': '{}://{}/{}/services/{}/authorize'.format(settings.schema_pub,
+                                                                                        settings.host_pub,
+                                                                                        settings.api_version,
+                                                                                        _service['id'])
+                        }
 
-                    logger.debug("[patch_endpoints] Initiated PATCH - {}".format(_service.get('url')))
-                    logger.verbose("\n{}\n".format(json.dumps(data, indent=4, sort_keys=True)))
+                        logger.debug("[patch_endpoints] Initiated PATCH - {}".format(_service.get('url')))
+                        logger.verbose("\n{}\n".format(json.dumps(data, indent=4, sort_keys=True)))
 
-                    resp = requests.patch('{}/services/{}'.format(settings.api_server_full, _service['id']),
-                                          data=json.dumps(data), headers=self.session.headers)
+                        resp = requests.patch('{}/services/{}'.format(settings.api_server_full, _service['id']),
+                                              data=json.dumps(data), headers=self.session.headers)
 
-                    logger.verbose("[patch_endpoints] Received response code[{}]".format(resp.status_code))
-                    logger.verbose("\n{}\n".format(json.dumps(resp.json(), indent=4, sort_keys=True)))
+                        logger.verbose("[patch_endpoints] Received response code[{}]".format(resp.status_code))
+                        logger.verbose("\n{}\n".format(json.dumps(resp.json(), indent=4, sort_keys=True)))
 
-                    if int(resp.status_code) == 200:
-                        logger.notice("[patch_endpoints] Service setup successful!")
-                    else:
-                        raise Exception('Service setup not successful!')
+                        if int(resp.status_code) == 200:
+                            logger.notice("[patch_endpoints] Service setup successful!")
+                        else:
+                            raise Exception('Service setup not successful!')
 
                 except Exception as e:
 
