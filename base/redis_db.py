@@ -380,7 +380,6 @@ class DBManager(Redis):
 
 def get_redis():
     try:
-        logger.debug(f"Try to connect to REDIS w/ host: {settings.redis_host}; port: {settings.redis_port}")
         return DBManager(
             host=settings.redis_host,
             port=settings.redis_port,

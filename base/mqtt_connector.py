@@ -26,39 +26,25 @@ class MqttConnector:
                  **kwargs):
         logger.debug("Mqtt - Init")
         self.mqtt_client = paho.Client()
-        logger.debug("MQTT_CLIENT configured")
         self.mqtt_client.enable_logger()
-        logger.debug("MQTT_CLIENT logger enabled")
 
         self.mqtt_client.on_connect = self.on_connect if 'on_connect' not in kwargs else kwargs['on_connect']
-        logger.debug("MQTT_CLIENT on_connect set")
         self.mqtt_client.on_subscribe = self.on_subscribe if 'on_subscribe' not in kwargs else kwargs['on_subscribe']
-        logger.debug("MQTT_CLIENT on_subscribe set")
         self.mqtt_client.on_message = self.on_message if 'on_message' not in kwargs else kwargs['on_message']
-        logger.debug("MQTT_CLIENT on_message set")
         self.mqtt_client.on_disconnect = self.on_disconnect if 'on_disconnect' not in kwargs else kwargs['on_disconnect']
-        logger.debug("MQTT_CLIENT on_disconect set")
         self.mqtt_client.on_publish = self.on_publish if 'on_publish' not in kwargs else kwargs['on_publish']
-        logger.debug("MQTT_CLIENT on_publish set")
         self._topics = []
         self._on_connect_callback = None
         self._on_connect_callback_params = {}
 
         self.client_id = client_id if client_id else settings.client_id
-        logger.debug(f"MQTT_CLIENT_ID: {self.client_id}")
         self.access_token = access_token if access_token else settings.block["access_token"]
-        logger.debug(f"MQTT_ACCESS_TOKEN: {self.access_token}")
 
         self.db = get_redis()
-        logger.debug(f"MQTT_DB configured")
         self.implementer = implementer
-        logger.debug(f"MQTT_IMPLEMENTER configured")
         self.queue = queue
-        logger.debug(f"MQTT_QUEUE configured")
         self.queue_pub = queue_pub
-        logger.debug(f"MQTT_QUEUE_PUB configured")
         self.subscribe = subscribe
-        logger.debug(f"MQTT_SUBSCRIBE configured")
 
     def on_connect(self, client, userdata, flags, rc):
         try:
